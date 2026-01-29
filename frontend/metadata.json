@@ -1,0 +1,7 @@
+{
+  "name": "Agenda Escolar Pro",
+  "description": "Una aplicación móvil para gestionar el calendario escolar, horarios, exámenes y menús del comedor. Mantén todo organizado en un solo lugar.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
