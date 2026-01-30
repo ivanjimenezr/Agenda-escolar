@@ -76,12 +76,11 @@ async def ping():
     return {"message": "pong"}
 
 
-# Import and include routers here when created
-# Example:
-# from src.infrastructure.api.routes import students, subjects, exams
-# app.include_router(students.router, prefix="/api/v1/students", tags=["students"])
-# app.include_router(subjects.router, prefix="/api/v1/subjects", tags=["subjects"])
-# app.include_router(exams.router, prefix="/api/v1/exams", tags=["exams"])
+# Import and include routers
+from src.infrastructure.api.routes import auth, users
+
+app.include_router(auth.router)
+app.include_router(users.router)
 
 
 if __name__ == "__main__":

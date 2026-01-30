@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { User } from '../types';
 import { SparklesIcon } from '../components/icons';
+import { login, register } from '../services/authService';
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -13,18 +14,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [registeredUsers, setRegisteredUsers] = useState<any[]>([]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('school-agenda-registered-users');
-    if (saved) setRegisteredUsers(JSON.parse(saved));
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -38,29 +34,29 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
-    if (mode === 'register') {
-      const exists = registeredUsers.find(u => u.email === email);
-      if (exists) {
-        setError('Este correo ya está registrado.');
-        return;
-      }
-      const newUser = { name, email, password };
-      const updatedUsers = [...registeredUsers, newUser];
-      setRegisteredUsers(updatedUsers);
-      localStorage.setItem('school-agenda-registered-users', JSON.stringify(updatedUsers));
-      onLogin({ name, email });
-    } else {
-      const user = registeredUsers.find(u => u.email === email && u.password === password);
-      if (user) {
-        onLogin({ name: user.name, email: user.email });
+    setLoading(true);
+
+    try {
+      if (mode === 'register') {
+        // Register new user via backend API
+        const user = await register({ name, email, password });
+        // After registration, automatically log in
+        const loginUser = await login({ email, password });
+        onLogin({ name: loginUser.name, email: loginUser.email });
       } else {
-        setError('Credenciales incorrectas o usuario no registrado.');
+        // Login existing user via backend API
+        const user = await login({ email, password });
+        onLogin({ name: user.name, email: user.email });
       }
+    } catch (err: any) {
+      setError(err.message || 'Ocurrió un error. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,11 +123,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-600/30 active:scale-95 transition-all mt-4"
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-600/30 active:scale-95 transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {mode === 'login' ? 'Iniciar Sesión' : 'Registrarme'}
+              {loading ? 'Cargando...' : (mode === 'login' ? 'Iniciar Sesión' : 'Registrarme')}
             </button>
           </form>
 

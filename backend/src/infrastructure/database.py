@@ -1,32 +1,24 @@
 """
-Database connection configuration for Supabase PostgreSQL.
+Database connection configuration for PostgreSQL.
 """
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import Pool
-import os
-from dotenv import load_dotenv
+from typing import Generator
 
-# Load environment variables
-load_dotenv()
-
-# Database URL from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+from .config import settings
 
 # Create SQLAlchemy engine
-# For Supabase, we use connection pooling with optimized settings
+# Using connection pooling with optimized settings
 engine = create_engine(
-    DATABASE_URL,
-    pool_size=10,  # Maximum number of connections to maintain in the pool
-    max_overflow=20,  # Maximum number of connections that can be created beyond pool_size
-    pool_timeout=30,  # Seconds to wait before giving up on getting a connection
+    settings.database_url,
+    pool_size=settings.db_pool_size,
+    max_overflow=settings.db_max_overflow,
+    pool_timeout=settings.db_pool_timeout,
     pool_recycle=3600,  # Recycle connections after 1 hour
     pool_pre_ping=True,  # Verify connections before using them
-    echo=False,  # Set to True for SQL query logging (useful for debugging)
+    echo=settings.debug,  # SQL query logging in debug mode
 )
 
 
@@ -51,7 +43,7 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     """
     Dependency function to get database session.
 
