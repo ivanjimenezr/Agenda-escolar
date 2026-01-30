@@ -156,8 +156,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
         {/* Gestión de Hijos */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4 flex justify-between items-center">
-                <span>Gestionar Hijos</span>
-                <button onClick={() => setIsChildModalOpen(true)} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg"><PlusIcon className="w-4 h-4" /></button>
+                <span>Gestionar Estudiantes</span>
+                <button
+                    onClick={() => {
+                        console.log('Botón crear estudiante clickeado');
+                        setIsChildModalOpen(true);
+                    }}
+                    className="px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 active:scale-95 transition-all"
+                >
+                    + Crear Estudiante
+                </button>
             </h2>
             <div className="space-y-2">
                 {profiles.length === 0 ? (
@@ -340,7 +348,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
           </div>
       )}
 
-      {isChildModalOpen && <ItemFormModal item={null} type="profiles" title="Nuevo Hijo/a" onClose={() => setIsChildModalOpen(false)} onSave={handleCreateStudent} />}
+      {isChildModalOpen && <ItemFormModal item={null} type="profiles" title="Estudiante" onClose={() => setIsChildModalOpen(false)} onSave={handleCreateStudent} />}
     </div>
   );
 };

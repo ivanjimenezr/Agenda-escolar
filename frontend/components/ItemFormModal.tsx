@@ -60,8 +60,8 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
                     {type === 'profiles' && (
                         <>
                             <div>
-                                <label className={labelClass}>Nombre del Hijo/a</label>
-                                <input className={inputClass} placeholder="Ej: Alex" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <label className={labelClass}>Nombre del Estudiante</label>
+                                <input className={inputClass} placeholder="Ej: Alex García" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                             </div>
                             <div>
                                 <label className={labelClass}>Colegio</label>
