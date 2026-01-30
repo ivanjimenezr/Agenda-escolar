@@ -7,7 +7,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from src.domain.models import User
-from src.infrastructure.security import get_password_hash
+from src.infrastructure.security.password import hash_password
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def test_user(db_session):
         id=uuid4(),
         email="test@example.com",
         name="Test User",
-        hashed_password=get_password_hash("TestPassword123"),
+        password_hash=hash_password("TestPassword123"),
         is_active=True,
         email_verified=False,
         created_at=datetime.utcnow()
@@ -31,7 +31,7 @@ def test_user(db_session):
 @pytest.fixture
 def auth_headers(test_user):
     """Get authentication headers for test user"""
-    from src.infrastructure.security import create_access_token
+    from src.infrastructure.security.jwt import create_access_token
     token = create_access_token(data={"sub": str(test_user.id)})
     return {"Authorization": f"Bearer {token}"}
 
@@ -98,7 +98,7 @@ def test_update_user_email_already_exists(client, test_user, auth_headers, db_se
         id=uuid4(),
         email="other@example.com",
         name="Other User",
-        hashed_password=get_password_hash("password"),
+        password_hash=hash_password("password"),
         is_active=True,
         email_verified=False,
         created_at=datetime.utcnow()
@@ -131,10 +131,10 @@ def test_update_user_password_success(client, test_user, auth_headers, db_sessio
     assert response.status_code == status.HTTP_200_OK
 
     # Verify password was changed
-    from src.infrastructure.security import verify_password
+    from src.infrastructure.security.password import verify_password
     db_session.refresh(test_user)
-    assert verify_password("NewPassword456", test_user.hashed_password)
-    assert not verify_password("TestPassword123", test_user.hashed_password)
+    assert verify_password("NewPassword456", test_user.password_hash)
+    assert not verify_password("TestPassword123", test_user.password_hash)
 
 
 def test_update_user_password_wrong_current(client, test_user, auth_headers):
@@ -171,11 +171,11 @@ def test_update_user_combined_fields(client, test_user, auth_headers, db_session
     assert data["email"] == "newemail@example.com"
 
     # Verify in database
-    from src.infrastructure.security import verify_password
+    from src.infrastructure.security.password import verify_password
     db_session.refresh(test_user)
     assert test_user.name == "New Name"
     assert test_user.email == "newemail@example.com"
-    assert verify_password("NewPassword456", test_user.hashed_password)
+    assert verify_password("NewPassword456", test_user.password_hash)
 
 
 def test_update_user_unauthorized(client):

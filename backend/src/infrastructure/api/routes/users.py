@@ -8,7 +8,7 @@ from src.infrastructure.database import get_db
 from src.infrastructure.api.dependencies.auth import get_current_user
 from src.domain.models import User
 from src.application.schemas.user import UserResponse, UserUpdateRequest
-from src.infrastructure.security import get_password_hash, verify_password
+from src.infrastructure.security.password import hash_password, verify_password
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -67,12 +67,12 @@ def update_current_user(
 
     # Update password if provided
     if user_update.current_password and user_update.new_password:
-        if not verify_password(user_update.current_password, current_user.hashed_password):
+        if not verify_password(user_update.current_password, current_user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Current password is incorrect"
             )
-        current_user.hashed_password = get_password_hash(user_update.new_password)
+        current_user.password_hash = hash_password(user_update.new_password)
 
     db.commit()
     db.refresh(current_user)
