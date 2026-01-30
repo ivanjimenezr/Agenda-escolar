@@ -127,8 +127,12 @@ const App: React.FC = () => {
           <h2 className="text-xl font-black mb-2 dark:text-white">Bienvenido a Agenda Escolar Pro</h2>
           <p className="text-sm font-semibold mb-6">No tienes ningún perfil de estudiante configurado.</p>
           <button
-            onClick={() => setActiveView('profile')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:bg-blue-700 transition-all"
+            onClick={() => {
+              console.log('Botón "Crear Primer Perfil" clickeado');
+              console.log('Cambiando vista a: profile');
+              setActiveView('profile');
+            }}
+            className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:bg-blue-700 active:scale-95 transition-all"
           >
             Crear Primer Perfil
           </button>

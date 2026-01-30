@@ -48,6 +48,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
   const [userFormData, setUserFormData] = useState({ name: user?.name || '', email: user?.email || '' });
   const [passwordFormData, setPasswordFormData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
+  // Log para debug
+  useEffect(() => {
+    console.log('ProfilePage renderizado');
+    console.log('profiles.length:', profiles.length);
+    console.log('user:', user);
+    console.log('isChildModalOpen:', isChildModalOpen);
+  }, [profiles.length, user, isChildModalOpen]);
+
   // Auto-open modal when there are no profiles
   useEffect(() => {
     if (profiles.length === 0) {
