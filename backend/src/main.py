@@ -80,10 +80,10 @@ async def ping():
 # Import and include routers
 from src.infrastructure.api.routes import auth, users, students, menus
 
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(students.router)
-app.include_router(menus.router)
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(students.router, prefix="/api/v1")
+app.include_router(menus.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
