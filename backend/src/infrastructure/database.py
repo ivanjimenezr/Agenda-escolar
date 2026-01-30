@@ -11,6 +11,7 @@ from .config import settings
 
 # Create SQLAlchemy engine
 # Using connection pooling with optimized settings
+# Add connect_args to force IPv4 connection (Render doesn't support IPv6)
 engine = create_engine(
     settings.database_url,
     pool_size=settings.db_pool_size,
@@ -19,6 +20,13 @@ engine = create_engine(
     pool_recycle=3600,  # Recycle connections after 1 hour
     pool_pre_ping=True,  # Verify connections before using them
     echo=settings.debug,  # SQL query logging in debug mode
+    connect_args={
+        "options": "-c statement_timeout=30000",  # 30 second timeout
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5,
+    }
 )
 
 
