@@ -80,7 +80,7 @@ async def ping():
 # Import and include routers
 from src.infrastructure.api.routes import auth, users, students, menus
 
-app.include_router(auth.router, prefix="/api/v1")
+app.include_router(auth.router)  # auth.py ya tiene el prefijo /api/v1/auth
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(students.router, prefix="/api/v1")
 app.include_router(menus.router, prefix="/api/v1")
