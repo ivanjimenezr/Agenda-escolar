@@ -40,6 +40,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-open modal when there are no profiles
+  useEffect(() => {
+    if (profiles.length === 0) {
+      setIsChildModalOpen(true);
+    }
+  }, [profiles.length]);
+
   useEffect(() => { if (profile) setFormData(profile); }, [profile]);
 
   const handleSaveMainInfo = async () => {
