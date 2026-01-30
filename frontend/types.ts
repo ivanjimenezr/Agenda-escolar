@@ -13,6 +13,12 @@ export interface StudentProfile {
   allergies: string[]; // 'gluten', 'lactose'
   excludedFoods: string[];
   activeModules: ActiveModules;
+  // Backend fields (not used in UI but returned from API)
+  user_id?: string;
+  avatar_url?: string | null;
+  excluded_foods?: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Subject {
@@ -54,6 +60,15 @@ export interface MenuItem {
   mainCourse: string;
   sideDish: string;
   dessert: string;
+  // Backend fields
+  student_id?: string;
+  studentId?: string;
+  first_course?: string;
+  second_course?: string;
+  side_dish?: string | null;
+  allergens?: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DinnerItem {

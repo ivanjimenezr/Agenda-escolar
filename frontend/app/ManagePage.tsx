@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import type { Subject, Exam, MenuItem, SchoolEvent, ActiveModules, ModuleKey, Center, Contact } from '../types';
 import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 import ItemFormModal from '../components/ItemFormModal';
+import { createMenu, updateMenu, deleteMenu } from '../services/menuService';
+import { transformMenuForCreate, transformMenuForUpdate } from '../utils/dataTransformers';
 
 type Manageable = Exclude<ModuleKey, 'dinner'> | 'centers' | 'contacts';
 type Item = Subject | Exam | MenuItem | SchoolEvent | Center | Contact;
@@ -22,11 +24,12 @@ interface ManagePageProps {
   contacts: Contact[];
   setContacts: React.Dispatch<React.SetStateAction<Contact[]>>;
   activeModules: ActiveModules;
+  reloadMenus?: () => Promise<void>;
 }
 
 const ManagePage: React.FC<ManagePageProps> = ({
-  activeProfileId, subjects, setSubjects, exams, setExams, menu, setMenu, events, setEvents, 
-  centers, setCenters, contacts, setContacts, activeModules,
+  activeProfileId, subjects, setSubjects, exams, setExams, menu, setMenu, events, setEvents,
+  centers, setCenters, contacts, setContacts, activeModules, reloadMenus,
 }) => {
   const dataMap = {
     subjects: { title: 'Clases', data: subjects, setData: setSubjects },
@@ -51,6 +54,55 @@ const ManagePage: React.FC<ManagePageProps> = ({
     setIsModalOpen(true);
   };
 
+  const handleDelete = async (item: Item, type: Manageable) => {
+    if (!confirm('¿Borrar este elemento?')) return;
+
+    if (type === 'menu') {
+      try {
+        await deleteMenu(item.id);
+        if (reloadMenus) await reloadMenus();
+      } catch (error) {
+        console.error('Error deleting menu:', error);
+        alert('Error al eliminar el menú');
+      }
+    } else {
+      // Other types still use local state
+      dataMap[type].setData((prev: any[]) => (prev as any).filter((p: any) => p.id !== item.id));
+    }
+  };
+
+  const handleSave = async (data: any) => {
+    if (activeTab === 'menu') {
+      try {
+        if (editingItem) {
+          // Update existing menu
+          await updateMenu(editingItem.id, transformMenuForUpdate(data));
+        } else {
+          // Create new menu
+          await createMenu(transformMenuForCreate(data, activeProfileId));
+        }
+        if (reloadMenus) await reloadMenus();
+        setIsModalOpen(false);
+      } catch (error) {
+        console.error('Error saving menu:', error);
+        alert('Error al guardar el menú');
+      }
+    } else {
+      // Other types still use local state
+      const setData = dataMap[activeTab].setData as any;
+      if (editingItem) {
+        setData((prev: any[]) => prev.map((i: any) => i.id === editingItem.id ? { ...i, ...data } : i));
+      } else {
+        setData((prev: any[]) => [...prev, {
+          ...data,
+          id: Date.now().toString(),
+          studentId: (activeTab === 'subjects' || activeTab === 'exams') ? activeProfileId : undefined
+        }]);
+      }
+      setIsModalOpen(false);
+    }
+  };
+
   return (
     <div className="p-5 pb-24 animate-in slide-in-from-right duration-500 bg-gray-50 dark:bg-gray-950 min-h-full">
       <h1 className="text-xl font-black mb-6 text-gray-900 dark:text-white">Gestión de Datos</h1>
@@ -73,7 +125,7 @@ const ManagePage: React.FC<ManagePageProps> = ({
                 <ItemDisplay item={item} type={activeTab} centers={centers} />
                 <div className="flex space-x-1">
                     <button onClick={() => openModal(item)} className="p-2 text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg active:scale-95 transition-transform"><PencilIcon className="w-4 h-4" /></button>
-                    <button onClick={() => { if(confirm('¿Borrar este elemento?')) dataMap[activeTab].setData((prev: any[]) => (prev as any).filter((p: any) => p.id !== item.id)) }} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg active:scale-95 transition-transform"><TrashIcon className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(item, activeTab)} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg active:scale-95 transition-transform"><TrashIcon className="w-4 h-4" /></button>
                 </div>
             </div>
         ))}
@@ -91,15 +143,7 @@ const ManagePage: React.FC<ManagePageProps> = ({
             type={activeTab}
             centers={centers}
             onClose={() => setIsModalOpen(false)}
-            onSave={(data) => {
-                const setData = dataMap[activeTab].setData as any;
-                if (editingItem) {
-                    setData((prev: any[]) => prev.map(i => i.id === editingItem.id ? { ...i, ...data } : i));
-                } else {
-                    setData((prev: any[]) => [...prev, { ...data, id: Date.now().toString(), studentId: (activeTab === 'subjects' || activeTab === 'exams') ? activeProfileId : undefined }]);
-                }
-                setIsModalOpen(false);
-            }}
+            onSave={handleSave}
             title={dataMap[activeTab].title}
         />
       )}

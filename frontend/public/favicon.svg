@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#grad)"/>
+
+  <!-- Sparkles icon (matches the app branding) -->
+  <g fill="white" stroke="white" stroke-width="2">
+    <!-- Small sparkle top-left -->
+    <path d="M25 20 L25 28 M21 24 L29 24" stroke-linecap="round"/>
+
+    <!-- Small sparkle top-right -->
+    <path d="M75 30 L75 36 M72 33 L78 33" stroke-linecap="round"/>
+
+    <!-- Large sparkle center -->
+    <path d="M50 25 L52.5 40 L60 42.5 L52.5 45 L50 60 L47.5 45 L40 42.5 L47.5 40 Z" fill="white"/>
+
+    <!-- Book/agenda icon -->
+    <rect x="35" y="50" width="30" height="35" rx="2" fill="white" opacity="0.95"/>
+    <rect x="38" y="50" width="24" height="35" rx="1" fill="url(#grad)"/>
+
+    <!-- Page lines -->
+    <line x1="41" y1="58" x2="57" y2="58" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="41" y1="63" x2="57" y2="63" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="41" y1="68" x2="52" y2="68" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+</svg>

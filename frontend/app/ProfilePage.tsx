@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { StudentProfile, ActiveModules, ModuleKey } from '../types';
 import { PlusIcon, TrashIcon, UserIcon, PencilIcon, MoonIcon, SunIcon } from '../components/icons';
 import ItemFormModal from '../components/ItemFormModal';
+import { createStudent, updateStudent, deleteStudent as deleteStudentAPI } from '../services/studentService';
+import { transformStudent, transformStudentForUpdate } from '../utils/dataTransformers';
 
 interface ProfilePageProps {
   profile: StudentProfile;
@@ -16,6 +18,7 @@ interface ProfilePageProps {
   theme: 'light' | 'dark';
   setTheme: (t: 'light' | 'dark') => void;
   onLogout: () => void;
+  reloadStudents: () => Promise<void>;
 }
 
 const moduleLabels: Record<ModuleKey, string> = {
@@ -29,7 +32,7 @@ const moduleLabels: Record<ModuleKey, string> = {
 
 const APP_AVATARS = ['Alex', 'Jordan', 'Taylor', 'Charlie', 'Casey', 'Robin', 'Sam', 'Mika'].map(seed => `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`);
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfiles, setProfile, activeProfileId, setActiveProfileId, activeModules, setActiveModules, theme, setTheme, onLogout }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfiles, setProfile, activeProfileId, setActiveProfileId, activeModules, setActiveModules, theme, setTheme, onLogout, reloadStudents }) => {
   const [formData, setFormData] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
   const [newExcluded, setNewExcluded] = useState('');
@@ -37,30 +40,111 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setFormData(profile); }, [profile]);
+  useEffect(() => { if (profile) setFormData(profile); }, [profile]);
 
-  const handleSaveMainInfo = () => { setProfile(formData); setIsEditing(false); };
-  const handleAllergyToggle = (allergy: string) => {
-      const current = profile.allergies || [];
-      const updated = current.includes(allergy) ? current.filter(a => a !== allergy) : [...current, allergy];
+  const handleSaveMainInfo = async () => {
+    try {
+      await updateStudent(profile.id, transformStudentForUpdate(formData));
+      setProfile(formData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating student:', error);
+      alert('Error al actualizar el perfil');
+    }
+  };
+
+  const handleAllergyToggle = async (allergy: string) => {
+    const current = profile.allergies || [];
+    const updated = current.includes(allergy) ? current.filter(a => a !== allergy) : [...current, allergy];
+    try {
+      await updateStudent(profile.id, { allergies: updated });
       setProfile({ ...profile, allergies: updated });
+    } catch (error) {
+      console.error('Error updating allergies:', error);
+      alert('Error al actualizar alergias');
+    }
   };
-  const addExcluded = () => {
-      if (!newExcluded.trim()) return;
-      const current = profile.excludedFoods || [];
-      if (!current.includes(newExcluded.trim())) setProfile({ ...profile, excludedFoods: [...current, newExcluded.trim()] });
-      setNewExcluded('');
-  };
-  const removeExcluded = (food: string) => setProfile({ ...profile, excludedFoods: (profile.excludedFoods || []).filter(f => f !== food) });
-  const handleModuleToggle = (key: ModuleKey) => setActiveModules(prev => ({ ...prev, [key]: !prev[key] }));
-  const deleteChild = (id: string) => { if (profiles.length > 1 && confirm('¿Borrar perfil?')) { const updated = profiles.filter(p => p.id !== id); setProfiles(updated); setActiveProfileId(updated[0].id); } };
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => { setProfile({ ...profile, avatarUrl: reader.result as string }); setIsAvatarPickerOpen(false); };
-          reader.readAsDataURL(file);
+
+  const addExcluded = async () => {
+    if (!newExcluded.trim()) return;
+    const current = profile.excludedFoods || [];
+    if (!current.includes(newExcluded.trim())) {
+      const updated = [...current, newExcluded.trim()];
+      try {
+        await updateStudent(profile.id, { excluded_foods: updated });
+        setProfile({ ...profile, excludedFoods: updated });
+        setNewExcluded('');
+      } catch (error) {
+        console.error('Error adding excluded food:', error);
+        alert('Error al añadir alimento excluido');
       }
+    }
+  };
+
+  const removeExcluded = async (food: string) => {
+    const updated = (profile.excludedFoods || []).filter(f => f !== food);
+    try {
+      await updateStudent(profile.id, { excluded_foods: updated });
+      setProfile({ ...profile, excludedFoods: updated });
+    } catch (error) {
+      console.error('Error removing excluded food:', error);
+      alert('Error al eliminar alimento excluido');
+    }
+  };
+
+  const handleModuleToggle = (key: ModuleKey) => setActiveModules(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const deleteChild = async (id: string) => {
+    if (profiles.length > 1 && confirm('¿Borrar perfil?')) {
+      try {
+        await deleteStudentAPI(id);
+        await reloadStudents();
+        if (id === activeProfileId && profiles.length > 1) {
+          const remaining = profiles.filter(p => p.id !== id);
+          setActiveProfileId(remaining[0].id);
+        }
+      } catch (error) {
+        console.error('Error deleting student:', error);
+        alert('Error al eliminar el perfil');
+      }
+    }
+  };
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const avatarUrl = reader.result as string;
+        try {
+          await updateStudent(profile.id, { avatar_url: avatarUrl });
+          setProfile({ ...profile, avatarUrl });
+          setIsAvatarPickerOpen(false);
+        } catch (error) {
+          console.error('Error uploading avatar:', error);
+          alert('Error al subir la imagen');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreateStudent = async (data: any) => {
+    try {
+      const newStudent = await createStudent({
+        name: data.name,
+        school: data.school,
+        grade: data.grade,
+        avatar_url: data.avatarUrl,
+        allergies: data.allergies || [],
+        excluded_foods: data.excludedFoods || []
+      });
+      await reloadStudents();
+      setActiveProfileId(newStudent.id);
+      setIsChildModalOpen(false);
+    } catch (error) {
+      console.error('Error creating student:', error);
+      alert('Error al crear el perfil');
+    }
   };
 
   const inputClass = "w-full p-3 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium shadow-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all";
@@ -76,18 +160,55 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
                 <button onClick={() => setIsChildModalOpen(true)} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg"><PlusIcon className="w-4 h-4" /></button>
             </h2>
             <div className="space-y-2">
-                {profiles.map(p => (
-                    <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${activeProfileId === p.id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : 'bg-gray-50 border-gray-100 dark:bg-gray-900 dark:border-gray-800'}`}>
-                        <div className="flex items-center flex-1 cursor-pointer" onClick={() => setActiveProfileId(p.id)}>
-                            <img src={p.avatarUrl} className="w-10 h-10 rounded-full mr-3 border border-white dark:border-gray-700 shadow-sm" alt={p.name} />
-                            <div><p className="text-sm font-bold dark:text-gray-200">{p.name}</p><p className="text-[10px] text-gray-500">{p.grade}</p></div>
-                        </div>
-                        <button onClick={() => deleteChild(p.id)} className="p-2 text-red-400 hover:text-red-600 transition-colors"><TrashIcon className="w-4 h-4" /></button>
+                {profiles.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                        <p className="text-sm font-semibold mb-3">No hay perfiles creados</p>
+                        <p className="text-xs">Haz clic en el botón + para crear tu primer perfil de estudiante</p>
                     </div>
-                ))}
+                ) : (
+                    profiles.map(p => (
+                        <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${activeProfileId === p.id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : 'bg-gray-50 border-gray-100 dark:bg-gray-900 dark:border-gray-800'}`}>
+                            <div className="flex items-center flex-1 cursor-pointer" onClick={() => setActiveProfileId(p.id)}>
+                                <img src={p.avatarUrl} className="w-10 h-10 rounded-full mr-3 border border-white dark:border-gray-700 shadow-sm" alt={p.name} />
+                                <div><p className="text-sm font-bold dark:text-gray-200">{p.name}</p><p className="text-[10px] text-gray-500">{p.grade}</p></div>
+                            </div>
+                            <button onClick={() => deleteChild(p.id)} className="p-2 text-red-400 hover:text-red-600 transition-colors"><TrashIcon className="w-4 h-4" /></button>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
 
+        {/* Configuración de la Aplicación (Tema) - Siempre visible */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Configuración de la App</h2>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        {theme === 'light' ? <SunIcon className="w-5 h-5 mr-3 text-amber-500" /> : <MoonIcon className="w-5 h-5 mr-3 text-indigo-400" />}
+                        <span className="text-sm font-medium dark:text-gray-300">Modo {theme === 'light' ? 'Claro' : 'Oscuro'}</span>
+                    </div>
+                    <button
+                      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                      className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 flex items-center ${theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-200 shadow-inner'}`}
+                    >
+                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`}>
+                            {theme === 'dark' ? <MoonIcon className="w-3.5 h-3.5 text-indigo-600" /> : <SunIcon className="w-3.5 h-3.5 text-amber-500" />}
+                        </div>
+                    </button>
+                </div>
+                <button
+                    onClick={onLogout}
+                    className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-black uppercase tracking-widest border border-red-100 dark:border-red-900/20 active:scale-95 transition-all"
+                >
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+
+        {/* Secciones específicas del perfil - Solo mostrar si hay perfil activo */}
+        {profile && (
+        <>
         {/* Perfil Seleccionado */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 flex flex-col items-center border border-gray-200 dark:border-gray-700">
             <div className="relative cursor-pointer group" onClick={() => setIsAvatarPickerOpen(true)}>
@@ -185,10 +306,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
                 ))}
             </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Selector de Avatar Modal (Bottom Sheet Style) */}
-      {isAvatarPickerOpen && (
+      {isAvatarPickerOpen && profile && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-end justify-center p-4 animate-in fade-in duration-300" onClick={() => setIsAvatarPickerOpen(false)}>
               <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
                   <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
@@ -199,7 +322,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
                       <div>
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Avatares Predefinidos</p>
                           <div className="grid grid-cols-4 gap-3 max-h-[30vh] overflow-y-auto pr-2 scrollbar-hide">
-                              {APP_AVATARS.map((url, i) => <button key={i} onClick={() => { setProfile({ ...profile, avatarUrl: url }); setIsAvatarPickerOpen(false); }} className={`rounded-xl overflow-hidden border-2 transition-all active:scale-95 ${profile.avatarUrl === url ? 'border-blue-500 scale-105 shadow-md' : 'border-gray-200 dark:border-gray-800'}`}><img src={url} className="w-full h-full object-cover" /></button>)}
+                              {APP_AVATARS.map((url, i) => <button key={i} onClick={async () => {
+                                try {
+                                  await updateStudent(profile.id, { avatar_url: url });
+                                  setProfile({ ...profile, avatarUrl: url });
+                                  setIsAvatarPickerOpen(false);
+                                } catch (error) {
+                                  console.error('Error updating avatar:', error);
+                                  alert('Error al cambiar el avatar');
+                                }
+                              }} className={`rounded-xl overflow-hidden border-2 transition-all active:scale-95 ${profile.avatarUrl === url ? 'border-blue-500 scale-105 shadow-md' : 'border-gray-200 dark:border-gray-800'}`}><img src={url} className="w-full h-full object-cover" /></button>)}
                           </div>
                       </div>
                       <button onClick={() => setIsAvatarPickerOpen(false)} className="w-full py-4 bg-gray-100 dark:bg-gray-800 rounded-2xl font-bold text-gray-500 dark:text-gray-400 uppercase text-xs active:scale-95 transition-all">Cerrar</button>
@@ -208,7 +340,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
           </div>
       )}
 
-      {isChildModalOpen && <ItemFormModal item={null} type="profiles" title="Nuevo Hijo/a" onClose={() => setIsChildModalOpen(false)} onSave={(data) => { const newId = `child-${Date.now()}`; setProfiles(prev => [...prev, { ...data, id: newId, activeModules: { subjects: true, exams: true, menu: true, events: true, dinner: true, contacts: true } }]); setActiveProfileId(newId); setIsChildModalOpen(false); }} />}
+      {isChildModalOpen && <ItemFormModal item={null} type="profiles" title="Nuevo Hijo/a" onClose={() => setIsChildModalOpen(false)} onSave={handleCreateStudent} />}
     </div>
   );
 };

@@ -8,8 +8,9 @@ import ManagePage from './app/ManagePage';
 import ProfilePage from './app/ProfilePage';
 import DinnersPage from './app/DinnersPage';
 import LoginPage from './app/LoginPage';
-
-const initialId = 'default-child-1';
+import { getMyStudents } from './services/studentService';
+import { getStudentMenus } from './services/menuService';
+import { transformStudent, transformMenu } from './utils/dataTransformers';
 
 const defaultActiveModules: ActiveModules = {
   subjects: true,
@@ -20,22 +21,6 @@ const defaultActiveModules: ActiveModules = {
   contacts: true,
 };
 
-const defaultProfile: StudentProfile = {
-  id: initialId,
-  name: 'Alex García',
-  school: 'Colegio Cervantes',
-  grade: '5º de Primaria',
-  avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=Alex`,
-  allergies: [],
-  excludedFoods: [],
-  activeModules: defaultActiveModules
-};
-
-const subjectsMock: Subject[] = [
-    { id: '1', studentId: initialId, name: 'Matemáticas', days: ['Lunes', 'Miércoles'], time: '09:00', teacher: 'Sra. Pérez', color: '#3b82f6', type: 'colegio' },
-    { id: '2', studentId: initialId, name: 'Judo', days: ['Lunes', 'Viernes'], time: '17:30', teacher: 'Sensei Ryu', color: '#a855f7', type: 'extraescolar' },
-];
-
 const defaultCardOrder: ModuleKey[] = ['subjects', 'menu', 'dinner', 'exams', 'contacts'];
 
 const App: React.FC = () => {
@@ -43,20 +28,36 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('home');
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('school-agenda-theme', 'light');
   
-  const [profiles, setProfiles] = useLocalStorage<StudentProfile[]>('school-agenda-profiles', [defaultProfile]);
-  const [activeProfileId, setActiveProfileId] = useLocalStorage<string>('school-agenda-active-id', initialId);
-  
-  const [allSubjects, setAllSubjects] = useLocalStorage<Subject[]>('school-agenda-subjects', subjectsMock);
+  const [profiles, setProfiles] = useState<StudentProfile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useLocalStorage<string>('school-agenda-active-id', '');
+  const [loading, setLoading] = useState(true);
+
+  const [allSubjects, setAllSubjects] = useLocalStorage<Subject[]>('school-agenda-subjects', []);
   const [allExams, setAllExams] = useLocalStorage<Exam[]>('school-agenda-exams', []);
   const [allDinners, setAllDinners] = useLocalStorage<DinnerItem[]>('school-agenda-dinners', []);
-  
-  const [menu, setMenu] = useLocalStorage<MenuItem[]>('school-agenda-menu', []);
+
+  const [menu, setMenu] = useState<MenuItem[]>([]);
   const [events, setEvents] = useLocalStorage<SchoolEvent[]>('school-agenda-events', []);
-  const [centers, setCenters] = useLocalStorage<Center[]>('school-agenda-centers', [{ id: '1', name: 'Colegio Cervantes' }]);
+  const [centers, setCenters] = useLocalStorage<Center[]>('school-agenda-centers', []);
   const [contacts, setContacts] = useLocalStorage<Contact[]>('school-agenda-contacts', []);
-  
+
   const [cardOrder, setCardOrder] = useLocalStorage<ModuleKey[]>('school-agenda-order', defaultCardOrder);
 
+  // Load students from backend when user logs in
+  useEffect(() => {
+    if (user) {
+      loadStudents();
+    }
+  }, [user]);
+
+  // Load menus when active profile changes
+  useEffect(() => {
+    if (activeProfileId) {
+      loadMenus(activeProfileId);
+    }
+  }, [activeProfileId]);
+
+  // Theme effect
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -64,6 +65,34 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+      const students = await getMyStudents();
+      const transformedStudents = students.map(transformStudent);
+      setProfiles(transformedStudents);
+
+      // Set active profile to first student if none selected
+      if (!activeProfileId && transformedStudents.length > 0) {
+        setActiveProfileId(transformedStudents[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading students:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMenus = async (studentId: string) => {
+    try {
+      const menus = await getStudentMenus(studentId);
+      const transformedMenus = menus.map(transformMenu);
+      setMenu(transformedMenus);
+    } catch (error) {
+      console.error('Error loading menus:', error);
+    }
+  };
 
   const activeProfile = useMemo(() => 
     profiles.find(p => p.id === activeProfileId) || profiles[0], 
@@ -81,7 +110,31 @@ const App: React.FC = () => {
   }
 
   const renderContent = () => {
-    if (!activeProfile) return <div className="p-10 text-center dark:text-gray-400 font-bold">Iniciando sesión...</div>;
+    if (loading) {
+      return (
+        <div className="p-10 text-center dark:text-gray-400">
+          <div className="mb-4 text-6xl animate-pulse">⏳</div>
+          <h2 className="text-xl font-black mb-2 dark:text-white">Cargando...</h2>
+          <p className="text-sm font-semibold">Obteniendo tus datos</p>
+        </div>
+      );
+    }
+
+    if (!activeProfile) {
+      return (
+        <div className="p-10 text-center dark:text-gray-400">
+          <div className="mb-4 text-6xl">👤</div>
+          <h2 className="text-xl font-black mb-2 dark:text-white">Bienvenido a Agenda Escolar Pro</h2>
+          <p className="text-sm font-semibold mb-6">No tienes ningún perfil de estudiante configurado.</p>
+          <button
+            onClick={() => setActiveView('profile')}
+            className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:bg-blue-700 transition-all"
+          >
+            Crear Primer Perfil
+          </button>
+        </div>
+      );
+    }
 
     switch(activeView) {
       case 'home':
@@ -130,9 +183,9 @@ const App: React.FC = () => {
                   profile={activeProfile}
                 />;
       case 'manage':
-        return <ManagePage 
+        return <ManagePage
                   activeProfileId={activeProfileId}
-                  subjects={subjects} 
+                  subjects={subjects}
                   setSubjects={(val) => {
                       if (typeof val === 'function') {
                           setAllSubjects(prev => {
@@ -143,7 +196,7 @@ const App: React.FC = () => {
                           });
                       }
                   }}
-                  exams={exams} 
+                  exams={exams}
                   setExams={(val) => {
                     if (typeof val === 'function') {
                         setAllExams(prev => {
@@ -159,10 +212,11 @@ const App: React.FC = () => {
                   centers={centers} setCenters={setCenters}
                   contacts={contacts} setContacts={setContacts}
                   activeModules={activeModules}
+                  reloadMenus={() => loadMenus(activeProfileId)}
                 />;
       case 'profile':
-        return <ProfilePage 
-                  profile={activeProfile} 
+        return <ProfilePage
+                  profile={activeProfile}
                   profiles={profiles}
                   setProfiles={setProfiles}
                   setProfile={(updated) => {
@@ -170,7 +224,7 @@ const App: React.FC = () => {
                   }}
                   activeProfileId={activeProfileId}
                   setActiveProfileId={setActiveProfileId}
-                  activeModules={activeModules} 
+                  activeModules={activeModules}
                   setActiveModules={(val) => {
                       setProfiles(prev => prev.map(p => {
                           if (p.id === activeProfileId) {
@@ -179,10 +233,11 @@ const App: React.FC = () => {
                           }
                           return p;
                       }));
-                  }} 
+                  }}
                   theme={theme}
                   setTheme={setTheme}
                   onLogout={() => { if(confirm('¿Deseas cerrar sesión en este dispositivo?')) setUser(null); }}
+                  reloadStudents={loadStudents}
                 />;
       default:
         return null;
