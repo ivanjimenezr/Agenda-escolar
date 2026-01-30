@@ -15,6 +15,7 @@ interface ProfilePageProps {
   setActiveModules: (val: ActiveModules | ((prev: ActiveModules) => ActiveModules)) => void;
   theme: 'light' | 'dark';
   setTheme: (t: 'light' | 'dark') => void;
+  onLogout: () => void;
 }
 
 const moduleLabels: Record<ModuleKey, string> = {
@@ -28,7 +29,7 @@ const moduleLabels: Record<ModuleKey, string> = {
 
 const APP_AVATARS = ['Alex', 'Jordan', 'Taylor', 'Charlie', 'Casey', 'Robin', 'Sam', 'Mika'].map(seed => `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`);
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfiles, setProfile, activeProfileId, setActiveProfileId, activeModules, setActiveModules, theme, setTheme }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfiles, setProfile, activeProfileId, setActiveProfileId, activeModules, setActiveModules, theme, setTheme, onLogout }) => {
   const [formData, setFormData] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
   const [newExcluded, setNewExcluded] = useState('');
@@ -120,18 +121,26 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
         {/* Configuración de la Aplicación (Tema) */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Configuración de la App</h2>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    {theme === 'light' ? <SunIcon className="w-5 h-5 mr-3 text-amber-500" /> : <MoonIcon className="w-5 h-5 mr-3 text-indigo-400" />}
-                    <span className="text-sm font-medium dark:text-gray-300">Modo {theme === 'light' ? 'Claro' : 'Oscuro'}</span>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        {theme === 'light' ? <SunIcon className="w-5 h-5 mr-3 text-amber-500" /> : <MoonIcon className="w-5 h-5 mr-3 text-indigo-400" />}
+                        <span className="text-sm font-medium dark:text-gray-300">Modo {theme === 'light' ? 'Claro' : 'Oscuro'}</span>
+                    </div>
+                    <button 
+                      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                      className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 flex items-center ${theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-200 shadow-inner'}`}
+                    >
+                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`}>
+                            {theme === 'dark' ? <MoonIcon className="w-3.5 h-3.5 text-indigo-600" /> : <SunIcon className="w-3.5 h-3.5 text-amber-500" />}
+                        </div>
+                    </button>
                 </div>
                 <button 
-                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                  className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 flex items-center ${theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-200 shadow-inner'}`}
+                    onClick={onLogout}
+                    className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-black uppercase tracking-widest border border-red-100 dark:border-red-900/20 active:scale-95 transition-all"
                 >
-                    <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`}>
-                        {theme === 'dark' ? <MoonIcon className="w-3.5 h-3.5 text-indigo-600" /> : <SunIcon className="w-3.5 h-3.5 text-amber-500" />}
-                    </div>
+                    Cerrar Sesión
                 </button>
             </div>
         </div>

@@ -11,7 +11,7 @@ interface ItemFormModalProps {
     onClose: () => void;
     onSave: (data: any) => void;
     title: string;
-    centers?: Center[]; // Necesario para asociar contactos a centros
+    centers?: Center[];
 }
 
 const DAYS_OF_WEEK = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'] as const;
@@ -43,25 +43,25 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
         }
     };
 
-    // Estilos mejorados para inputs: fondo blanco en light, gris oscuro en dark, texto contrastado siempre.
-    const inputClass = "w-full p-3 bg-white dark:bg-gray-950 rounded-xl font-medium border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 outline-none transition-all focus:ring-2 focus:ring-blue-500 shadow-sm";
-    const labelClass = "block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 ml-1";
+    // Estilos optimizados: Borde gris 200 para mejor definición, texto explícito por tema.
+    const inputClass = "w-full p-4 bg-white dark:bg-gray-950 rounded-2xl font-semibold border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 outline-none transition-all focus:ring-2 focus:ring-blue-500 shadow-sm";
+    const labelClass = "block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end p-4 z-[100]">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex justify-center items-end p-4 z-[100]">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-[2.5rem] w-full max-w-md p-7 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto scrollbar-hide">
                 <header className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">{item ? 'Editar' : 'Añadir'} {title}</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2">✕</button>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white leading-none">{item ? 'Editar' : 'Añadir'} {title}</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full font-bold">✕</button>
                 </header>
                 
-                <div className="space-y-4">
+                <div className="space-y-5">
                     {/* Perfiles */}
                     {type === 'profiles' && (
                         <>
                             <div>
                                 <label className={labelClass}>Nombre del Hijo/a</label>
-                                <input className={inputClass} placeholder="Nombre" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <input className={inputClass} placeholder="Ej: Alex" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                             </div>
                             <div>
                                 <label className={labelClass}>Colegio</label>
@@ -79,20 +79,20 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
                         <>
                             <div>
                                 <label className={labelClass}>Asignatura / Actividad</label>
-                                <input className={inputClass} placeholder="Ej: Matemáticas o Judo" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <input className={inputClass} placeholder="Ej: Matemáticas" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                             </div>
                             <div>
                                 <label className={labelClass}>Tipo de Clase</label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-3">
                                     <button 
                                         type="button"
                                         onClick={() => setFormData({...formData, type: 'colegio', color: '#3b82f6'})}
-                                        className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${formData.type === 'colegio' ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-200' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400'}`}
+                                        className={`p-4 rounded-2xl border-2 text-xs font-black transition-all ${formData.type === 'colegio' ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-200' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400'}`}
                                     >COLEGIO</button>
                                     <button 
                                         type="button"
                                         onClick={() => setFormData({...formData, type: 'extraescolar', color: '#a855f7'})}
-                                        className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${formData.type === 'extraescolar' ? 'bg-purple-50 border-purple-500 text-purple-600 dark:bg-purple-900/30 dark:border-purple-400 dark:text-purple-200' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400'}`}
+                                        className={`p-4 rounded-2xl border-2 text-xs font-black transition-all ${formData.type === 'extraescolar' ? 'bg-purple-50 border-purple-500 text-purple-600 dark:bg-purple-900/30 dark:border-purple-400 dark:text-purple-200' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400'}`}
                                     >EXTRAESCOLAR</button>
                                 </div>
                             </div>
@@ -106,10 +106,10 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
                                                 key={day}
                                                 type="button"
                                                 onClick={() => toggleDay(day)}
-                                                className={`px-3 py-2 rounded-lg text-[10px] font-bold border-2 transition-all ${
+                                                className={`px-3 py-3 rounded-xl text-[10px] font-black border-2 transition-all ${
                                                     isSelected 
-                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm' 
-                                                    : 'bg-white border-gray-100 text-gray-400 dark:bg-gray-800 dark:border-gray-700'
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-md scale-105' 
+                                                    : 'bg-white border-gray-200 text-gray-400 dark:bg-gray-800 dark:border-gray-700'
                                                 }`}
                                             >
                                                 {day.substring(0, 3).toUpperCase()}
@@ -118,50 +118,51 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
                                     })}
                                 </div>
                             </div>
-                            <div>
-                                <label className={labelClass}>Hora</label>
-                                <input className={inputClass} type="time" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className={labelClass}>Hora</label>
+                                    <input className={inputClass} type="time" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Color</label>
+                                    <input className={`${inputClass} h-[54px] p-1`} type="color" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} />
+                                </div>
                             </div>
                             <div>
                                 <label className={labelClass}>Profesor / Instructor</label>
-                                <input className={inputClass} placeholder="Nombre del profesor" value={formData.teacher} onChange={e => setFormData({...formData, teacher: e.target.value})} />
+                                <input className={inputClass} placeholder="Nombre" value={formData.teacher} onChange={e => setFormData({...formData, teacher: e.target.value})} />
                             </div>
                         </>
                     )}
 
-                    {/* Centros */}
+                    {/* Centros y Contactos */}
                     {type === 'centers' && (
                         <div>
                             <label className={labelClass}>Nombre del Centro</label>
-                            <input className={inputClass} placeholder="Ej: Colegio Cervantes o Gimsanio" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                            <input className={inputClass} placeholder="Ej: Colegio o Academia" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                         </div>
                     )}
 
-                    {/* Contactos */}
                     {type === 'contacts' && (
                         <>
                             <div>
-                                <label className={labelClass}>Centro</label>
+                                <label className={labelClass}>Centro Asociado</label>
                                 <select className={inputClass} value={formData.centerId} onChange={e => setFormData({...formData, centerId: e.target.value})}>
                                     {centers?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className={labelClass}>Nombre del Contacto</label>
-                                <input className={inputClass} placeholder="Ej: Tutor Juan" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <label className={labelClass}>Nombre</label>
+                                <input className={inputClass} placeholder="Nombre del contacto" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                             </div>
                             <div>
-                                <label className={labelClass}>Teléfono / Email</label>
+                                <label className={labelClass}>Teléfono</label>
                                 <input className={inputClass} placeholder="600 000 000" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Cargo / Nota</label>
-                                <input className={inputClass} placeholder="Ej: Profesor de Mates" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} />
                             </div>
                         </>
                     )}
 
-                    {/* Otros (Exámenes, Menú, Eventos) */}
+                    {/* Exámenes y Menú */}
                     {(type === 'exams' || type === 'menu' || type === 'events' || type === 'dinner') && (
                         <div>
                             <label className={labelClass}>Fecha</label>
@@ -172,62 +173,39 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
                         <>
                             <div>
                                 <label className={labelClass}>Asignatura</label>
-                                <input className={inputClass} placeholder="Ej: Historia" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} />
+                                <input className={inputClass} placeholder="Ej: Lengua" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} />
                             </div>
                             <div>
-                                <label className={labelClass}>Tema / Contenido</label>
-                                <input className={inputClass} placeholder="Ej: Revolución Francesa" value={formData.topic} onChange={e => setFormData({...formData, topic: e.target.value})} />
+                                <label className={labelClass}>Tema</label>
+                                <input className={inputClass} placeholder="Contenido del examen" value={formData.topic} onChange={e => setFormData({...formData, topic: e.target.value})} />
                             </div>
                             <div>
-                                <label className={labelClass}>Notas (Opcional)</label>
-                                <textarea 
-                                    className={`${inputClass} min-h-[80px]`} 
-                                    placeholder="Detalles sobre el examen..." 
-                                    value={formData.notes || ''} 
-                                    onChange={e => setFormData({...formData, notes: e.target.value})} 
-                                />
+                                <label className={labelClass}>Notas</label>
+                                <textarea className={`${inputClass} min-h-[100px]`} placeholder="Detalles adicionales..." value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} />
                             </div>
                         </>
                     )}
                     {type === 'menu' && (
-                        <>
-                            <div className="space-y-3 pt-2">
-                                <div>
-                                    <label className={labelClass}>Plato Principal</label>
-                                    <input className={inputClass} placeholder="Ej: Lentejas con chorizo" value={formData.mainCourse} onChange={e => setFormData({...formData, mainCourse: e.target.value})} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Guarnición / Segundo</label>
-                                    <input className={inputClass} placeholder="Ej: Filete de ternera" value={formData.sideDish} onChange={e => setFormData({...formData, sideDish: e.target.value})} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Postre</label>
-                                    <input className={inputClass} placeholder="Ej: Fruta de temporada" value={formData.dessert} onChange={e => setFormData({...formData, dessert: e.target.value})} />
-                                </div>
-                            </div>
-                        </>
-                    )}
-                    {type === 'events' && (
-                        <>
+                        <div className="space-y-4">
                             <div>
-                                <label className={labelClass}>Nombre del Evento</label>
-                                <input className={inputClass} placeholder="Ej: Excursión al museo" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <label className={labelClass}>Primer Plato</label>
+                                <input className={inputClass} placeholder="Principal" value={formData.mainCourse} onChange={e => setFormData({...formData, mainCourse: e.target.value})} />
                             </div>
                             <div>
-                                <label className={labelClass}>Tipo</label>
-                                <select className={inputClass} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
-                                    <option value="Lectivo">Lectivo</option>
-                                    <option value="Festivo">Festivo</option>
-                                    <option value="Vacaciones">Vacaciones</option>
-                                </select>
+                                <label className={labelClass}>Segundo / Guarnición</label>
+                                <input className={inputClass} placeholder="Secundario" value={formData.sideDish} onChange={e => setFormData({...formData, sideDish: e.target.value})} />
                             </div>
-                        </>
+                            <div>
+                                <label className={labelClass}>Postre</label>
+                                <input className={inputClass} placeholder="Postre" value={formData.dessert} onChange={e => setFormData({...formData, dessert: e.target.value})} />
+                            </div>
+                        </div>
                     )}
                 </div>
 
-                <div className="flex space-x-2 mt-8">
-                    <button onClick={onClose} className="flex-1 p-3 bg-white dark:bg-gray-800 rounded-xl font-bold text-xs uppercase tracking-wider text-gray-500 border border-gray-200 dark:border-gray-700">Cancelar</button>
-                    <button onClick={() => onSave(formData)} className="flex-1 p-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg active:scale-95">Guardar</button>
+                <div className="flex space-x-3 mt-10">
+                    <button onClick={onClose} className="flex-1 p-4 bg-white dark:bg-gray-800 rounded-[1.25rem] font-black text-xs uppercase tracking-widest text-gray-500 border border-gray-200 dark:border-gray-700 active:scale-95 transition-all">Cancelar</button>
+                    <button onClick={() => onSave(formData)} className="flex-1 p-4 bg-blue-600 text-white rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Guardar</button>
                 </div>
             </div>
         </div>

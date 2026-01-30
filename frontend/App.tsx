@@ -1,12 +1,13 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { View, StudentProfile, Subject, Exam, MenuItem, SchoolEvent, ActiveModules, DinnerItem, ModuleKey, Center, Contact } from './types';
+import type { View, StudentProfile, Subject, Exam, MenuItem, SchoolEvent, ActiveModules, DinnerItem, ModuleKey, Center, Contact, User } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import BottomNav from './components/BottomNav';
 import HomePage from './app/HomePage';
 import ManagePage from './app/ManagePage';
 import ProfilePage from './app/ProfilePage';
 import DinnersPage from './app/DinnersPage';
+import LoginPage from './app/LoginPage';
 
 const initialId = 'default-child-1';
 
@@ -38,6 +39,7 @@ const subjectsMock: Subject[] = [
 const defaultCardOrder: ModuleKey[] = ['subjects', 'menu', 'dinner', 'exams', 'contacts'];
 
 const App: React.FC = () => {
+  const [user, setUser] = useLocalStorage<User | null>('school-agenda-auth-v2', null);
   const [activeView, setActiveView] = useState<View>('home');
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('school-agenda-theme', 'light');
   
@@ -55,7 +57,6 @@ const App: React.FC = () => {
   
   const [cardOrder, setCardOrder] = useLocalStorage<ModuleKey[]>('school-agenda-order', defaultCardOrder);
 
-  // Aplicar tema dark al elemento raíz de la aplicación
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -75,8 +76,12 @@ const App: React.FC = () => {
   const exams = useMemo(() => allExams.filter(e => e.studentId === activeProfileId), [allExams, activeProfileId]);
   const dinners = useMemo(() => allDinners.filter(d => d.studentId === activeProfileId), [allDinners, activeProfileId]);
 
+  if (!user) {
+    return <LoginPage onLogin={setUser} />;
+  }
+
   const renderContent = () => {
-    if (!activeProfile) return <div className="p-10 text-center dark:text-gray-400">Cargando perfiles...</div>;
+    if (!activeProfile) return <div className="p-10 text-center dark:text-gray-400 font-bold">Iniciando sesión...</div>;
 
     switch(activeView) {
       case 'home':
@@ -177,6 +182,7 @@ const App: React.FC = () => {
                   }} 
                   theme={theme}
                   setTheme={setTheme}
+                  onLogout={() => { if(confirm('¿Deseas cerrar sesión en este dispositivo?')) setUser(null); }}
                 />;
       default:
         return null;
@@ -189,7 +195,7 @@ const App: React.FC = () => {
         <main className="flex-grow overflow-y-auto scrollbar-hide">
           {renderContent()}
         </main>
-        <BottomNav activeView={activeView} setActiveView={setActiveView} />
+        {user && <BottomNav activeView={activeView} setActiveView={setActiveView} />}
       </div>
     </div>
   );

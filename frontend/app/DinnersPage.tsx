@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { DinnerItem, MenuItem, StudentProfile } from '../types';
-import { SparklesIcon, ShoppingCartIcon, PlusIcon, TrashIcon, PencilIcon, MoonIcon } from '../components/icons';
+import { SparklesIcon, ShoppingCartIcon, TrashIcon, MoonIcon } from '../components/icons';
 import { aiService } from '../services/aiService';
 
 interface DinnersPageProps {
@@ -12,32 +12,32 @@ interface DinnersPageProps {
 }
 
 const ShoppingListModal: React.FC<{ list: { category: string, items: string[] }[], onClose: () => void }> = ({ list, onClose }) => (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div className="p-5 border-b dark:border-gray-800 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center">
                     <ShoppingCartIcon className="w-5 h-5 mr-2" />
                     <h2 className="text-lg font-bold uppercase tracking-tight">Lista de Compra</h2>
                 </div>
-                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors">✕</button>
+                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors font-bold">✕</button>
             </div>
             <div className="flex-grow overflow-y-auto p-5 space-y-6">
                 {list.map((cat, idx) => (
                     <div key={idx}>
                         <h3 className="font-bold text-[10px] uppercase text-indigo-500 mb-2 tracking-widest">{cat.category}</h3>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                             {cat.items.map((item, i) => (
-                                <label key={i} className="flex items-center p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
-                                    <input type="checkbox" className="mr-3 h-4 w-4 rounded border-gray-300 text-indigo-600" />
-                                    <span className="text-gray-700 dark:text-gray-200 text-sm font-medium">{item}</span>
+                                <label key={i} className="flex items-center p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 shadow-sm">
+                                    <input type="checkbox" className="mr-3 h-5 w-5 rounded-lg border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                    <span className="text-gray-900 dark:text-gray-100 text-sm font-semibold">{item}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
                 ))}
             </div>
-            <div className="p-5 bg-gray-50 dark:bg-gray-800/50 border-t dark:border-gray-800">
-                <button onClick={onClose} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95">Finalizar</button>
+            <div className="p-5 bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700">
+                <button onClick={onClose} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-all">FINALIZAR COMPRA</button>
             </div>
         </div>
     </div>
@@ -61,10 +61,21 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
             if (results) {
                 setDinners(prev => {
                     const filtered = prev.filter(p => !results.some((r: any) => r.date === p.date));
-                    return [...filtered, ...results.map((r: any) => ({ ...r, id: Math.random().toString(36).substr(2, 9), ingredients: [], studentId: profile.id }))].sort((a,b) => a.date.compare(b.date));
+                    // Corrección: localeCompare para strings de fecha
+                    return [...filtered, ...results.map((r: any) => ({ 
+                        ...r, 
+                        id: Math.random().toString(36).substr(2, 9), 
+                        ingredients: [], 
+                        studentId: profile.id 
+                    }))].sort((a, b) => a.date.localeCompare(b.date));
                 });
             }
-        } catch (e) { console.error(e); } finally { setGenerating(false); }
+        } catch (e) { 
+            console.error(e); 
+            alert('Error al conectar con la IA. Revisa tu conexión.');
+        } finally { 
+            setGenerating(false); 
+        }
     };
 
     const fetchShoppingList = async (scope: 'today' | 'week') => {
@@ -76,7 +87,7 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
                 : dinners;
 
             if (targetDinners.length === 0) {
-                alert('No hay cenas planificadas.');
+                alert('No hay cenas planificadas para generar la lista.');
                 return;
             }
 
@@ -86,53 +97,55 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
     };
 
     return (
-        <div className="p-5 pb-24 animate-in slide-in-from-bottom duration-500">
+        <div className="p-5 pb-24 animate-in slide-in-from-bottom duration-500 bg-gray-50 dark:bg-gray-950 min-h-full">
             <header className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-                    <MoonIcon className="w-7 h-7 mr-3 text-indigo-500" />
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center">
+                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center mr-3">
+                        <MoonIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    </div>
                     Plan de Cenas
                 </h1>
-                <p className="text-sm text-gray-500 font-medium">Gestión inteligente de alimentación</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Sugerencias inteligentes para {profile.name.split(' ')[0]}</p>
             </header>
 
             <div className="grid grid-cols-2 gap-3 mb-8">
-                <button onClick={() => generateAI('today')} disabled={generating} className="p-4 bg-white dark:bg-gray-800 rounded-2xl border-2 border-dashed border-indigo-200 dark:border-indigo-900 flex flex-col items-center justify-center space-y-2 active:scale-95 transition-all disabled:opacity-50">
+                <button onClick={() => generateAI('today')} disabled={generating} className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-indigo-900/50 flex flex-col items-center justify-center space-y-2 active:scale-95 transition-all disabled:opacity-50 shadow-sm">
                     <SparklesIcon className="w-6 h-6 text-indigo-500" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">Cena Hoy</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Cena Hoy</span>
                 </button>
                 <button onClick={() => generateAI('week')} disabled={generating} className="p-4 bg-indigo-600 rounded-2xl flex flex-col items-center justify-center space-y-2 shadow-lg active:scale-95 transition-all disabled:opacity-50">
                     <SparklesIcon className="w-6 h-6 text-white" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-white">Semana Completa</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white">Semana Completa</span>
                 </button>
             </div>
 
             <div className="mb-8">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Lista de la Compra</p>
+                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">Lista de la Compra</p>
                 <div className="flex space-x-2">
-                    <button onClick={() => fetchShoppingList('today')} disabled={loadingList} className="flex-1 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-600 dark:text-gray-300">
-                        {loadingList ? '...' : 'COMPRA HOY'}
+                    <button onClick={() => fetchShoppingList('today')} disabled={loadingList} className="flex-1 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 shadow-sm active:bg-gray-50">
+                        {loadingList ? 'PROCESANDO...' : 'COMPRA HOY'}
                     </button>
-                    <button onClick={() => fetchShoppingList('week')} disabled={loadingList} className="flex-1 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-600 dark:text-gray-300">
-                        {loadingList ? '...' : 'COMPRA SEMANAL'}
+                    <button onClick={() => fetchShoppingList('week')} disabled={loadingList} className="flex-1 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 shadow-sm active:bg-gray-50">
+                        {loadingList ? 'PROCESANDO...' : 'COMPRA SEMANAL'}
                     </button>
                 </div>
             </div>
 
             <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Próximas Cenas</p>
+                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">Próximas Cenas Planificadas</p>
                 <div className="space-y-3">
                     {dinners.length > 0 ? dinners.map(d => (
-                        <div key={d.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                        <div key={d.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between transition-colors">
                             <div className="flex-grow">
-                                <p className="text-[10px] font-bold text-indigo-500 uppercase">{d.date}</p>
-                                <p className="text-sm font-bold text-gray-800 dark:text-gray-100 italic">"{d.meal}"</p>
+                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{d.date}</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-gray-100 italic mt-0.5">"{d.meal}"</p>
                             </div>
-                            <button onClick={() => setDinners(prev => prev.filter(p => p.id !== d.id))} className="p-2 text-red-400 hover:text-red-600"><TrashIcon className="w-5 h-5" /></button>
+                            <button onClick={() => setDinners(prev => prev.filter(p => p.id !== d.id))} className="p-2 text-red-400 hover:text-red-600 active:scale-90 transition-all"><TrashIcon className="w-5 h-5" /></button>
                         </div>
                     )) : (
-                        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/40 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-700">
-                            <MoonIcon className="w-10 h-10 mx-auto text-gray-300 mb-2" />
-                            <p className="text-sm text-gray-400 font-medium">Sin cenas planificadas</p>
+                        <div className="text-center py-12 bg-white dark:bg-gray-800/40 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                            <MoonIcon className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                            <p className="text-sm text-gray-400 font-bold italic">No hay cenas planificadas</p>
                         </div>
                     )}
                 </div>
@@ -140,10 +153,10 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
 
             {shoppingList && <ShoppingListModal list={shoppingList} onClose={() => setShoppingList(null)} />}
             {generating && (
-                <div className="fixed inset-0 bg-indigo-600/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white p-8">
-                    <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-6"></div>
-                    <h2 className="text-2xl font-bold mb-2">Creando menú...</h2>
-                    <p className="text-indigo-100 text-center text-sm font-medium">Analizando menú escolar y restricciones dietéticas.</p>
+                <div className="fixed inset-0 bg-indigo-600/95 backdrop-blur-xl z-[100] flex flex-col items-center justify-center text-white p-8 animate-in fade-in duration-300">
+                    <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mb-8 shadow-2xl"></div>
+                    <h2 className="text-2xl font-black mb-3 tracking-tight">Creando tu menú...</h2>
+                    <p className="text-indigo-100 text-center text-sm font-bold max-w-xs leading-relaxed opacity-80">Estamos analizando el menú escolar y las restricciones dietéticas para sugerir las mejores cenas.</p>
                 </div>
             )}
         </div>
