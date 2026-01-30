@@ -120,7 +120,8 @@ const App: React.FC = () => {
       );
     }
 
-    if (!activeProfile) {
+    // Si no hay perfiles pero el usuario quiere ir a la vista de profile, permitirlo
+    if (!activeProfile && activeView !== 'profile') {
       return (
         <div className="p-10 text-center dark:text-gray-400">
           <div className="mb-4 text-6xl">👤</div>
