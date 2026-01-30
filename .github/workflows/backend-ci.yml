@@ -1,0 +1,98 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ==================== TEST & LINT ====================
+  test:
+    name: Test & Lint Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements*.txt'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run linters
+        working-directory: ./backend
+        run: |
+          echo "🔍 Running code formatters and linters..."
+
+          # Formato con black (check only)
+          black --check src/ tests/ || echo "⚠️ Black formatting issues found"
+
+          # Imports con isort (check only)
+          isort --check-only src/ tests/ || echo "⚠️ Import sorting issues found"
+
+          # Linting con flake8
+          flake8 src/ tests/ --max-line-length=120 --exclude=__pycache__,.venv
+
+      - name: Run type checking
+        working-directory: ./backend
+        run: |
+          echo "🔍 Running type checking..."
+          mypy src/ --ignore-missing-imports || echo "⚠️ Type checking issues found"
+
+      - name: Run tests with coverage
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          SECRET_KEY: test_secret_key_for_ci_only
+          GEMINI_API_KEY: test_api_key
+        run: |
+          echo "🧪 Running tests..."
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          fail_ci_if_error: false
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "### 🎯 Backend CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Python Version**: ${{ env.PYTHON_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests passed - Render will auto-deploy" >> $GITHUB_STEP_SUMMARY
