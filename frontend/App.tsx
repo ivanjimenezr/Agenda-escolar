@@ -238,6 +238,8 @@ const App: React.FC = () => {
                   setTheme={setTheme}
                   onLogout={() => { if(confirm('¿Deseas cerrar sesión en este dispositivo?')) setUser(null); }}
                   reloadStudents={loadStudents}
+                  user={user}
+                  setUser={setUser}
                 />;
       default:
         return null;

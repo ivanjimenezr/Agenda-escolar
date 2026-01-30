@@ -45,12 +45,16 @@ class UserUpdateRequest(BaseModel):
     """Schema for updating user information."""
     name: Optional[str] = Field(None, min_length=1, max_length=255, description="User full name")
     email: Optional[EmailStr] = Field(None, description="User email address")
+    current_password: Optional[str] = Field(None, description="Current password (required if changing password)")
+    new_password: Optional[str] = Field(None, min_length=8, max_length=100, description="New password (min 8 characters)")
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "name": "Juan Pérez García",
-                "email": "nuevo_email@example.com"
+                "email": "nuevo_email@example.com",
+                "current_password": "OldPass123!",
+                "new_password": "NewPass123!"
             }
         }
     )

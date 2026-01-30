@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import type { StudentProfile, ActiveModules, ModuleKey } from '../types';
+import type { StudentProfile, ActiveModules, ModuleKey, User } from '../types';
 import { PlusIcon, TrashIcon, UserIcon, PencilIcon, MoonIcon, SunIcon } from '../components/icons';
 import ItemFormModal from '../components/ItemFormModal';
 import { createStudent, updateStudent, deleteStudent as deleteStudentAPI } from '../services/studentService';
+import { updateCurrentUser, deleteCurrentUser } from '../services/userService';
 import { transformStudent, transformStudentForUpdate } from '../utils/dataTransformers';
 
 interface ProfilePageProps {
@@ -19,6 +20,8 @@ interface ProfilePageProps {
   setTheme: (t: 'light' | 'dark') => void;
   onLogout: () => void;
   reloadStudents: () => Promise<void>;
+  user: User;
+  setUser: (user: User | null) => void;
 }
 
 const moduleLabels: Record<ModuleKey, string> = {
@@ -32,13 +35,18 @@ const moduleLabels: Record<ModuleKey, string> = {
 
 const APP_AVATARS = ['Alex', 'Jordan', 'Taylor', 'Charlie', 'Casey', 'Robin', 'Sam', 'Mika'].map(seed => `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`);
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfiles, setProfile, activeProfileId, setActiveProfileId, activeModules, setActiveModules, theme, setTheme, onLogout, reloadStudents }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfiles, setProfile, activeProfileId, setActiveProfileId, activeModules, setActiveModules, theme, setTheme, onLogout, reloadStudents, user, setUser }) => {
   const [formData, setFormData] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
   const [newExcluded, setNewExcluded] = useState('');
   const [isChildModalOpen, setIsChildModalOpen] = useState(false);
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // User account editing state
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [userFormData, setUserFormData] = useState({ name: user?.name || '', email: user?.email || '' });
+  const [passwordFormData, setPasswordFormData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
   // Auto-open modal when there are no profiles
   useEffect(() => {
@@ -154,6 +162,56 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
     }
   };
 
+  const handleUpdateUser = async () => {
+    try {
+      const updatedUser = await updateCurrentUser({
+        name: userFormData.name,
+        email: userFormData.email,
+      });
+      setUser({ ...user, name: updatedUser.name, email: updatedUser.email });
+      setIsEditingUser(false);
+      alert('Datos actualizados correctamente');
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      alert(error.message || 'Error al actualizar los datos');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
+      alert('Las contraseñas no coinciden');
+      return;
+    }
+    if (passwordFormData.newPassword.length < 8) {
+      alert('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    try {
+      await updateCurrentUser({
+        current_password: passwordFormData.currentPassword,
+        new_password: passwordFormData.newPassword,
+      });
+      setPasswordFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      alert('Contraseña cambiada correctamente');
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      alert(error.message || 'Error al cambiar la contraseña');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('¿Estás seguro de que deseas eliminar tu cuenta? Esta acción eliminará también todos los perfiles de estudiantes y no se puede deshacer.')) {
+      return;
+    }
+    try {
+      await deleteCurrentUser();
+      setUser(null); // This will trigger logout
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      alert(error.message || 'Error al eliminar la cuenta');
+    }
+  };
+
   const inputClass = "w-full p-3 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium shadow-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all";
 
   return (
@@ -192,6 +250,116 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
                     ))
                 )}
             </div>
+        </div>
+
+        {/* Cuenta de Usuario */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">Mi Cuenta</h2>
+
+            {!isEditingUser ? (
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between py-2">
+                        <div>
+                            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Nombre</p>
+                            <p className="text-sm font-medium dark:text-gray-200">{user?.name}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                        <div>
+                            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Email</p>
+                            <p className="text-sm font-medium dark:text-gray-200">{user?.email}</p>
+                        </div>
+                    </div>
+                    <div className="flex space-x-2 pt-2">
+                        <button
+                            onClick={() => {
+                                setUserFormData({ name: user?.name || '', email: user?.email || '' });
+                                setIsEditingUser(true);
+                            }}
+                            className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase shadow-sm active:scale-95 transition-all"
+                        >
+                            Editar Datos
+                        </button>
+                        <button
+                            onClick={handleDeleteAccount}
+                            className="flex-1 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold uppercase border border-red-100 dark:border-red-900/20 active:scale-95 transition-all"
+                        >
+                            Eliminar Cuenta
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="space-y-4 animate-in slide-in-from-top duration-200">
+                    <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1 block">Nombre</label>
+                        <input
+                            type="text"
+                            value={userFormData.name}
+                            onChange={e => setUserFormData({...userFormData, name: e.target.value})}
+                            className={inputClass}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1 block">Email</label>
+                        <input
+                            type="email"
+                            value={userFormData.email}
+                            onChange={e => setUserFormData({...userFormData, email: e.target.value})}
+                            className={inputClass}
+                        />
+                    </div>
+
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Cambiar Contraseña (Opcional)</p>
+                        <div className="space-y-3">
+                            <input
+                                type="password"
+                                placeholder="Contraseña actual"
+                                value={passwordFormData.currentPassword}
+                                onChange={e => setPasswordFormData({...passwordFormData, currentPassword: e.target.value})}
+                                className={inputClass}
+                            />
+                            <input
+                                type="password"
+                                placeholder="Nueva contraseña (mín. 8 caracteres)"
+                                value={passwordFormData.newPassword}
+                                onChange={e => setPasswordFormData({...passwordFormData, newPassword: e.target.value})}
+                                className={inputClass}
+                            />
+                            <input
+                                type="password"
+                                placeholder="Confirmar nueva contraseña"
+                                value={passwordFormData.confirmPassword}
+                                onChange={e => setPasswordFormData({...passwordFormData, confirmPassword: e.target.value})}
+                                className={inputClass}
+                            />
+                            {passwordFormData.currentPassword && passwordFormData.newPassword && (
+                                <button
+                                    onClick={handleChangePassword}
+                                    className="w-full py-2 bg-amber-500 text-white rounded-xl text-xs font-bold uppercase shadow-sm active:scale-95 transition-all"
+                                >
+                                    Cambiar Contraseña
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex space-x-2 pt-2">
+                        <button
+                            onClick={() => setIsEditingUser(false)}
+                            className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold uppercase border border-gray-200 dark:border-gray-600"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleUpdateUser}
+                            className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase shadow-lg"
+                        >
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
 
         {/* Configuración de la Aplicación (Tema) - Siempre visible */}
@@ -252,33 +420,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
                     </div>
                 </div>
             )}
-        </div>
-
-        {/* Configuración de la Aplicación (Tema) */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Configuración de la App</h2>
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                        {theme === 'light' ? <SunIcon className="w-5 h-5 mr-3 text-amber-500" /> : <MoonIcon className="w-5 h-5 mr-3 text-indigo-400" />}
-                        <span className="text-sm font-medium dark:text-gray-300">Modo {theme === 'light' ? 'Claro' : 'Oscuro'}</span>
-                    </div>
-                    <button 
-                      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                      className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 flex items-center ${theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-200 shadow-inner'}`}
-                    >
-                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`}>
-                            {theme === 'dark' ? <MoonIcon className="w-3.5 h-3.5 text-indigo-600" /> : <SunIcon className="w-3.5 h-3.5 text-amber-500" />}
-                        </div>
-                    </button>
-                </div>
-                <button 
-                    onClick={onLogout}
-                    className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-black uppercase tracking-widest border border-red-100 dark:border-red-900/20 active:scale-95 transition-all"
-                >
-                    Cerrar Sesión
-                </button>
-            </div>
         </div>
 
         {/* Configuración Dietética */}
