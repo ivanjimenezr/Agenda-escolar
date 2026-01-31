@@ -76,7 +76,6 @@ class User(Base):
 
     # Relationships
     student_profiles = relationship("StudentProfile", back_populates="user", cascade="all, delete-orphan")
-    menu_items = relationship("MenuItem", back_populates="user", cascade="all, delete-orphan")
     school_events = relationship("SchoolEvent", back_populates="user", cascade="all, delete-orphan")
     centers = relationship("Center", back_populates="user", cascade="all, delete-orphan")
     preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
