@@ -108,6 +108,7 @@ class StudentProfile(Base):
     active_modules = relationship("ActiveModule", back_populates="student", uselist=False, cascade="all, delete-orphan")
     subjects = relationship("Subject", back_populates="student", cascade="all, delete-orphan")
     exams = relationship("Exam", back_populates="student", cascade="all, delete-orphan")
+    menu_items = relationship("MenuItem", back_populates="student", cascade="all, delete-orphan")
     dinners = relationship("Dinner", back_populates="student", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -199,11 +200,13 @@ class MenuItem(Base):
     __tablename__ = "menu_items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
     date = Column(Date, nullable=False)
-    main_course = Column(String(255), nullable=False)
-    side_dish = Column(String(255), nullable=False)
-    dessert = Column(String(255), nullable=False)
+    first_course = Column(String(255), nullable=False)
+    second_course = Column(String(255), nullable=False)
+    side_dish = Column(String(255), nullable=True)
+    dessert = Column(String(255), nullable=True)
+    allergens = Column(ARRAY(String), default=list, nullable=False)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -212,14 +215,14 @@ class MenuItem(Base):
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint("user_id", "date", name="unique_menu_per_date"),
+        UniqueConstraint("student_id", "date", name="unique_menu_per_student_per_date"),
     )
 
     # Relationships
-    user = relationship("User", back_populates="menu_items")
+    student = relationship("Student", back_populates="menu_items")
 
     def __repr__(self):
-        return f"<MenuItem(id={self.id}, date={self.date}, main_course='{self.main_course}')>"
+        return f"<MenuItem(id={self.id}, date={self.date}, first_course='{self.first_course}')>"
 
 
 class Dinner(Base):
