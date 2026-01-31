@@ -205,7 +205,22 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
 
                 <div className="flex space-x-3 mt-10">
                     <button onClick={onClose} className="flex-1 p-4 bg-white dark:bg-gray-800 rounded-[1.25rem] font-black text-xs uppercase tracking-widest text-gray-500 border border-gray-200 dark:border-gray-700 active:scale-95 transition-all">Cancelar</button>
-                    <button onClick={() => onSave(formData)} className="flex-1 p-4 bg-blue-600 text-white rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Guardar</button>
+                    <button onClick={() => {
+                        // Normalize form values: trim strings and avoid sending empty strings
+                        const normalized: any = { ...formData };
+                        if (typeof normalized.mainCourse === 'string') normalized.mainCourse = normalized.mainCourse.trim();
+                        if (typeof normalized.sideDish === 'string') normalized.sideDish = normalized.sideDish.trim();
+                        if (typeof normalized.dessert === 'string') normalized.dessert = normalized.dessert.trim();
+
+                        if (normalized.mainCourse === '') delete normalized.mainCourse;
+                        if (normalized.sideDish === '') delete normalized.sideDish;
+                        if (normalized.dessert === '') delete normalized.dessert;
+
+                        // Debug: log normalized form data before sending
+                        console.debug('[ItemFormModal] normalized formData:', normalized);
+
+                        onSave(normalized);
+                    }} className="flex-1 p-4 bg-blue-600 text-white rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Guardar</button>
                 </div>
             </div>
         </div>

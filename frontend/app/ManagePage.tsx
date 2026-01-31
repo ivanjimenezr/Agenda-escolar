@@ -74,12 +74,22 @@ const ManagePage: React.FC<ManagePageProps> = ({
   const handleSave = async (data: any) => {
     if (activeTab === 'menu') {
       try {
+        // Debug: raw form data from modal
+        console.debug('[ManagePage] raw menu form data:', data);
+
+        const payload = editingItem
+          ? transformMenuForUpdate(data)
+          : transformMenuForCreate(data, activeProfileId);
+
+        // Debug: transformed payload to be sent to backend
+        console.debug('[ManagePage] transformed menu payload:', payload);
+
         if (editingItem) {
           // Update existing menu
-          await updateMenu(editingItem.id, transformMenuForUpdate(data));
+          await updateMenu(editingItem.id, payload);
         } else {
           // Create new menu
-          await createMenu(transformMenuForCreate(data, activeProfileId));
+          await createMenu(payload);
         }
         if (reloadMenus) await reloadMenus();
         setIsModalOpen(false);

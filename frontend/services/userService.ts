@@ -4,7 +4,7 @@
  * API client for user-related operations
  */
 
-const API_BASE_URL = 'https://agenda-escolar-pnpk.onrender.com/api/v1';
+import { apiClient, removeAuthToken, ApiError } from './apiClient';
 
 interface UserUpdateData {
   name?: string;
@@ -22,74 +22,67 @@ interface ApiUser {
   created_at: string;
 }
 
-/**
- * Get authorization header with JWT token
- */
-function getAuthHeader(): { Authorization: string } {
-  const authData = localStorage.getItem('school-agenda-auth-v2');
-  if (!authData) {
+function ensureAuthToken(): void {
+  const token = localStorage.getItem('auth-token');
+  if (!token) {
     throw new Error('No authentication token found');
   }
-
-  const { token } = JSON.parse(authData);
-  return { Authorization: `Bearer ${token}` };
 }
 
 /**
  * Get current user information
  */
 export async function getCurrentUser(): Promise<ApiUser> {
-  const response = await fetch(`${API_BASE_URL}/users/me`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader(),
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to get user' }));
-    throw new Error(error.detail || 'Failed to get user');
+  ensureAuthToken();
+  try {
+    const user = await apiClient.get<ApiUser>('/api/v1/users/me');
+    localStorage.setItem('school-agenda-auth-v2', JSON.stringify(user));
+    return user;
+  } catch (error: any) {
+    if (error instanceof ApiError && error.status === 401) {
+      // Clear tokens on auth error
+      removeAuthToken();
+      localStorage.removeItem('school-agenda-auth-v2');
+      throw new Error('Session expired. Please login again.');
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 /**
  * Update current user information
  */
 export async function updateCurrentUser(data: UserUpdateData): Promise<ApiUser> {
-  const response = await fetch(`${API_BASE_URL}/users/me`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to update user' }));
-    throw new Error(error.detail || 'Failed to update user');
+  ensureAuthToken();
+  try {
+    const user = await apiClient.put<ApiUser>('/api/v1/users/me', data);
+    localStorage.setItem('school-agenda-auth-v2', JSON.stringify(user));
+    return user;
+  } catch (error: any) {
+    if (error instanceof ApiError && error.status === 401) {
+      removeAuthToken();
+      localStorage.removeItem('school-agenda-auth-v2');
+      throw new Error('Session expired. Please login again.');
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 /**
  * Delete current user account
  */
 export async function deleteCurrentUser(): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/users/me`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader(),
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to delete user' }));
-    throw new Error(error.detail || 'Failed to delete user');
+  ensureAuthToken();
+  try {
+    await apiClient.delete<void>('/api/v1/users/me');
+    removeAuthToken();
+    localStorage.removeItem('school-agenda-auth-v2');
+  } catch (error: any) {
+    if (error instanceof ApiError && error.status === 401) {
+      removeAuthToken();
+      localStorage.removeItem('school-agenda-auth-v2');
+      throw new Error('Session expired. Please login again.');
+    }
+    throw error;
   }
 }

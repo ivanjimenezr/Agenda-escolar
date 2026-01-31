@@ -78,12 +78,22 @@ export function transformMenu(apiMenu: ApiMenu): MenuItem {
 /**
  * Transform frontend MenuItem to backend create request
  */
+function firstNonEmpty(...values: Array<string | undefined | null>) {
+  for (const v of values) {
+    if (v !== undefined && v !== null && String(v).trim().length > 0) {
+      return String(v).trim();
+    }
+  }
+  return '';
+}
+
 export function transformMenuForCreate(menu: Partial<MenuItem>, studentId: string) {
   return {
     student_id: studentId,
     date: menu.date!,
-    first_course: menu.mainCourse || menu.first_course!,
-    second_course: menu.second_course || '',
+    first_course: firstNonEmpty(menu.mainCourse, menu.first_course!),
+    // Choose the first non-empty value among possible fields
+    second_course: firstNonEmpty(menu.second_course as any, (menu as any).secondCourse, menu.sideDish, menu.side_dish, menu.mainCourse),
     side_dish: menu.sideDish || menu.side_dish || undefined,
     dessert: menu.dessert || undefined,
     allergens: menu.allergens || [],
@@ -96,8 +106,9 @@ export function transformMenuForCreate(menu: Partial<MenuItem>, studentId: strin
 export function transformMenuForUpdate(menu: Partial<MenuItem>) {
   return {
     date: menu.date,
-    first_course: menu.mainCourse || menu.first_course,
-    second_course: menu.second_course,
+    first_course: firstNonEmpty(menu.mainCourse as any, menu.first_course as any),
+    // Prefer explicit second_course, fall back to sideDish/mainCourse but only if non-empty
+    second_course: firstNonEmpty(menu.second_course as any, (menu as any).secondCourse, menu.sideDish, menu.side_dish, menu.mainCourse as any) || undefined,
     side_dish: menu.sideDish || menu.side_dish,
     dessert: menu.dessert,
     allergens: menu.allergens,
