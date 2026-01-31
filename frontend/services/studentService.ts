@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from './apiClient';
+import { ActiveModules } from './activeModulesService';
 
 export interface StudentProfile {
   id: string;
@@ -15,6 +16,7 @@ export interface StudentProfile {
   avatar_url: string | null;
   allergies: string[];
   excluded_foods: string[];
+  active_modules?: ActiveModules;
   created_at: string;
   updated_at: string;
 }

@@ -10,6 +10,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.application.schemas.active_modules import ActiveModulesResponse
+
 
 # ==================== REQUEST SCHEMAS ====================
 
@@ -45,6 +47,7 @@ class StudentResponse(BaseModel):
     avatar_url: Optional[str]
     allergies: List[str]
     excluded_foods: List[str]
+    active_modules: Optional[ActiveModulesResponse] = None
     created_at: datetime
     updated_at: datetime
 

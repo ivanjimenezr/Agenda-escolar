@@ -5,6 +5,7 @@ import { PlusIcon, TrashIcon, UserIcon, PencilIcon, MoonIcon, SunIcon } from '..
 import ItemFormModal from '../components/ItemFormModal';
 import { createStudent, updateStudent, deleteStudent as deleteStudentAPI } from '../services/studentService';
 import { updateCurrentUser, deleteCurrentUser } from '../services/userService';
+import { updateActiveModules } from '../services/activeModulesService';
 import { transformStudent, transformStudentForUpdate } from '../utils/dataTransformers';
 
 interface ProfilePageProps {
@@ -115,7 +116,21 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ profile, profiles, setProfile
     }
   };
 
-  const handleModuleToggle = (key: ModuleKey) => setActiveModules(prev => ({ ...prev, [key]: !prev[key] }));
+  const handleModuleToggle = async (key: ModuleKey) => {
+    const newValue = !activeModules[key];
+    try {
+      // Update locally first for immediate UI feedback
+      setActiveModules(prev => ({ ...prev, [key]: newValue }));
+
+      // Save to database
+      await updateActiveModules(profile.id, { [key]: newValue });
+    } catch (error) {
+      console.error('Error updating active modules:', error);
+      // Revert on error
+      setActiveModules(prev => ({ ...prev, [key]: !newValue }));
+      alert('Error al actualizar módulos activos');
+    }
+  };
 
   const deleteChild = async (id: string) => {
     if (profiles.length > 1 && confirm('¿Borrar perfil?')) {

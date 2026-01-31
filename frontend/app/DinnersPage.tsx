@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { DinnerItem, MenuItem, StudentProfile } from '../types';
 import { SparklesIcon, ShoppingCartIcon, TrashIcon, MoonIcon } from '../components/icons';
-import { aiService } from '../services/aiService';
+import { generateDinners, getDinners, deleteDinner as deleteDinnerAPI, generateShoppingList } from '../services/dinnerService';
 
 interface DinnersPageProps {
   dinners: DinnerItem[];
@@ -47,42 +47,82 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
     const [generating, setGenerating] = useState(false);
     const [shoppingList, setShoppingList] = useState<{ category: string, items: string[] }[] | null>(null);
     const [loadingList, setLoadingList] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Load dinners from backend on mount
+    useEffect(() => {
+        const loadDinners = async () => {
+            try {
+                const backendDinners = await getDinners(profile.id);
+                // Transform backend format to frontend format
+                const transformedDinners = backendDinners.map(d => ({
+                    id: d.id,
+                    studentId: d.student_id,
+                    date: d.date,
+                    meal: d.meal,
+                    ingredients: d.ingredients
+                }));
+                setDinners(transformedDinners);
+            } catch (e) {
+                console.error('Error loading dinners:', e);
+            }
+        };
+
+        if (profile?.id) {
+            loadDinners();
+        }
+    }, [profile?.id]);
 
     const generateAI = async (type: 'today' | 'week') => {
         setGenerating(true);
+        setError(null);
         try {
             const todayISO = new Date().toISOString().split('T')[0];
-            const relevantMenu = type === 'today' 
-                ? menu.find(m => m.date === todayISO) 
-                : menu.slice(0, 5);
-            
-            const results = await aiService.generateDinnerPlan(type, relevantMenu, profile.allergies, profile.excludedFoods);
 
-            if (results) {
+            // Call backend to generate dinners with AI
+            const generatedDinners = await generateDinners(profile.id, {
+                type: type,
+                target_date: type === 'today' ? todayISO : undefined
+            });
+
+            if (generatedDinners && generatedDinners.length > 0) {
+                // Transform backend format to frontend format
+                const transformedDinners = generatedDinners.map(d => ({
+                    id: d.id,
+                    studentId: d.student_id,
+                    date: d.date,
+                    meal: d.meal,
+                    ingredients: d.ingredients
+                }));
+
+                // Update state with new dinners (replacing existing ones for the same dates)
                 setDinners(prev => {
-                    const filtered = prev.filter(p => !results.some((r: any) => r.date === p.date));
-                    // Corrección: localeCompare para strings de fecha
-                    return [...filtered, ...results.map((r: any) => ({ 
-                        ...r, 
-                        id: Math.random().toString(36).substr(2, 9), 
-                        ingredients: [], 
-                        studentId: profile.id 
-                    }))].sort((a, b) => a.date.localeCompare(b.date));
+                    const filtered = prev.filter(p =>
+                        !transformedDinners.some(nd => nd.date === p.date)
+                    );
+                    return [...filtered, ...transformedDinners].sort((a, b) =>
+                        a.date.localeCompare(b.date)
+                    );
                 });
             }
-        } catch (e) { 
-            console.error(e); 
-            alert('Error al conectar con la IA. Revisa tu conexión.');
-        } finally { 
-            setGenerating(false); 
+        } catch (e: any) {
+            console.error('Error generating dinners:', e);
+            const errorMsg = e.message || 'Error al conectar con la IA. Revisa tu conexión.';
+            setError(errorMsg);
+            alert(errorMsg);
+        } finally {
+            setGenerating(false);
         }
     };
 
     const fetchShoppingList = async (scope: 'today' | 'week') => {
         setLoadingList(true);
+        setError(null);
         try {
             const todayISO = new Date().toISOString().split('T')[0];
-            const targetDinners = scope === 'today' 
+
+            // Check if there are dinners for the scope
+            const targetDinners = scope === 'today'
                 ? dinners.filter(d => d.date === todayISO)
                 : dinners;
 
@@ -91,9 +131,30 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
                 return;
             }
 
-            const list = await aiService.generateShoppingList(targetDinners.map(d => d.meal));
-            if (list) setShoppingList(list);
-        } catch (e) { console.error(e); } finally { setLoadingList(false); }
+            // Call backend to generate shopping list
+            const response = await generateShoppingList(profile.id, { scope });
+
+            if (response && response.categories) {
+                setShoppingList(response.categories);
+            }
+        } catch (e: any) {
+            console.error('Error generating shopping list:', e);
+            const errorMsg = e.message || 'Error al generar la lista de compra.';
+            setError(errorMsg);
+            alert(errorMsg);
+        } finally {
+            setLoadingList(false);
+        }
+    };
+
+    const handleDeleteDinner = async (dinnerId: string) => {
+        try {
+            await deleteDinnerAPI(profile.id, dinnerId);
+            setDinners(prev => prev.filter(d => d.id !== dinnerId));
+        } catch (e: any) {
+            console.error('Error deleting dinner:', e);
+            alert('Error al eliminar la cena.');
+        }
     };
 
     return (
@@ -140,7 +201,7 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
                                 <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{d.date}</p>
                                 <p className="text-sm font-bold text-gray-900 dark:text-gray-100 italic mt-0.5">"{d.meal}"</p>
                             </div>
-                            <button onClick={() => setDinners(prev => prev.filter(p => p.id !== d.id))} className="p-2 text-red-400 hover:text-red-600 active:scale-90 transition-all"><TrashIcon className="w-5 h-5" /></button>
+                            <button onClick={() => handleDeleteDinner(d.id)} className="p-2 text-red-400 hover:text-red-600 active:scale-90 transition-all"><TrashIcon className="w-5 h-5" /></button>
                         </div>
                     )) : (
                         <div className="text-center py-12 bg-white dark:bg-gray-800/40 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
