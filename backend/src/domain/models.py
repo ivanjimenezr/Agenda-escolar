@@ -200,7 +200,7 @@ class MenuItem(Base):
     __tablename__ = "menu_items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    student_id = Column(UUID(as_uuid=True), ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     date = Column(Date, nullable=False)
     first_course = Column(String(255), nullable=False)
     second_course = Column(String(255), nullable=False)
