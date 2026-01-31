@@ -109,7 +109,7 @@ class DinnerUseCases:
 
         dinners = []
 
-        if data.type == "today":
+        if data.generation_type == "today":
             # Generate for a single day
             week_menus = self._get_week_menus(student_id, target_date)
             school_menu_for_day = self.menu_repo.get_by_date(student_id, target_date)
@@ -143,7 +143,7 @@ class DinnerUseCases:
             )
             dinners.append(dinner)
 
-        elif data.type == "week":
+        elif data.generation_type == "week":
             # Generate for a week (next 7 days from target_date)
             start_date = target_date
             days = 7

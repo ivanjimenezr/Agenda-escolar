@@ -15,8 +15,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class DinnerGenerateRequest(BaseModel):
     """Schema for generating dinner suggestions with AI"""
-    type: str = Field(..., pattern="^(today|week)$", description="Generate for today or full week")
+    generation_type: str = Field(..., pattern="^(today|week)$", description="Generate for today or full week", alias="type")
     target_date: Optional[date] = Field(None, description="Specific date for 'today' type (defaults to today)")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DinnerCreateRequest(BaseModel):
