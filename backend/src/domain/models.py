@@ -114,6 +114,11 @@ class StudentProfile(Base):
         return f"<StudentProfile(id={self.id}, name='{self.name}', grade='{self.grade}')>"
 
 
+# Backwards compatibility alias: some deployed/older code used the name `Student`.
+# Providing this alias ensures relationships referencing 'Student' still resolve
+# during SQLAlchemy mapper initialization and prevents InvalidRequestError.
+Student = StudentProfile
+
 class ActiveModule(Base):
     """Active modules configuration per student."""
     __tablename__ = "active_modules"
@@ -218,7 +223,7 @@ class MenuItem(Base):
     )
 
     # Relationships
-    student = relationship("Student", back_populates="menu_items")
+    student = relationship("StudentProfile", back_populates="menu_items")
 
     def __repr__(self):
         return f"<MenuItem(id={self.id}, date={self.date}, first_course='{self.first_course}')>"

@@ -2,7 +2,7 @@
  * Unit tests for userService
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getCurrentUser, updateCurrentUser, deleteCurrentUser } from '../userService';
+import { getCurrentUser, updateCurrentUser, deleteCurrentUser } from '../../../services/userService';
 
 // Mock fetch globally
 global.fetch = vi.fn();
