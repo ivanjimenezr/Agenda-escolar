@@ -19,8 +19,8 @@ class StudentCreateRequest(BaseModel):
     school: str = Field(..., min_length=1, max_length=255)
     grade: str = Field(..., min_length=1, max_length=100)
     avatar_url: Optional[str] = Field(None, max_length=500)
-    allergies: List[str] = Field(default=[])
-    excluded_foods: List[str] = Field(default=[])
+    allergies: List[str] = Field(default_factory=list)
+    excluded_foods: List[str] = Field(default_factory=list)
 
 
 class StudentUpdateRequest(BaseModel):

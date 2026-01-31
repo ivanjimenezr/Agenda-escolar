@@ -21,7 +21,7 @@ class MenuItemCreateRequest(BaseModel):
     second_course: str = Field(..., min_length=1, max_length=255)
     side_dish: Optional[str] = Field(None, max_length=255)
     dessert: Optional[str] = Field(None, max_length=255)
-    allergens: List[str] = Field(default=[])
+    allergens: List[str] = Field(default_factory=list)
 
 
 class MenuItemUpdateRequest(BaseModel):
