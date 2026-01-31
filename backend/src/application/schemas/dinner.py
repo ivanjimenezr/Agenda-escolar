@@ -25,7 +25,7 @@ class DinnerCreateRequest(BaseModel):
     """Schema for creating a dinner manually"""
     date: date = Field(..., description="Date for the dinner")
     meal: str = Field(..., min_length=1, max_length=500, description="Meal description")
-    ingredients: List[str] = Field(default_factory=list, description="List of ingredients")
+    ingredients: list[str] = Field(default_factory=list, description="List of ingredients")
 
 
 class DinnerUpdateRequest(BaseModel):
