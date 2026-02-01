@@ -23,13 +23,35 @@ export interface StudentProfile {
 
 export interface Subject {
   id: string;
-  studentId: string;
+  studentId: string; // Frontend uses camelCase
   name: string;
   days: ('Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes')[];
   time: string;
   teacher: string;
   color: string;
   type: 'colegio' | 'extraescolar';
+  // Backend fields
+  student_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateSubjectRequest {
+  name: string;
+  days: ('Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes')[];
+  time: string;
+  teacher: string;
+  color: string;
+  type: 'colegio' | 'extraescolar';
+}
+
+export interface UpdateSubjectRequest {
+  name?: string;
+  days?: ('Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes')[];
+  time?: string;
+  teacher?: string;
+  color?: string;
+  type?: 'colegio' | 'extraescolar';
 }
 
 export interface Center {

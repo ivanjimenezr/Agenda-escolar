@@ -250,8 +250,125 @@ const ManagePage: React.FC<ManagePageProps> = ({
             type={activeTab}
             centers={centers}
             onClose={() => setIsModalOpen(false)}
-            onSave={handleSave}
+            onSave={(result) => {
+                if (activeTab === 'subjects') {
+                    if (editingItem) {
+                        setSubjects((prev: Subject[]) => prev.map(s => s.id === (editingItem as Subject).id ? result as Subject : s));
+                    } else {
+                        setSubjects((prev: Subject[]) => [...prev, result as Subject]);
+                    }
+                    setIsModalOpen(false);
+                } else if (activeTab === 'menu') {
+                    // Existing menu saving logic starts here
+                    try {
+                        // Debug: raw form data from modal
+                        console.debug('[ManagePage] raw menu form data:', result);
+
+                        const payload = editingItem
+                            ? transformMenuForUpdate(result)
+                            : transformMenuForCreate(result, activeProfileId);
+
+                        // Debug: transformed payload to be sent to backend
+                        console.debug('[ManagePage] transformed menu payload:', payload);
+
+                        const saveMenu = async () => {
+                            if (editingItem) {
+                                // Update existing menu
+                                await updateMenu(editingItem.id, payload);
+                            } else {
+                                // Create new menu - try normal create first
+                                try {
+                                    await createMenu(payload);
+                                } catch (createError: any) {
+                                    console.error('[ManagePage] Create error caught:', createError);
+
+                                    // Check if error is duplicate constraint violation
+                                    const errorString = JSON.stringify(createError).toLowerCase();
+                                    const messageString = (createError?.message || '').toLowerCase();
+                                    const detailString = (createError?.details?.detail || '').toLowerCase();
+
+                                    const isDuplicateError =
+                                        messageString.includes('duplicate key') ||
+                                        messageString.includes('unique constraint') ||
+                                        messageString.includes('uniqueviolation') ||
+                                        messageString.includes('already exists') ||
+                                        messageString.includes('use update or upsert') ||
+                                        detailString.includes('duplicate key') ||
+                                        detailString.includes('unique constraint') ||
+                                        detailString.includes('uniqueviolation') ||
+                                        detailString.includes('already exists') ||
+                                        errorString.includes('duplicate key') ||
+                                        errorString.includes('unique constraint') ||
+                                        errorString.includes('already exists') ||
+                                        errorString.includes('unique_menu_per_student_per_date');
+
+                                    console.log('[ManagePage] Is duplicate error?', isDuplicateError);
+                                    console.log('[ManagePage] Error details:', {
+                                        message: createError?.message,
+                                        details: createError?.details,
+                                        errorString: errorString.substring(0, 200)
+                                    });
+
+                                    if (isDuplicateError) {
+                                        // Show confirmation dialog
+                                        console.log('[ManagePage] ✅ SHOWING MODAL - Duplicate detected!');
+                                        console.log('[ManagePage] Payload:', payload);
+                                        console.log('[ManagePage] Setting pendingMenuData and showConfirmOverwrite...');
+                                        console.log('[ManagePage] Closing ItemFormModal to show ConfirmDialog');
+                                        setIsModalOpen(false); // Close the form modal so ConfirmDialog is visible
+                                        setPendingMenuData(payload);
+                                        setShowConfirmOverwrite(true);
+                                        console.log('[ManagePage] State updated, returning early');
+                                        return;
+                                    } else {
+                                        // Re-throw if it's a different error
+                                        throw createError;
+                                    }
+                                }
+                            }
+                            if (reloadMenus) await reloadMenus();
+                            setIsModalOpen(false);
+                        };
+                        saveMenu(); // Call the async function
+                    } catch (error: any) {
+                        console.error('Error saving menu:', error);
+
+                        // Extract error message properly
+                        let errorMessage = 'Error desconocido';
+
+                        if (error instanceof Error) {
+                            errorMessage = error.message;
+                        } else if (typeof error === 'string') {
+                            errorMessage = error;
+                        } else if (error?.details) {
+                            errorMessage = JSON.stringify(error.details);
+                        } else if (error?.message) {
+                            errorMessage = String(error.message);
+                        }
+
+                        // Log full error for debugging
+                        console.error('Full error details:', JSON.stringify(error, null, 2));
+
+                        alert(`Error al guardar el menú: ${errorMessage}`);
+                    }
+                    // Existing menu saving logic ends here
+                } else {
+                    // Other types still use local state for now
+                    const setData = dataMap[activeTab].setData as any;
+                    if (editingItem) {
+                        setData((prev: any[]) => prev.map((i: any) => i.id === editingItem.id ? { ...i, ...result } : i));
+                    } else {
+                        setData((prev: any[]) => [...prev, {
+                            ...result,
+                            id: Date.now().toString(),
+                            studentId: (activeTab === 'exams') ? activeProfileId : undefined // exams still need studentId for local state creation
+                        }]);
+                    }
+                    setIsModalOpen(false);
+                }
+            }}
             title={dataMap[activeTab].title}
+            studentId={activeProfileId}
         />
       )}
 

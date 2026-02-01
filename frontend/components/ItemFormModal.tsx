@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import type { Subject, Exam, MenuItem, SchoolEvent, DinnerItem, ModuleKey, Center, Contact, StudentProfile } from '../types';
+import type { Exam, MenuItem, SchoolEvent, DinnerItem, ModuleKey, Center, Contact, StudentProfile, Subject, CreateSubjectRequest, UpdateSubjectRequest } from '../types';
+import { createSubject, updateSubject } from '../services/subjectService';
 
 type Manageable = ModuleKey | 'centers' | 'profiles';
 type Item = Subject | Exam | MenuItem | SchoolEvent | DinnerItem | Center | Contact | StudentProfile;
@@ -12,11 +13,12 @@ interface ItemFormModalProps {
     onSave: (data: any) => void;
     title: string;
     centers?: Center[];
+    studentId: string; // Add studentId prop
 }
 
 const DAYS_OF_WEEK = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'] as const;
 
-const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSave, title, centers }) => {
+const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSave, title, centers, studentId }) => { // Destructure studentId
     const [formData, setFormData] = useState<any>(() => {
         if (item) return item;
         switch(type) {
@@ -46,6 +48,39 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
     // Estilos optimizados: Borde gris 200 para mejor definición, texto explícito por tema.
     const inputClass = "w-full p-4 bg-white dark:bg-gray-950 rounded-2xl font-semibold border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 outline-none transition-all focus:ring-2 focus:ring-blue-500 shadow-sm";
     const labelClass = "block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
+
+    const handleSave = async () => {
+        // Normalize form values: trim strings and avoid sending empty strings
+        const normalized: any = { ...formData };
+        if (typeof normalized.mainCourse === 'string') normalized.mainCourse = normalized.mainCourse.trim();
+        if (typeof normalized.sideDish === 'string') normalized.sideDish = normalized.sideDish.trim();
+        if (typeof normalized.dessert === 'string') normalized.dessert = normalized.dessert.trim();
+
+        if (normalized.mainCourse === '') delete normalized.mainCourse;
+        if (normalized.sideDish === '') delete normalized.sideDish;
+        if (normalized.dessert === '') delete normalized.dessert;
+
+        // Debug: log normalized form data before sending
+        console.debug('[ItemFormModal] normalized formData:', normalized);
+
+        try {
+            let result: Subject | Exam | MenuItem | SchoolEvent | DinnerItem | Center | Contact | StudentProfile;
+            if (type === 'subjects') {
+                if (item) { // Update existing subject
+                    result = await updateSubject(studentId, (item as Subject).id, normalized as UpdateSubjectRequest);
+                } else { // Create new subject
+                    result = await createSubject(studentId, normalized as CreateSubjectRequest);
+                }
+            } else {
+                // For other types, pass to parent onSave handler
+                result = normalized;
+            }
+            onSave(result);
+        } catch (error) {
+            console.error(`Error saving ${type}:`, error);
+            // Optionally, show an error message to the user
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex justify-center items-end p-4 z-[100]">
@@ -205,22 +240,7 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
 
                 <div className="flex space-x-3 mt-10">
                     <button onClick={onClose} className="flex-1 p-4 bg-white dark:bg-gray-800 rounded-[1.25rem] font-black text-xs uppercase tracking-widest text-gray-500 border border-gray-200 dark:border-gray-700 active:scale-95 transition-all">Cancelar</button>
-                    <button onClick={() => {
-                        // Normalize form values: trim strings and avoid sending empty strings
-                        const normalized: any = { ...formData };
-                        if (typeof normalized.mainCourse === 'string') normalized.mainCourse = normalized.mainCourse.trim();
-                        if (typeof normalized.sideDish === 'string') normalized.sideDish = normalized.sideDish.trim();
-                        if (typeof normalized.dessert === 'string') normalized.dessert = normalized.dessert.trim();
-
-                        if (normalized.mainCourse === '') delete normalized.mainCourse;
-                        if (normalized.sideDish === '') delete normalized.sideDish;
-                        if (normalized.dessert === '') delete normalized.dessert;
-
-                        // Debug: log normalized form data before sending
-                        console.debug('[ItemFormModal] normalized formData:', normalized);
-
-                        onSave(normalized);
-                    }} className="flex-1 p-4 bg-blue-600 text-white rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Guardar</button>
+                    <button onClick={handleSave} className="flex-1 p-4 bg-blue-600 text-white rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Guardar</button>
                 </div>
             </div>
         </div>
