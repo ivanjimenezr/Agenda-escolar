@@ -41,6 +41,8 @@ class Weekday(str, enum.Enum):
     MIERCOLES = "Miércoles"
     JUEVES = "Jueves"
     VIERNES = "Viernes"
+    SABADO = "Sábado"
+    DOMINGO = "Domingo"
 
 
 class EventType(str, enum.Enum):
@@ -154,7 +156,7 @@ class Subject(Base):
     name = Column(String(255), nullable=False)
     days = Column(ARRAY(SQLEnum(Weekday, name="weekday", create_type=True)), nullable=False)
     time = Column(Time, nullable=False)
-    teacher = Column(String(255), nullable=False)
+    teacher = Column(String(255), nullable=True)
     color = Column(String(7), nullable=False)
     type = Column(SQLEnum(SubjectType, name="subject_type", create_type=True), nullable=False)
 

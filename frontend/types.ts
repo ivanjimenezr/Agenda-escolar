@@ -21,11 +21,13 @@ export interface StudentProfile {
   updated_at?: string;
 }
 
+type SubjectDays = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes' | 'Sábado' | 'Domingo';
+
 export interface Subject {
   id: string;
   studentId: string; // Frontend uses camelCase
   name: string;
-  days: ('Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes')[];
+  days: SubjectDays[];
   time: string;
   teacher: string;
   color: string;
@@ -38,7 +40,7 @@ export interface Subject {
 
 export interface CreateSubjectRequest {
   name: string;
-  days: ('Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes')[];
+  days: SubjectDays[];
   time: string;
   teacher: string;
   color: string;
@@ -47,7 +49,7 @@ export interface CreateSubjectRequest {
 
 export interface UpdateSubjectRequest {
   name?: string;
-  days?: ('Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes')[];
+  days?: SubjectDays[];
   time?: string;
   teacher?: string;
   color?: string;

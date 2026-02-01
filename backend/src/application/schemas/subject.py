@@ -21,7 +21,7 @@ class SubjectCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     days: List[Weekday] = Field(..., min_length=1)
     time: time
-    teacher: str = Field(..., min_length=1, max_length=255)
+    teacher: Optional[str] = Field(None, min_length=1, max_length=255)
     color: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
     type: SubjectType
 
