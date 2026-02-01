@@ -149,6 +149,8 @@ const ManagePage: React.FC<ManagePageProps> = ({
 
             if (isDuplicateError) {
               // Show confirmation dialog
+              console.log('[ManagePage] ✅ SHOWING MODAL - Duplicate detected!');
+              console.log('[ManagePage] Payload:', payload);
               setPendingMenuData(payload);
               setShowConfirmOverwrite(true);
               return;
