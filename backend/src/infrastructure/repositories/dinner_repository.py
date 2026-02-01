@@ -128,11 +128,17 @@ class DinnerRepository:
         ingredients: Optional[List[str]] = None
     ) -> Dinner:
         """Create or update dinner for a specific date"""
-        existing = self.get_by_student_and_date(student_id, date)
+        # Check for existing dinner (including soft-deleted ones)
+        existing = self.db.query(Dinner).filter(
+            Dinner.student_id == student_id,
+            Dinner.date == date
+        ).first()
 
         if existing:
+            # Update existing (even if soft-deleted)
             existing.meal = meal
             existing.ingredients = ingredients or []
+            existing.deleted_at = None  # Restore if was soft-deleted
             existing.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(existing)
