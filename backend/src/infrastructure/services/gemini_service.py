@@ -18,7 +18,7 @@ class GeminiService:
     def __init__(self):
         """Initialize Gemini AI client"""
         genai.configure(api_key=settings.gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-3-flash-preview')
 
     def _build_restrictions_text(
         self,
