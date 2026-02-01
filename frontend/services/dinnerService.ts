@@ -36,6 +36,7 @@ export interface ShoppingListRequest {
   scope: 'today' | 'week' | 'custom';
   start_date?: string;
   end_date?: string;
+  num_people?: number;
 }
 
 export interface ShoppingListCategory {

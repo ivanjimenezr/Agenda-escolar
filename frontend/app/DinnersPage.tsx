@@ -48,6 +48,9 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
     const [shoppingList, setShoppingList] = useState<{ category: string, items: string[] }[] | null>(null);
     const [loadingList, setLoadingList] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showPeopleModal, setShowPeopleModal] = useState(false);
+    const [numPeople, setNumPeople] = useState(4);
+    const [pendingScope, setPendingScope] = useState<'today' | 'week' | null>(null);
 
     // Load dinners from backend on mount
     useEffect(() => {
@@ -115,24 +118,35 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
         }
     };
 
-    const fetchShoppingList = async (scope: 'today' | 'week') => {
+    const handleShoppingListClick = (scope: 'today' | 'week') => {
+        const todayISO = new Date().toISOString().split('T')[0];
+        const targetDinners = scope === 'today'
+            ? dinners.filter(d => d.date === todayISO)
+            : dinners;
+
+        if (targetDinners.length === 0) {
+            alert('No hay cenas planificadas para generar la lista.');
+            return;
+        }
+
+        // Show modal to ask for number of people
+        setPendingScope(scope);
+        setShowPeopleModal(true);
+    };
+
+    const fetchShoppingList = async () => {
+        if (!pendingScope) return;
+
         setLoadingList(true);
         setError(null);
+        setShowPeopleModal(false);
+
         try {
-            const todayISO = new Date().toISOString().split('T')[0];
-
-            // Check if there are dinners for the scope
-            const targetDinners = scope === 'today'
-                ? dinners.filter(d => d.date === todayISO)
-                : dinners;
-
-            if (targetDinners.length === 0) {
-                alert('No hay cenas planificadas para generar la lista.');
-                return;
-            }
-
-            // Call backend to generate shopping list
-            const response = await generateShoppingList(profile.id, { scope });
+            // Call backend to generate shopping list with number of people
+            const response = await generateShoppingList(profile.id, {
+                scope: pendingScope,
+                num_people: numPeople
+            });
 
             if (response && response.categories) {
                 setShoppingList(response.categories);
@@ -144,6 +158,7 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
             alert(errorMsg);
         } finally {
             setLoadingList(false);
+            setPendingScope(null);
         }
     };
 
@@ -183,10 +198,10 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
             <div className="mb-8">
                 <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">Lista de la Compra</p>
                 <div className="flex space-x-2">
-                    <button onClick={() => fetchShoppingList('today')} disabled={loadingList} className="flex-1 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 shadow-sm active:bg-gray-50">
+                    <button onClick={() => handleShoppingListClick('today')} disabled={loadingList} className="flex-1 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 shadow-sm active:bg-gray-50">
                         {loadingList ? 'PROCESANDO...' : 'COMPRA HOY'}
                     </button>
-                    <button onClick={() => fetchShoppingList('week')} disabled={loadingList} className="flex-1 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 shadow-sm active:bg-gray-50">
+                    <button onClick={() => handleShoppingListClick('week')} disabled={loadingList} className="flex-1 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-600 dark:text-gray-300 shadow-sm active:bg-gray-50">
                         {loadingList ? 'PROCESANDO...' : 'COMPRA SEMANAL'}
                     </button>
                 </div>
@@ -213,6 +228,56 @@ const DinnersPage: React.FC<DinnersPageProps> = ({ dinners, setDinners, menu, pr
             </div>
 
             {shoppingList && <ShoppingListModal list={shoppingList} onClose={() => setShoppingList(null)} />}
+
+            {/* Modal para número de comensales */}
+            {showPeopleModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">¿Cuántos comensales?</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Indica el número de personas para calcular las cantidades apropiadas para cenas ligeras.</p>
+
+                        <div className="mb-6">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Número de personas</label>
+                            <div className="flex items-center space-x-4">
+                                <button
+                                    onClick={() => setNumPeople(Math.max(1, numPeople - 1))}
+                                    className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-600 dark:text-gray-300 font-bold text-xl active:scale-95 transition-all"
+                                >
+                                    −
+                                </button>
+                                <div className="flex-1 text-center">
+                                    <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400">{numPeople}</span>
+                                </div>
+                                <button
+                                    onClick={() => setNumPeople(Math.min(20, numPeople + 1))}
+                                    className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-600 dark:text-gray-300 font-bold text-xl active:scale-95 transition-all"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => {
+                                    setShowPeopleModal(false);
+                                    setPendingScope(null);
+                                }}
+                                className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl font-bold text-sm"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={fetchShoppingList}
+                                className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-all"
+                            >
+                                Generar Lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {generating && (
                 <div className="fixed inset-0 bg-indigo-600/95 backdrop-blur-xl z-[100] flex flex-col items-center justify-center text-white p-8 animate-in fade-in duration-300">
                     <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mb-8 shadow-2xl"></div>

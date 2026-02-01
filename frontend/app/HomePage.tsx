@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import type { StudentProfile, Subject, Exam, MenuItem, SchoolEvent, ActiveModules, DinnerItem, ModuleKey, Center, Contact, View } from '../types';
 import { BookOpenIcon, CakeIcon, AcademicCapIcon, FlagIcon, MoonIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, TrashIcon, PencilIcon, UserIcon, PlusIcon, PencilIcon as EditIcon } from '../components/icons';
-import { aiService } from '../services/aiService';
+import { generateDinners } from '../services/dinnerService';
 import ItemFormModal from '../components/ItemFormModal';
 
 interface HomePageProps {
@@ -76,17 +76,34 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
   const handleQuickDinner = async () => {
     setGenerating(true);
     try {
-        const menuToday = menu.find(m => m.date === todayISO);
-        const result = await aiService.suggestDinner(
-          menuToday?.mainCourse || 'comida variada',
-          profile.allergies,
-          profile.excludedFoods
-        );
-        if (result && result.meal) {
-            const newDinner = { id: Date.now().toString(), date: todayISO, meal: result.meal, ingredients: [], studentId: activeProfileId };
-            setDinners((prev: DinnerItem[]) => [...prev.filter(d => d.date !== todayISO), newDinner]);
+        // Call backend to generate dinner suggestion using AI
+        const generatedDinners = await generateDinners(profile.id, {
+          type: 'today',
+          target_date: todayISO
+        });
+
+        if (generatedDinners && generatedDinners.length > 0) {
+            // Transform backend format to frontend format
+            const transformedDinners = generatedDinners.map(d => ({
+                id: d.id,
+                studentId: d.student_id,
+                date: d.date,
+                meal: d.meal,
+                ingredients: d.ingredients
+            }));
+
+            // Update dinners state
+            setDinners((prev: DinnerItem[]) => {
+                const filtered = prev.filter(d => d.date !== todayISO);
+                return [...filtered, ...transformedDinners];
+            });
         }
-    } catch (e) { console.error(e); } finally { setGenerating(false); }
+    } catch (e: any) {
+        console.error('Error generating dinner:', e);
+        alert(e.message || 'Error al generar la cena. Por favor, intenta de nuevo.');
+    } finally {
+        setGenerating(false);
+    }
   };
 
   const todaysSubjects = subjects.filter(s => s.days.includes(dayOfWeek as any)).sort((a, b) => a.time.localeCompare(b.time));

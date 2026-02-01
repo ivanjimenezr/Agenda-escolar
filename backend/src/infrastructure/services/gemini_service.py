@@ -263,13 +263,15 @@ IMPORTANTE: Debe haber exactamente {days} cenas en el array, una por cada día. 
 
     async def generate_shopping_list(
         self,
-        dinners: List[Dict[str, Any]]
+        dinners: List[Dict[str, Any]],
+        num_people: int = 4
     ) -> List[Dict[str, Any]]:
         """
         Generate a categorized shopping list from dinner plans
 
         Args:
             dinners: List of dinner items with 'meal' and 'ingredients'
+            num_people: Number of people (diners) for portion calculation
 
         Returns:
             List of categories with items
@@ -282,31 +284,54 @@ IMPORTANTE: Debe haber exactamente {days} cenas en el array, una por cada día. 
             for dinner in dinners
         ])
 
-        prompt = f"""Eres un asistente de compras experto.
+        prompt = f"""Eres un asistente de compras experto especializado en planificación de cenas ligeras.
 
 🛒 CENAS PLANIFICADAS:
 {meals_text}
 
-🎯 TAREA:
-Crea una lista de la compra organizada por categorías con TODOS los ingredientes necesarios.
+👥 NÚMERO DE COMENSALES: {num_people} personas
 
-📋 REQUISITOS:
-- Agrupar ingredientes por categoría (Carnes, Pescados, Verduras, Frutas, Lácteos, Despensa, etc.)
-- Eliminar duplicados
-- Usar cantidades aproximadas cuando sea relevante
-- Incluir ingredientes básicos que probablemente se necesiten (aceite, sal, etc.)
+🎯 TAREA:
+Crea una lista de la compra organizada por categorías con TODOS los ingredientes necesarios para CENAS LIGERAS.
+
+📋 REQUISITOS IMPORTANTES:
+- **CANTIDADES PARA CENAS LIGERAS**: Las porciones deben ser apropiadas para una cena, NO para comida principal
+- Las cantidades deben ser para {num_people} personas
+- Agrupar ingredientes por categoría (Carnes y Pescados, Verduras y Hortalizas, Frutas, Lácteos y Huevos, Despensa, Congelados, etc.)
+- Eliminar duplicados y sumar cantidades de ingredientes repetidos
+- Usar cantidades específicas y realistas (ej: "500g de pollo", "2 tomates", "1 litro de leche")
+- Para cenas ligeras, reduce las cantidades en un 25-30% respecto a una comida principal
+- Incluir ingredientes básicos necesarios (aceite, sal, especias básicas)
+- Pensar en cantidades que se venden normalmente en supermercados
+
+💡 EJEMPLO DE CANTIDADES LIGERAS (para 4 personas):
+- Proteína: 400-500g (100-125g por persona)
+- Verduras: 600-800g
+- Carbohidratos: 300-400g (pasta, arroz, pan)
 
 📤 FORMATO DE RESPUESTA:
 Responde SOLO con un array JSON válido:
 [
     {{
         "category": "Nombre de categoría",
-        "items": ["item1", "item2", ...]
+        "items": ["cantidad + ingrediente", "cantidad + ingrediente", ...]
     }},
     ...
 ]
 
-IMPORTANTE: Solo el JSON, sin explicaciones adicionales."""
+Ejemplo:
+[
+    {{
+        "category": "Carnes y Pescados",
+        "items": ["400g de pechuga de pollo", "300g de salmón fresco"]
+    }},
+    {{
+        "category": "Verduras y Hortalizas",
+        "items": ["4 tomates medianos", "1 lechuga", "2 pimientos rojos"]
+    }}
+]
+
+IMPORTANTE: Solo el JSON, sin explicaciones adicionales. Las cantidades deben ser para CENAS LIGERAS."""
 
         try:
             response = self.model.generate_content(prompt)

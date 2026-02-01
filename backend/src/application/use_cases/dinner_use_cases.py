@@ -391,7 +391,10 @@ class DinnerUseCases:
             for dinner in dinners
         ]
 
-        # Call AI service
-        shopping_list = await self.gemini_service.generate_shopping_list(dinners_data)
+        # Call AI service with number of people
+        shopping_list = await self.gemini_service.generate_shopping_list(
+            dinners_data,
+            num_people=request.num_people
+        )
 
         return shopping_list

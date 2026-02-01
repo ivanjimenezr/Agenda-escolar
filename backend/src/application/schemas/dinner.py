@@ -39,6 +39,7 @@ class ShoppingListRequest(BaseModel):
     scope: str = Field(..., pattern="^(today|week|custom)$", description="Scope for shopping list")
     start_date: Optional[dt_date] = Field(None, description="Start date for custom range")
     end_date: Optional[dt_date] = Field(None, description="End date for custom range")
+    num_people: int = Field(default=4, ge=1, le=20, description="Number of people (diners)")
 
 
 # ==================== RESPONSE SCHEMAS ====================
