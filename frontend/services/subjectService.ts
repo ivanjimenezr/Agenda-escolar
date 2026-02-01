@@ -10,8 +10,9 @@ import { Subject, CreateSubjectRequest, UpdateSubjectRequest } from '../types';
 /**
  * Create a new subject for a student
  */
-export const createSubject = async (studentId: string, data: CreateSubjectRequest): Promise<Subject> => {
-  return apiClient.post<Subject>(`/api/v1/students/${studentId}/subjects`, data);
+export const createSubject = async (studentId: string, data: CreateSubjectRequest, replace: boolean = false): Promise<Subject> => {
+  const suffix = replace ? '?replace=true' : '';
+  return apiClient.post<Subject>(`/api/v1/students/${studentId}/subjects${suffix}`, data);
 };
 
 /**

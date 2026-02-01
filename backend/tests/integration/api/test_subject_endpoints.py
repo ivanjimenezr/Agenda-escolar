@@ -72,3 +72,49 @@ class TestSubjectEndpoints:
         assert data["student_id"] == student_id
         # teacher may be empty string or null depending on how repository/response serialize it; accept both
         assert data.get("teacher") in (None, "")
+
+    def test_conflict_and_replace_flow(self, client: TestClient):
+        token = self.register_and_login(client, email="conflict@example.com")
+        student_id = self.create_student(client, token)
+
+        # Create initial subject at 09:00 on Lunes
+        payload1 = {
+            "name": "Matemáticas",
+            "days": ["Lunes"],
+            "time": "09:00",
+            "teacher": "Ana",
+            "color": "#ff0000",
+            "type": "colegio"
+        }
+        res1 = client.post(f"/api/v1/students/{student_id}/subjects", json=payload1, headers={"Authorization": f"Bearer {token}"})
+        assert res1.status_code == 201
+        created1 = res1.json()
+
+        # Try to create another subject that conflicts (same time and overlapping day)
+        payload2 = {
+            "name": "Fútbol",
+            "days": ["Lunes", "Domingo"],
+            "time": "09:00",
+            "teacher": "",
+            "color": "#3b82f6",
+            "type": "extraescolar"
+        }
+        res2 = client.post(f"/api/v1/students/{student_id}/subjects", json=payload2, headers={"Authorization": f"Bearer {token}"})
+
+        # Expect conflict response with details
+        assert res2.status_code == 409, res2.text
+        body = res2.json()
+        assert "conflicts" in body["detail"]
+        conflicts = body["detail"]["conflicts"]
+        assert any(c["id"] == created1["id"] for c in conflicts)
+
+        # Now replace existing by sending replace=true
+        res3 = client.post(f"/api/v1/students/{student_id}/subjects?replace=true", json=payload2, headers={"Authorization": f"Bearer {token}"})
+        assert res3.status_code == 201, res3.text
+        created2 = res3.json()
+        assert created2["name"] == "Fútbol"
+
+        # Verify the original is soft-deleted by trying to GET it (should 404)
+        res_get_old = client.get(f"/api/v1/students/{student_id}/subjects/{created1['id']}", headers={"Authorization": f"Bearer {token}"})
+        assert res_get_old.status_code == 404
+

@@ -20,6 +20,24 @@ class SubjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
+        """Return existing subjects for the student that overlap at the same time and days."""
+        return self.db.query(Subject).filter(
+            Subject.student_id == student_id,
+            Subject.time == time,
+            Subject.deleted_at.is_(None),
+            Subject.days.overlap(days)
+        ).all()
+
+    def delete_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
+        """Soft delete conflicting subjects and return them."""
+        conflicts = self.get_conflicting(student_id, days, time)
+        for c in conflicts:
+            c.deleted_at = datetime.utcnow()
+        if conflicts:
+            self.db.commit()
+        return conflicts
+
     def create(
         self,
         student_id: UUID,
@@ -28,13 +46,29 @@ class SubjectRepository:
         time: time,
         teacher: str,
         color: str,
-        type: SubjectType
+        type: SubjectType,
+        replace: bool = False
     ) -> Subject:
         """Create a new subject
 
+        If a conflicting subject exists and `replace` is False, a ConflictError is raised.
+        If `replace` is True, conflicting subjects are soft-deleted and the new subject is created.
+
         Raises:
-            ValueError: If validation fails
+            ConflictError: If a conflict is detected and replace is False
+            ValueError: If other DB errors occur
         """
+        # Check for conflicts
+        conflicts = self.get_conflicting(student_id, days, time)
+        if conflicts and not replace:
+            # Let caller decide how to handle (raise a specific exception with the conflicting items)
+            from src.application.exceptions import ConflictError
+            raise ConflictError(conflicts=conflicts)
+
+        if conflicts and replace:
+            for c in conflicts:
+                c.deleted_at = datetime.utcnow()
+
         # Ensure teacher is not None to avoid DB NOT NULL constraint from older migrations
         teacher_value = teacher if teacher is not None else ""
         subject = Subject(

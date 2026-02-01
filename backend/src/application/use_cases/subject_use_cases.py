@@ -30,13 +30,15 @@ class SubjectUseCases:
     def create_subject(
         self,
         user_id: UUID,
-        data: SubjectCreateRequest
+        data: SubjectCreateRequest,
+        replace: bool = False
     ) -> Subject:
         """Create a new subject for a student
 
         Args:
             user_id: ID of the user creating the subject
             data: Subject creation data
+            replace: If True, replace existing conflicting subject(s)
 
         Returns:
             Created Subject
@@ -56,7 +58,8 @@ class SubjectUseCases:
             time=data.time,
             teacher=data.teacher,
             color=data.color,
-            type=data.type
+            type=data.type,
+            replace=replace
         )
 
     def get_subject_by_id(

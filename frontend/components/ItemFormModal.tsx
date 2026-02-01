@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { Exam, MenuItem, SchoolEvent, DinnerItem, ModuleKey, Center, Contact, StudentProfile, Subject, CreateSubjectRequest, UpdateSubjectRequest } from '../types';
 import { createSubject, updateSubject } from '../services/subjectService';
+import ConfirmDialog from './ConfirmDialog';
 
 type Manageable = ModuleKey | 'centers' | 'profiles';
 type Item = Subject | Exam | MenuItem | SchoolEvent | DinnerItem | Center | Contact | StudentProfile;
@@ -49,6 +50,10 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
     const inputClass = "w-full p-4 bg-white dark:bg-gray-950 rounded-2xl font-semibold border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 outline-none transition-all focus:ring-2 focus:ring-blue-500 shadow-sm";
     const labelClass = "block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
 
+    const [conflictDialogOpen, setConflictDialogOpen] = React.useState(false);
+    const [conflictInfo, setConflictInfo] = React.useState<any | null>(null);
+    const [pendingPayload, setPendingPayload] = React.useState<any | null>(null);
+
     const handleSave = async () => {
         // Normalize form values: trim strings and avoid sending empty strings
         const normalized: any = { ...formData };
@@ -73,19 +78,50 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
 
                 if (item) { // Update existing subject
                     result = await updateSubject(studentId, (item as Subject).id, normalized as UpdateSubjectRequest);
+                    onSave(result);
                 } else { // Create new subject
-                    result = await createSubject(studentId, normalized as CreateSubjectRequest);
+                    try {
+                        result = await createSubject(studentId, normalized as CreateSubjectRequest);
+                        onSave(result);
+                    } catch (err: any) {
+                        // Handle conflict (409)
+                        if (err?.status === 409 && err?.details?.detail?.conflicts) {
+                            setConflictInfo(err.details.detail);
+                            setPendingPayload(normalized);
+                            setConflictDialogOpen(true);
+                            return;
+                        }
+                        throw err; // rethrow other errors
+                    }
                 }
             } else {
                 // For other types, pass to parent onSave handler
                 result = normalized;
+                onSave(result);
             }
-            onSave(result);
         } catch (error) {
             console.error(`Error saving ${type}:`, error);
             // Optionally, show an error message to the user
         }
     };
+
+    const confirmReplace = async () => {
+        if (!pendingPayload) return;
+        try {
+            const result = await createSubject(studentId, pendingPayload as CreateSubjectRequest, true);
+            setConflictDialogOpen(false);
+            setConflictInfo(null);
+            setPendingPayload(null);
+            onSave(result);
+        } catch (error) {
+            console.error('Error replacing subject:', error);
+            // Keep dialog open or show message
+            setConflictDialogOpen(false);
+            setConflictInfo(null);
+            setPendingPayload(null);
+        }
+    };
+
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex justify-center items-end p-4 z-[100]">
@@ -247,6 +283,18 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
                     <button onClick={onClose} className="flex-1 p-4 bg-white dark:bg-gray-800 rounded-[1.25rem] font-black text-xs uppercase tracking-widest text-gray-500 border border-gray-200 dark:border-gray-700 active:scale-95 transition-all">Cancelar</button>
                     <button onClick={handleSave} className="flex-1 p-4 bg-blue-600 text-white rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Guardar</button>
                 </div>
+
+                {/* Confirm dialog for conflicts */}
+                <ConfirmDialog
+                    isOpen={conflictDialogOpen}
+                    title={conflictInfo ? `${conflictInfo.conflicts.length} conflicto(s)` : 'Conflicto'}
+                    message={conflictInfo ? `Existe(n) la(s) asignatura(s): ${conflictInfo.conflicts.map((c: any) => `${c.name} (${c.time} ${c.days.join(', ')})`).join('; ')}. ¿Deseas reemplazar la(s) existente(s)?` : 'Hay un conflicto con la hora especificada. ¿Deseas reemplazarla(s)?'}
+                    confirmText="Reemplazar"
+                    cancelText="Cancelar"
+                    onConfirm={confirmReplace}
+                    onCancel={() => { setConflictDialogOpen(false); setConflictInfo(null); setPendingPayload(null); }}
+                    type="warning"
+                />
             </div>
         </div>
     );
