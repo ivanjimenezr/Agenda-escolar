@@ -79,11 +79,15 @@ class SubjectRepository:
         if not normalized_days:
             return []
 
+        # Ensure we pass exact enum textual values to the DB (e.g., 'Lunes') to avoid psycopg2/Enum name serialization issues.
+        normalized_for_query = [WeekdayEnum(v).value if not isinstance(v, WeekdayEnum) else v.value for v in normalized_days]
+        logger.debug("SubjectRepository.get_conflicting - normalized_for_query: %s", normalized_for_query)
+
         return self.db.query(Subject).filter(
             Subject.student_id == student_id,
             Subject.time == time,
             Subject.deleted_at.is_(None),
-            Subject.days.overlap(normalized_days)
+            Subject.days.overlap(normalized_for_query)
         ).all()
 
     def delete_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
