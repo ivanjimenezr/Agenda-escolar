@@ -10,6 +10,7 @@ import DinnersPage from './app/DinnersPage';
 import LoginPage from './app/LoginPage';
 import { getMyStudents } from './services/studentService';
 import { getStudentMenus } from './services/menuService';
+import { getDinners } from './services/dinnerService';
 import { getActiveModules } from './services/activeModulesService';
 import { transformStudent, transformMenu } from './utils/dataTransformers';
 
@@ -35,7 +36,7 @@ const App: React.FC = () => {
 
   const [allSubjects, setAllSubjects] = useLocalStorage<Subject[]>('school-agenda-subjects', []);
   const [allExams, setAllExams] = useLocalStorage<Exam[]>('school-agenda-exams', []);
-  const [allDinners, setAllDinners] = useLocalStorage<DinnerItem[]>('school-agenda-dinners', []);
+  const [allDinners, setAllDinners] = useState<DinnerItem[]>([]); // Changed from localStorage to state
 
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [events, setEvents] = useLocalStorage<SchoolEvent[]>('school-agenda-events', []);
@@ -51,10 +52,11 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  // Load menus when active profile changes
+  // Load menus and dinners when active profile changes
   useEffect(() => {
     if (activeProfileId) {
       loadMenus(activeProfileId);
+      loadDinners(activeProfileId);
     }
   }, [activeProfileId]);
 
@@ -125,6 +127,26 @@ const App: React.FC = () => {
       setMenu(transformedMenus);
     } catch (error) {
       console.error('[App] Error loading menus:', error);
+    }
+  };
+
+  const loadDinners = async (studentId: string) => {
+    try {
+      console.log('[App] Loading dinners for student:', studentId);
+      const dinners = await getDinners(studentId);
+      console.log('[App] Received dinners from API:', dinners);
+      // Transform backend format to frontend format
+      const transformedDinners: DinnerItem[] = dinners.map(d => ({
+        id: d.id,
+        studentId: d.student_id,
+        date: d.date,
+        meal: d.meal,
+        ingredients: d.ingredients || []
+      }));
+      console.log('[App] Transformed dinners:', transformedDinners);
+      setAllDinners(transformedDinners);
+    } catch (error) {
+      console.error('[App] Error loading dinners:', error);
     }
   };
 
