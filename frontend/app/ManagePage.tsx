@@ -82,7 +82,8 @@ const ManagePage: React.FC<ManagePageProps> = ({
   const handleCancelOverwrite = () => {
     setShowConfirmOverwrite(false);
     setPendingMenuData(null);
-    // Don't close the main modal, let user edit the date
+    // Reopen the form modal so user can edit the date
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (item: Item, type: Manageable) => {
@@ -158,6 +159,8 @@ const ManagePage: React.FC<ManagePageProps> = ({
               console.log('[ManagePage] ✅ SHOWING MODAL - Duplicate detected!');
               console.log('[ManagePage] Payload:', payload);
               console.log('[ManagePage] Setting pendingMenuData and showConfirmOverwrite...');
+              console.log('[ManagePage] Closing ItemFormModal to show ConfirmDialog');
+              setIsModalOpen(false); // Close the form modal so ConfirmDialog is visible
               setPendingMenuData(payload);
               setShowConfirmOverwrite(true);
               console.log('[ManagePage] State updated, returning early');

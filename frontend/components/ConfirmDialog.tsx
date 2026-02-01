@@ -46,15 +46,22 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const style = typeStyles[type];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200"
+      style={{ zIndex: 9999 }}
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onCancel}
+        style={{ zIndex: 9998 }}
       />
 
       {/* Dialog */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+      <div
+        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200"
+        style={{ zIndex: 10000 }}
+      >
         {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-3xl">
