@@ -12,11 +12,28 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://agenda-escolar-pnp
 export class ApiError extends Error {
   constructor(
     public status: number,
-    public message: string,
+    message: string,
     public details?: any
   ) {
     super(message);
     this.name = 'ApiError';
+    this.message = message;
+
+    // Ensure error is properly serialized
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+
+  toString(): string {
+    return `${this.name} (${this.status}): ${this.message}`;
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      status: this.status,
+      message: this.message,
+      details: this.details
+    };
   }
 }
 

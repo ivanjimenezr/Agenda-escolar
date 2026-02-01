@@ -95,7 +95,23 @@ const ManagePage: React.FC<ManagePageProps> = ({
         setIsModalOpen(false);
       } catch (error: any) {
         console.error('Error saving menu:', error);
-        const errorMessage = error?.message || error?.details?.detail || 'Error desconocido';
+
+        // Extract error message properly
+        let errorMessage = 'Error desconocido';
+
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error?.details) {
+          errorMessage = JSON.stringify(error.details);
+        } else if (error?.message) {
+          errorMessage = String(error.message);
+        }
+
+        // Log full error for debugging
+        console.error('Full error details:', JSON.stringify(error, null, 2));
+
         alert(`Error al guardar el menú: ${errorMessage}`);
       }
     } else {
