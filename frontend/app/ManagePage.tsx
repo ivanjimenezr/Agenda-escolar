@@ -52,6 +52,12 @@ const ManagePage: React.FC<ManagePageProps> = ({
   const [showConfirmOverwrite, setShowConfirmOverwrite] = useState(false);
   const [pendingMenuData, setPendingMenuData] = useState<any>(null);
 
+  // Debug: watch state changes
+  React.useEffect(() => {
+    console.log('[ManagePage] showConfirmOverwrite changed to:', showConfirmOverwrite);
+    console.log('[ManagePage] pendingMenuData:', pendingMenuData);
+  }, [showConfirmOverwrite, pendingMenuData]);
+
   const openModal = (item: Item | null = null) => {
     setEditingItem(item);
     setIsModalOpen(true);
@@ -151,8 +157,10 @@ const ManagePage: React.FC<ManagePageProps> = ({
               // Show confirmation dialog
               console.log('[ManagePage] ✅ SHOWING MODAL - Duplicate detected!');
               console.log('[ManagePage] Payload:', payload);
+              console.log('[ManagePage] Setting pendingMenuData and showConfirmOverwrite...');
               setPendingMenuData(payload);
               setShowConfirmOverwrite(true);
+              console.log('[ManagePage] State updated, returning early');
               return;
             } else {
               // Re-throw if it's a different error

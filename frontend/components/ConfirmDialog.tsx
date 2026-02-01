@@ -21,7 +21,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onCancel,
   type = 'warning'
 }) => {
+  console.log('[ConfirmDialog] Rendering with isOpen:', isOpen);
   if (!isOpen) return null;
+  console.log('[ConfirmDialog] SHOWING DIALOG - isOpen is true!');
 
   const typeStyles = {
     warning: {
