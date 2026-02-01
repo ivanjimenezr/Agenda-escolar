@@ -21,12 +21,52 @@ class SubjectRepository:
         self.db = db
 
     def get_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
-        """Return existing subjects for the student that overlap at the same time and days."""
+        """Return existing subjects for the student that overlap at the same time and days.
+
+        Normalize incoming `days` to their enum *values* (e.g. "Lunes") before querying.
+        Also accept strings (e.g. 'LUNES' or 'Lunes') and map them to the correct DB value.
+        """
+        # Normalize days to DB enum textual values
+        normalized_days: List[str] = []
+        from src.domain.models import Weekday as WeekdayEnum
+        for d in days:
+            if isinstance(d, WeekdayEnum):
+                normalized_days.append(d.value)
+                continue
+            if isinstance(d, str):
+                # Try direct value match (case-sensitive)
+                for member in WeekdayEnum:
+                    if d == member.value:
+                        normalized_days.append(member.value)
+                        break
+                else:
+                    # Try name match / upper-case like 'LUNES'
+                    try:
+                        member = WeekdayEnum[d.upper()]
+                        normalized_days.append(member.value)
+                    except Exception:
+                        # Fallback: try case-insensitive value match
+                        matched = False
+                        for member in WeekdayEnum:
+                            if d.lower() == member.value.lower():
+                                normalized_days.append(member.value)
+                                matched = True
+                                break
+                        if not matched:
+                            # Unknown value - let the DB return no conflicts
+                            continue
+            else:
+                # Unknown type - skip
+                continue
+
+        if not normalized_days:
+            return []
+
         return self.db.query(Subject).filter(
             Subject.student_id == student_id,
             Subject.time == time,
             Subject.deleted_at.is_(None),
-            Subject.days.overlap(days)
+            Subject.days.overlap(normalized_days)
         ).all()
 
     def delete_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:

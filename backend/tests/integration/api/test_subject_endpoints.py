@@ -118,3 +118,34 @@ class TestSubjectEndpoints:
         res_get_old = client.get(f"/api/v1/students/{student_id}/subjects/{created1['id']}", headers={"Authorization": f"Bearer {token}"})
         assert res_get_old.status_code == 404
 
+    def test_conflict_with_uppercase_days(self, client: TestClient):
+        token = self.register_and_login(client, email="upper@example.com")
+        student_id = self.create_student(client, token)
+
+        payload1 = {
+            "name": "Música",
+            "days": ["Lunes"],
+            "time": "10:00",
+            "teacher": "Luis",
+            "color": "#00ff00",
+            "type": "colegio"
+        }
+        res1 = client.post(f"/api/v1/students/{student_id}/subjects", json=payload1, headers={"Authorization": f"Bearer {token}"})
+        assert res1.status_code == 201
+
+        # Use uppercase day names in payload to simulate frontend sending enum names
+        payload2 = {
+            "name": "Piano",
+            "days": ["LUNES"],
+            "time": "10:00",
+            "teacher": "",
+            "color": "#0000ff",
+            "type": "extraescolar"
+        }
+        res2 = client.post(f"/api/v1/students/{student_id}/subjects", json=payload2, headers={"Authorization": f"Bearer {token}"})
+        # Should still detect conflict (no server error)
+        assert res2.status_code == 409, res2.text
+        body = res2.json()
+        assert "conflicts" in body["detail"]
+        assert len(body["detail"]["conflicts"]) >= 1
+
