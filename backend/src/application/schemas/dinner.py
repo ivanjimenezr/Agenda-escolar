@@ -4,7 +4,7 @@ Dinner Schemas
 Pydantic schemas for dinner request/response validation
 """
 
-from datetime import date, datetime
+from datetime import date as dt_date, datetime as dt_datetime # Renombramos para evitar conflicto
 from typing import List, Optional
 from uuid import UUID
 
@@ -16,14 +16,14 @@ from pydantic import BaseModel, ConfigDict, Field
 class DinnerGenerateRequest(BaseModel):
     """Schema for generating dinner suggestions with AI"""
     generation_type: str = Field(..., pattern="^(today|week)$", description="Generate for today or full week", alias="type")
-    target_date: Optional[date] = Field(None, description="Specific date for 'today' type (defaults to today)")
+    target_date: Optional[dt_date] = Field(None, description="Specific date for 'today' type (defaults to today)")
 
     model_config = ConfigDict(populate_by_name=True)
 
 
 class DinnerCreateRequest(BaseModel):
     """Schema for creating a dinner manually"""
-    date: date = Field(..., description="Date for the dinner")
+    date: dt_date = Field(..., description="Date for the dinner")
     meal: str = Field(..., min_length=1, max_length=500, description="Meal description")
     ingredients: list[str] = Field(default_factory=list, description="List of ingredients")
 
@@ -37,8 +37,8 @@ class DinnerUpdateRequest(BaseModel):
 class ShoppingListRequest(BaseModel):
     """Schema for generating shopping list"""
     scope: str = Field(..., pattern="^(today|week|custom)$", description="Scope for shopping list")
-    start_date: Optional[date] = Field(None, description="Start date for custom range")
-    end_date: Optional[date] = Field(None, description="End date for custom range")
+    start_date: Optional[dt_date] = Field(None, description="Start date for custom range")
+    end_date: Optional[dt_date] = Field(None, description="End date for custom range")
 
 
 # ==================== RESPONSE SCHEMAS ====================
@@ -47,11 +47,11 @@ class DinnerResponse(BaseModel):
     """Schema for dinner response"""
     id: UUID
     student_id: UUID
-    date: date
+    date: dt_date
     meal: str
     ingredients: List[str]
-    created_at: datetime
-    updated_at: datetime
+    created_at: dt_datetime
+    updated_at: dt_datetime
 
     model_config = ConfigDict(from_attributes=True)
 
