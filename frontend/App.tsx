@@ -101,8 +101,15 @@ const App: React.FC = () => {
       if (!activeProfileId && transformedStudents.length > 0) {
         setActiveProfileId(transformedStudents[0].id);
       }
-    } catch (error) {
-      console.error('Error loading students:', error);
+    } catch (error: any) {
+      console.error('[App] Error loading students:', error);
+      // If it's a 401, the apiClient will handle logout automatically
+      // For other errors, we might want to show a message or logout
+      if (error?.status === 401 || error?.message?.includes('Unauthorized')) {
+        console.log('[App] Session expired, user will be logged out automatically');
+      } else {
+        console.error('[App] Unexpected error loading students:', error);
+      }
     } finally {
       setLoading(false);
     }

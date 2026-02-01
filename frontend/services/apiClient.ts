@@ -91,6 +91,17 @@ async function apiFetch<T>(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error(`[API Error] ${response.status}:`, errorData);
+
+      // Handle 401 Unauthorized - session expired or invalid token
+      if (response.status === 401) {
+        console.warn('[API] 401 Unauthorized - Clearing session');
+        removeAuthToken();
+        // Clear user from localStorage to trigger logout
+        localStorage.removeItem('school-agenda-auth-v2');
+        // Reload page to show login screen
+        window.location.reload();
+      }
+
       throw new ApiError(
         response.status,
         errorData.detail || errorData.message || 'Request failed',
