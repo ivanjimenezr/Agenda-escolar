@@ -23,42 +23,59 @@ class SubjectRepository:
     def get_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
         """Return existing subjects for the student that overlap at the same time and days.
 
-        Normalize incoming `days` to their enum *values* (e.g. "Lunes") before querying.
-        Also accept strings (e.g. 'LUNES' or 'Lunes') and map them to the correct DB value.
+        Normalize incoming `days` robustly to their enum textual *values* (e.g. "Lunes")
+        before constructing the query. Accepts:
+         - enum members (Weekday.LUNES)
+         - enum names ("LUNES")
+         - enum values in any case ("lunes", "Lunes")
+         - strings with/without accents ("SABADO", "Sábado")
         """
-        # Normalize days to DB enum textual values
+        import unicodedata
+        # Helper to remove accents for tolerant matching
+        def strip_accents(s: str) -> str:
+            return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+        import logging
+        logger = logging.getLogger(__name__)
+
         normalized_days: List[str] = []
         from src.domain.models import Weekday as WeekdayEnum
-        for d in days:
-            if isinstance(d, WeekdayEnum):
-                normalized_days.append(d.value)
-                continue
-            if isinstance(d, str):
-                # Try direct value match (case-sensitive)
-                for member in WeekdayEnum:
-                    if d == member.value:
-                        normalized_days.append(member.value)
-                        break
-                else:
-                    # Try name match / upper-case like 'LUNES'
-                    try:
-                        member = WeekdayEnum[d.upper()]
-                        normalized_days.append(member.value)
-                    except Exception:
-                        # Fallback: try case-insensitive value match
-                        matched = False
-                        for member in WeekdayEnum:
-                            if d.lower() == member.value.lower():
-                                normalized_days.append(member.value)
-                                matched = True
-                                break
-                        if not matched:
-                            # Unknown value - let the DB return no conflicts
-                            continue
-            else:
-                # Unknown type - skip
-                continue
 
+        for d in days:
+            val: Optional[str] = None
+
+            # Enum instance -> use its value directly
+            if isinstance(d, WeekdayEnum):
+                val = d.value
+
+            # Try string-based matching
+            elif isinstance(d, str):
+                s = d.strip()
+                # 1) direct case-insensitive match against enum values
+                for member in WeekdayEnum:
+                    if s.lower() == member.value.lower():
+                        val = member.value
+                        break
+                # 2) try matching by enum name, e.g., 'LUNES' using __members__ for safety
+                if val is None:
+                    member = WeekdayEnum.__members__.get(s.upper())
+                    if member is not None:
+                        val = member.value
+                # 3) accent-insensitive match as a last resort
+                if val is None:
+                    s_norm = strip_accents(s.lower())
+                    for member in WeekdayEnum:
+                        if strip_accents(member.value.lower()) == s_norm:
+                            val = member.value
+                            break
+
+            # If we found a normalized textual value, append
+            if val is not None:
+                normalized_days.append(val)
+
+        logger.debug("SubjectRepository.get_conflicting - normalized_days: %s (input days: %s)", normalized_days, days)
+
+        # Nothing we can match - avoid querying with invalid values
         if not normalized_days:
             return []
 
