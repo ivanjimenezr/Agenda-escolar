@@ -45,6 +45,8 @@ export interface CreateSubjectRequest {
   teacher: string;
   color: string;
   type: 'colegio' | 'extraescolar';
+  // Optional backend field (snake_case) - added to support sending student_id from the UI
+  student_id?: string;
 }
 
 export interface UpdateSubjectRequest {

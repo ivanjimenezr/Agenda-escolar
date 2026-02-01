@@ -17,11 +17,12 @@ from src.domain.models import SubjectType, Weekday
 
 class SubjectCreateRequest(BaseModel):
     """Schema for creating a new subject"""
-    student_id: UUID
+    # student_id can be omitted in the request - it will be filled from the path
+    student_id: Optional[UUID] = None
     name: str = Field(..., min_length=1, max_length=255)
     days: List[Weekday] = Field(..., min_length=1)
     time: time
-    teacher: Optional[str] = Field(None, min_length=1, max_length=255)
+    teacher: Optional[str] = Field(None, max_length=255)
     color: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
     type: SubjectType
 
@@ -32,13 +33,21 @@ class SubjectCreateRequest(BaseModel):
             raise ValueError('At least one day must be specified')
         return v
 
+    @field_validator('teacher', mode='before')
+    @classmethod
+    def empty_teacher_to_none(cls, v):
+        # Convert empty string to None so it doesn't fail "min length" checks
+        if isinstance(v, str) and v.strip() == '':
+            return None
+        return v
+
 
 class SubjectUpdateRequest(BaseModel):
     """Schema for updating an existing subject"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     days: Optional[List[Weekday]] = Field(None, min_length=1)
     time: Optional[time] = None
-    teacher: Optional[str] = Field(None, min_length=1, max_length=255)
+    teacher: Optional[str] = Field(None, max_length=255)
     color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
     type: Optional[SubjectType] = None
 
@@ -59,7 +68,7 @@ class SubjectResponse(BaseModel):
     name: str
     days: List[Weekday]
     time: time
-    teacher: str
+    teacher: Optional[str]
     color: str
     type: SubjectType
     created_at: datetime

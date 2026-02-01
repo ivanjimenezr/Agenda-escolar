@@ -22,7 +22,7 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
     const [formData, setFormData] = useState<any>(() => {
         if (item) return item;
         switch(type) {
-            case 'subjects': return { name: '', days: ['Lunes'], time: '09:00', teacher: '', color: '#3b82f6', type: 'colegio' };
+            case 'subjects': return { name: '', days: ['Lunes'], time: '09:00', teacher: '', color: '#3b82f6', type: 'colegio', studentId: studentId };
             case 'exams': return { subject: '', date: new Date().toISOString().split('T')[0], topic: '', notes: '' };
             case 'menu': return { date: new Date().toISOString().split('T')[0], mainCourse: '', sideDish: '', dessert: '' };
             case 'events': return { date: new Date().toISOString().split('T')[0], name: '', type: 'Lectivo' };
@@ -66,6 +66,11 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
         try {
             let result: Subject | Exam | MenuItem | SchoolEvent | DinnerItem | Center | Contact | StudentProfile;
             if (type === 'subjects') {
+                // Ensure the backend receives snake_case `student_id` in the body to avoid validation issues
+                normalized.student_id = normalized.student_id || normalized.studentId || studentId;
+                // Remove camelCase field to avoid duplicate/conflicting data
+                delete normalized.studentId;
+
                 if (item) { // Update existing subject
                     result = await updateSubject(studentId, (item as Subject).id, normalized as UpdateSubjectRequest);
                 } else { // Create new subject

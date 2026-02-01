@@ -35,12 +35,14 @@ class SubjectRepository:
         Raises:
             ValueError: If validation fails
         """
+        # Ensure teacher is not None to avoid DB NOT NULL constraint from older migrations
+        teacher_value = teacher if teacher is not None else ""
         subject = Subject(
             student_id=student_id,
             name=name,
             days=days,
             time=time,
-            teacher=teacher,
+            teacher=teacher_value,
             color=color,
             type=type
         )

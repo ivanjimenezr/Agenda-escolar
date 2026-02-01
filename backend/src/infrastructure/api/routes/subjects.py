@@ -56,8 +56,11 @@ def create_subject(
     - **color**: Hex color code (e.g., "#FF5733")
     - **type**: Subject type ("colegio" or "extraescolar")
     """
-    # Ensure the student_id in the path matches the one in the body
-    if data.student_id != student_id:
+    # If student_id missing in body, fill it from the path; otherwise ensure they match
+    if getattr(data, "student_id", None) is None:
+        # create a copy of the request data with the student_id filled
+        data = data.model_copy(update={"student_id": student_id})
+    elif data.student_id != student_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Student ID in path must match student_id in request body"
