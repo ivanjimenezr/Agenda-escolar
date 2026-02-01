@@ -129,11 +129,15 @@ const ManagePage: React.FC<ManagePageProps> = ({
               messageString.includes('duplicate key') ||
               messageString.includes('unique constraint') ||
               messageString.includes('uniqueviolation') ||
+              messageString.includes('already exists') ||
+              messageString.includes('use update or upsert') ||
               detailString.includes('duplicate key') ||
               detailString.includes('unique constraint') ||
               detailString.includes('uniqueviolation') ||
+              detailString.includes('already exists') ||
               errorString.includes('duplicate key') ||
               errorString.includes('unique constraint') ||
+              errorString.includes('already exists') ||
               errorString.includes('unique_menu_per_student_per_date');
 
             console.log('[ManagePage] Is duplicate error?', isDuplicateError);
