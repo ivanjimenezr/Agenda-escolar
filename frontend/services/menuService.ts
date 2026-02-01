@@ -89,3 +89,13 @@ export const updateMenu = async (
 export const deleteMenu = async (menuId: string): Promise<void> => {
   return apiClient.delete<void>(`/api/v1/menus/${menuId}`);
 };
+
+/**
+ * Create or update a menu item (upsert)
+ *
+ * If a menu already exists for the given student_id and date, it will be updated.
+ * Otherwise, a new menu item will be created.
+ */
+export const upsertMenu = async (data: CreateMenuRequest): Promise<MenuItem> => {
+  return apiClient.put<MenuItem>('/api/v1/menus/upsert', data);
+};

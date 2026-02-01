@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import type { Subject, Exam, MenuItem, SchoolEvent, ActiveModules, ModuleKey, Center, Contact } from '../types';
 import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 import ItemFormModal from '../components/ItemFormModal';
-import { createMenu, updateMenu, deleteMenu } from '../services/menuService';
+import { createMenu, updateMenu, deleteMenu, upsertMenu } from '../services/menuService';
 import { transformMenuForCreate, transformMenuForUpdate } from '../utils/dataTransformers';
 
 type Manageable = Exclude<ModuleKey, 'dinner'> | 'centers' | 'contacts';
@@ -88,8 +88,36 @@ const ManagePage: React.FC<ManagePageProps> = ({
           // Update existing menu
           await updateMenu(editingItem.id, payload);
         } else {
-          // Create new menu
-          await createMenu(payload);
+          // Create new menu - try normal create first
+          try {
+            await createMenu(payload);
+          } catch (createError: any) {
+            // Check if error is duplicate constraint violation
+            const isDuplicateError =
+              createError?.message?.includes('duplicate key') ||
+              createError?.message?.includes('unique constraint') ||
+              createError?.message?.includes('UniqueViolation');
+
+            if (isDuplicateError) {
+              // Ask user if they want to overwrite
+              const shouldOverwrite = confirm(
+                `Ya existe un menú para esta fecha (${payload.date}).\n\n` +
+                '¿Deseas sobrescribir el menú existente?'
+              );
+
+              if (shouldOverwrite) {
+                // Use upsert to overwrite
+                await upsertMenu(payload);
+              } else {
+                // User cancelled, close modal without saving
+                setIsModalOpen(false);
+                return;
+              }
+            } else {
+              // Re-throw if it's a different error
+              throw createError;
+            }
+          }
         }
         if (reloadMenus) await reloadMenus();
         setIsModalOpen(false);

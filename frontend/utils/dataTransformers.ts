@@ -87,7 +87,15 @@ function firstNonEmpty(...values: Array<string | undefined | null>) {
   return '';
 }
 
-export function transformMenuForCreate(menu: Partial<MenuItem>, studentId: string) {
+export function transformMenuForCreate(menu: Partial<MenuItem>, studentId: string): {
+  student_id: string;
+  date: string;
+  first_course: string;
+  second_course: string;
+  side_dish?: string;
+  dessert?: string;
+  allergens: string[];
+} {
   return {
     student_id: studentId,
     date: menu.date!,
