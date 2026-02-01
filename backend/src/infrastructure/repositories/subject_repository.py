@@ -128,6 +128,8 @@ class SubjectRepository:
 
         # Ensure teacher is not None to avoid DB NOT NULL constraint from older migrations
         teacher_value = teacher if teacher is not None else ""
+        
+        
         subject = Subject(
             student_id=student_id,
             name=name,
@@ -137,6 +139,9 @@ class SubjectRepository:
             color=color,
             type=type
         )
+        print("###Asignatura a crear:")
+        print(student_id, name, days, time, teacher_value, color, type, replace)
+        print(f"Creating subject: {subject}")
         self.db.add(subject)
         try:
             self.db.commit()
