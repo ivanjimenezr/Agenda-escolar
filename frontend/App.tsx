@@ -10,6 +10,7 @@ import DinnersPage from './app/DinnersPage';
 import LoginPage from './app/LoginPage';
 import { getMyStudents } from './services/studentService';
 import { getStudentMenus } from './services/menuService';
+import { getActiveModules } from './services/activeModulesService';
 import { transformStudent, transformMenu } from './utils/dataTransformers';
 
 const defaultActiveModules: ActiveModules = {
@@ -70,7 +71,30 @@ const App: React.FC = () => {
     try {
       setLoading(true);
       const students = await getMyStudents();
-      const transformedStudents = students.map(transformStudent);
+
+      // Load active modules for each student
+      const transformedStudents = await Promise.all(
+        students.map(async (student) => {
+          try {
+            const activeModulesData = await getActiveModules(student.id);
+            // Transform backend active_modules to frontend format
+            const activeModules = {
+              subjects: activeModulesData.subjects,
+              exams: activeModulesData.exams,
+              menu: activeModulesData.menu,
+              events: activeModulesData.events,
+              dinner: activeModulesData.dinner,
+              contacts: activeModulesData.contacts,
+            };
+            return transformStudent(student, activeModules);
+          } catch (error) {
+            console.error(`Error loading active modules for student ${student.id}:`, error);
+            // If fails to load active modules, use defaults
+            return transformStudent(student);
+          }
+        })
+      );
+
       setProfiles(transformedStudents);
 
       // Set active profile to first student if none selected

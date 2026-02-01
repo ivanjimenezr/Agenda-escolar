@@ -20,7 +20,7 @@ const defaultActiveModules: ActiveModules = {
 /**
  * Transform backend student to frontend StudentProfile
  */
-export function transformStudent(apiStudent: ApiStudent): StudentProfile {
+export function transformStudent(apiStudent: ApiStudent, activeModules?: ActiveModules): StudentProfile {
   return {
     id: apiStudent.id,
     name: apiStudent.name,
@@ -29,7 +29,7 @@ export function transformStudent(apiStudent: ApiStudent): StudentProfile {
     avatarUrl: apiStudent.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${apiStudent.name}`,
     allergies: apiStudent.allergies || [],
     excludedFoods: apiStudent.excluded_foods || [],
-    activeModules: defaultActiveModules, // TODO: Store in backend or localStorage per student
+    activeModules: activeModules || defaultActiveModules,
     // Keep backend fields for API calls
     user_id: apiStudent.user_id,
     avatar_url: apiStudent.avatar_url,
