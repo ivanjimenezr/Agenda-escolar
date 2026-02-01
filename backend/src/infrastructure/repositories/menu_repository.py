@@ -9,6 +9,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from src.domain.models import MenuItem
 
@@ -29,7 +30,11 @@ class MenuRepository:
         dessert: Optional[str] = None,
         allergens: Optional[List[str]] = None
     ) -> MenuItem:
-        """Create a new menu item"""
+        """Create a new menu item
+
+        Raises:
+            ValueError: If a menu already exists for this student and date
+        """
         menu = MenuItem(
             student_id=student_id,
             date=date,
@@ -40,9 +45,17 @@ class MenuRepository:
             allergens=allergens or []
         )
         self.db.add(menu)
-        self.db.commit()
-        self.db.refresh(menu)
-        return menu
+        try:
+            self.db.commit()
+            self.db.refresh(menu)
+            return menu
+        except IntegrityError as e:
+            self.db.rollback()
+            # Check if it's a duplicate menu constraint
+            if 'unique_menu_per_student_per_date' in str(e.orig):
+                raise ValueError(f"A menu already exists for student on date {date}. Use update or upsert instead.")
+            # Re-raise other integrity errors
+            raise
 
     def get_by_id(self, menu_id: UUID) -> Optional[MenuItem]:
         """Get menu item by ID (excludes soft-deleted)"""

@@ -92,11 +92,31 @@ const ManagePage: React.FC<ManagePageProps> = ({
           try {
             await createMenu(payload);
           } catch (createError: any) {
+            console.error('[ManagePage] Create error caught:', createError);
+
             // Check if error is duplicate constraint violation
+            // Check in multiple places: message, details.detail, details, error string
+            const errorString = JSON.stringify(createError).toLowerCase();
+            const messageString = (createError?.message || '').toLowerCase();
+            const detailString = (createError?.details?.detail || '').toLowerCase();
+
             const isDuplicateError =
-              createError?.message?.includes('duplicate key') ||
-              createError?.message?.includes('unique constraint') ||
-              createError?.message?.includes('UniqueViolation');
+              messageString.includes('duplicate key') ||
+              messageString.includes('unique constraint') ||
+              messageString.includes('uniqueviolation') ||
+              detailString.includes('duplicate key') ||
+              detailString.includes('unique constraint') ||
+              detailString.includes('uniqueviolation') ||
+              errorString.includes('duplicate key') ||
+              errorString.includes('unique constraint') ||
+              errorString.includes('unique_menu_per_student_per_date');
+
+            console.log('[ManagePage] Is duplicate error?', isDuplicateError);
+            console.log('[ManagePage] Error details:', {
+              message: createError?.message,
+              details: createError?.details,
+              errorString: errorString.substring(0, 200)
+            });
 
             if (isDuplicateError) {
               // Ask user if they want to overwrite
