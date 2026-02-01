@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import type { Subject, Exam, MenuItem, SchoolEvent, ActiveModules, ModuleKey, Center, Contact } from '../types';
 import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 import ItemFormModal from '../components/ItemFormModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { createMenu, updateMenu, deleteMenu, upsertMenu } from '../services/menuService';
 import { transformMenuForCreate, transformMenuForUpdate } from '../utils/dataTransformers';
 
@@ -48,10 +49,34 @@ const ManagePage: React.FC<ManagePageProps> = ({
   const [activeTab, setActiveTab] = useState<Manageable>(availableTabs[0] || 'subjects');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [showConfirmOverwrite, setShowConfirmOverwrite] = useState(false);
+  const [pendingMenuData, setPendingMenuData] = useState<any>(null);
 
   const openModal = (item: Item | null = null) => {
     setEditingItem(item);
     setIsModalOpen(true);
+  };
+
+  const handleConfirmOverwrite = async () => {
+    if (!pendingMenuData) return;
+
+    try {
+      await upsertMenu(pendingMenuData);
+      if (reloadMenus) await reloadMenus();
+      setShowConfirmOverwrite(false);
+      setPendingMenuData(null);
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Error upserting menu:', error);
+      alert(`Error al sobrescribir el menú: ${error.message || 'Error desconocido'}`);
+      setShowConfirmOverwrite(false);
+    }
+  };
+
+  const handleCancelOverwrite = () => {
+    setShowConfirmOverwrite(false);
+    setPendingMenuData(null);
+    // Don't close the main modal, let user edit the date
   };
 
   const handleDelete = async (item: Item, type: Manageable) => {
@@ -119,20 +144,10 @@ const ManagePage: React.FC<ManagePageProps> = ({
             });
 
             if (isDuplicateError) {
-              // Ask user if they want to overwrite
-              const shouldOverwrite = confirm(
-                `Ya existe un menú para esta fecha (${payload.date}).\n\n` +
-                '¿Deseas sobrescribir el menú existente?'
-              );
-
-              if (shouldOverwrite) {
-                // Use upsert to overwrite
-                await upsertMenu(payload);
-              } else {
-                // User cancelled, close modal without saving
-                setIsModalOpen(false);
-                return;
-              }
+              // Show confirmation dialog
+              setPendingMenuData(payload);
+              setShowConfirmOverwrite(true);
+              return;
             } else {
               // Re-throw if it's a different error
               throw createError;
@@ -222,6 +237,17 @@ const ManagePage: React.FC<ManagePageProps> = ({
             title={dataMap[activeTab].title}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showConfirmOverwrite}
+        title="Menú duplicado"
+        message={`Ya existe un menú para la fecha ${pendingMenuData?.date || ''}. ¿Deseas sobrescribir el menú existente?`}
+        confirmText="Sobrescribir"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmOverwrite}
+        onCancel={handleCancelOverwrite}
+        type="warning"
+      />
     </div>
   );
 };

@@ -110,11 +110,14 @@ const App: React.FC = () => {
 
   const loadMenus = async (studentId: string) => {
     try {
+      console.log('[App] Loading menus for student:', studentId);
       const menus = await getStudentMenus(studentId);
+      console.log('[App] Received menus from API:', menus);
       const transformedMenus = menus.map(transformMenu);
+      console.log('[App] Transformed menus:', transformedMenus);
       setMenu(transformedMenus);
     } catch (error) {
-      console.error('Error loading menus:', error);
+      console.error('[App] Error loading menus:', error);
     }
   };
 
