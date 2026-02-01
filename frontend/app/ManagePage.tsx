@@ -93,9 +93,10 @@ const ManagePage: React.FC<ManagePageProps> = ({
         }
         if (reloadMenus) await reloadMenus();
         setIsModalOpen(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error saving menu:', error);
-        alert('Error al guardar el menú');
+        const errorMessage = error?.message || error?.details?.detail || 'Error desconocido';
+        alert(`Error al guardar el menú: ${errorMessage}`);
       }
     } else {
       // Other types still use local state

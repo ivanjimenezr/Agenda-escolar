@@ -63,6 +63,8 @@ async function apiFetch<T>(
   }
 
   try {
+    console.debug(`[API] ${options.method || 'GET'} ${url}`);
+
     const response = await fetch(url, {
       ...options,
       headers,
@@ -71,6 +73,7 @@ async function apiFetch<T>(
     // Handle non-2xx responses
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(`[API Error] ${response.status}:`, errorData);
       throw new ApiError(
         response.status,
         errorData.detail || errorData.message || 'Request failed',
