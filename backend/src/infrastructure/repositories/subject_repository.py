@@ -11,7 +11,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from src.domain.models import Subject, SubjectType
+from src.domain.models import Subject
 
 
 class SubjectRepository:
@@ -94,7 +94,7 @@ class SubjectRepository:
         time: time,
         teacher: str,
         color: str,
-        type: SubjectType,
+        type: str,
         replace: bool = False
     ) -> Subject:
         """Create a new subject
@@ -178,7 +178,7 @@ class SubjectRepository:
         time: Optional[time] = None,
         teacher: Optional[str] = None,
         color: Optional[str] = None,
-        type: Optional[SubjectType] = None
+        type: Optional[str] = None
     ) -> Optional[Subject]:
         """Update subject"""
         subject = self.get_by_id(subject_id)

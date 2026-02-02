@@ -217,7 +217,8 @@ class Subject(Base):
     time = Column(Time, nullable=False)
     teacher = Column(String(255), nullable=True)
     color = Column(String(7), nullable=False)
-    type = Column(SQLEnum(SubjectType, name="subject_type", create_type=True), nullable=False)
+    # Changed from enum to String to avoid serialization issues
+    type = Column(String(50), nullable=False)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

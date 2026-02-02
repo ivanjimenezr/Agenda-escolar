@@ -5,12 +5,10 @@ Pydantic schemas for subject request/response validation
 """
 
 from datetime import time, datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-from src.domain.models import SubjectType
 
 
 # ==================== REQUEST SCHEMAS ====================
@@ -24,7 +22,7 @@ class SubjectCreateRequest(BaseModel):
     time: time
     teacher: Optional[str] = Field(None, max_length=255)
     color: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
-    type: SubjectType
+    type: Literal["colegio", "extraescolar"]  # Changed from enum to string literal
 
     @field_validator('days')
     @classmethod
@@ -41,6 +39,14 @@ class SubjectCreateRequest(BaseModel):
             return None
         return v
 
+    @field_validator('type', mode='before')
+    @classmethod
+    def normalize_type(cls, v):
+        # Convert type to lowercase to handle frontend sending uppercase
+        if isinstance(v, str):
+            return v.lower()
+        return v
+
 
 class SubjectUpdateRequest(BaseModel):
     """Schema for updating an existing subject"""
@@ -49,7 +55,7 @@ class SubjectUpdateRequest(BaseModel):
     time: Optional[time] = None
     teacher: Optional[str] = Field(None, max_length=255)
     color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
-    type: Optional[SubjectType] = None
+    type: Optional[Literal["colegio", "extraescolar"]] = None  # Changed from enum to string literal
 
     @field_validator('days')
     @classmethod
@@ -70,7 +76,7 @@ class SubjectResponse(BaseModel):
     time: time
     teacher: Optional[str]
     color: str
-    type: SubjectType
+    type: str  # Changed from enum to string
     created_at: datetime
     updated_at: datetime
 
