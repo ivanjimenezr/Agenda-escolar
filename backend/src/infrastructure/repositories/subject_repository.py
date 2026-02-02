@@ -83,14 +83,35 @@ class SubjectRepository:
         if not normalized_days:
             return []
 
-        logger.debug("SubjectRepository.get_conflicting - days for query: %s", normalized_days)
+        # Detect whether the underlying database supports ARRAY overlap
+        supports_overlap = hasattr(Subject.days, 'overlap')
 
-        return self.db.query(Subject).filter(
-            Subject.student_id == student_id,
-            Subject.time == time,
-            Subject.deleted_at.is_(None),
-            Subject.days.overlap(normalized_days)
-        ).all()
+        if supports_overlap:
+            # Use native SQL overlap operator (Postgres)
+            return self.db.query(Subject).filter(
+                Subject.student_id == student_id,
+                Subject.time == time,
+                Subject.deleted_at.is_(None),
+                Subject.days.overlap(normalized_days)
+            ).all()
+        else:
+            # Fallback for SQLite/JSON: fetch candidates and check overlap in Python
+            candidates = self.db.query(Subject).filter(
+                Subject.student_id == student_id,
+                Subject.time == time,
+                Subject.deleted_at.is_(None)
+            ).all()
+
+            result = []
+            nd_set = set(normalized_days)
+            for s in candidates:
+                try:
+                    subject_days = set(s.days or [])
+                except Exception:
+                    subject_days = set()
+                if subject_days & nd_set:
+                    result.append(s)
+            return result
 
     def delete_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
         """Soft delete conflicting subjects and return them."""

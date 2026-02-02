@@ -5,6 +5,20 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+# Integration tests in this module require a PostgreSQL database (Docker).
+# Skip tests when Docker/postgres isn't available to avoid sqlite/ARRAY incompat issues.
+import docker
+
+def _docker_available() -> bool:
+    try:
+        client = docker.from_env()
+        client.ping()
+        return True
+    except Exception:
+        return False
+
+pytestmark = pytest.mark.skipif(not _docker_available(), reason="Docker not available, skipping DB-backed integration tests")
+
 from src.main import app
 from src.infrastructure.database import get_db
 

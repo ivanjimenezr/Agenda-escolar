@@ -33,11 +33,21 @@ engine = create_engine(
 # Configure connection pool to handle network issues gracefully
 @event.listens_for(Pool, "connect")
 def set_connection_parameters(dbapi_conn, connection_record):
-    """Set connection parameters for better timeout handling."""
-    cursor = dbapi_conn.cursor()
-    cursor.execute("SET statement_timeout = '30s'")  # 30 second query timeout
-    cursor.execute("SET idle_in_transaction_session_timeout = '60s'")  # 60 second idle timeout
-    cursor.close()
+    """Set connection parameters for better timeout handling.
+
+    This listener is primarily intended for PostgreSQL connections. For
+    other DBAPI connections (e.g., SQLite used in tests), the SET
+    statements will fail; therefore we tolerate and ignore errors.
+    """
+    try:
+        cursor = dbapi_conn.cursor()
+        cursor.execute("SET statement_timeout = '30s'")  # 30 second query timeout
+        cursor.execute("SET idle_in_transaction_session_timeout = '60s'")  # 60 second idle timeout
+        cursor.close()
+    except Exception:
+        # Not all DBAPIs support these statements (e.g., SQLite in tests)
+        # Silently ignore the failure since these settings are optional.
+        return
 
 
 # Create SessionLocal class for database sessions

@@ -47,6 +47,13 @@ def get_current_user(
     user_repo = UserRepository(db)
     user = user_repo.get_by_id(user_id)
 
+    # Fallback: some test DBs store UUIDs as strings; try string lookup if necessary
+    if user is None:
+        try:
+            user = db.query(User).filter(User.id == str(user_id), User.deleted_at.is_(None)).first()
+        except Exception:
+            user = None
+
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

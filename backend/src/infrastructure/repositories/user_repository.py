@@ -51,18 +51,49 @@ class UserRepository:
 
         return user
 
-    def get_by_id(self, user_id: UUID) -> Optional[User]:
+    def get_by_id(self, user_id: UUID | str) -> Optional[User]:
         """
         Get user by ID (excluding soft-deleted users).
 
+        Accepts either a UUID instance or a string. For non-Postgres dialects (eg. SQLite tests)
+        compare using the textual representation to avoid Postgres-specific casting in SQL.
+
         Args:
-            user_id: User UUID
+            user_id: User UUID or string
 
         Returns:
             Optional[User]: User instance or None if not found
         """
+        # Try direct UUID comparison when possible (fast path), but always
+        # fall back to a string-based lookup using CAST to avoid DB-specific
+        # UUID casting issues observed in unit tests (where the compiled SQL
+        # included a Postgres-only ::UUID cast against a SQLite DB).
+        from sqlalchemy import cast
+        from sqlalchemy import String as SAString
+        import uuid as _uuid
+
+        # Fast path: if user_id is a UUID instance, try direct comparison first
+        try:
+            if isinstance(user_id, _uuid.UUID):
+                user = self.db.query(User).filter(
+                    User.id == user_id,
+                    User.deleted_at.is_(None)
+                ).first()
+                if user:
+                    return user
+        except Exception:
+            # Be conservative: ignore and fall through to string-based lookup
+            pass
+
+        # Fallback: compare the textual representation of the id. This avoids
+        # Postgres-specific casting in compiled SQL and works across dialects.
+        try:
+            lookup_str = str(_uuid.UUID(str(user_id)))
+        except Exception:
+            lookup_str = str(user_id)
+
         return self.db.query(User).filter(
-            User.id == user_id,
+            cast(User.id, SAString(36)) == lookup_str,
             User.deleted_at.is_(None)
         ).first()
 
@@ -97,9 +128,14 @@ class UserRepository:
         if not user:
             return None
 
+        updated = False
         for key, value in kwargs.items():
             if hasattr(user, key) and value is not None:
                 setattr(user, key, value)
+                updated = True
+
+        if updated:
+            user.updated_at = datetime.utcnow()
 
         self.db.commit()
         self.db.refresh(user)

@@ -52,3 +52,23 @@ def sample_user_data():
         "password": "SecurePass123!",
         "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS.i7oWu2"  # bcrypt hash of "SecurePass123!"
     }
+
+
+# TestClient fixture used by API route unit tests. It overrides the real DB
+# dependency to use the in-memory testing session created in this file.
+from fastapi.testclient import TestClient
+from src.main import app
+from src.infrastructure.api.dependencies.database import get_db as real_get_db
+
+@pytest.fixture(scope="function")
+def client(db_session):
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[real_get_db] = override_get_db
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.pop(real_get_db, None)
