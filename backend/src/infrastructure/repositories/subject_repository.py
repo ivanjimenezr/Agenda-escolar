@@ -20,27 +20,20 @@ class SubjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
-        """Return existing subjects for the student that overlap at the same time and days.
+    def _normalize_days(self, days: List[Weekday]) -> List[str]:
+        """Normalize a sequence of weekday inputs to their enum *values* (e.g., "Lunes").
 
-        Normalize incoming `days` robustly to their enum textual *values* (e.g. "Lunes")
-        before constructing the query. Accepts:
-         - enum members (Weekday.LUNES)
-         - enum names ("LUNES")
-         - enum values in any case ("lunes", "Lunes")
-         - strings with/without accents ("SABADO", "Sábado")
+        Accepts enum members, enum names ("LUNES"), values in any case ("lunes"),
+        and accent-insensitive strings ("MIERCOLES" / "Miercoles" / "Miércoles").
+        Returns a list of valid enum values suitable for DB queries.
         """
         import unicodedata
-        # Helper to remove accents for tolerant matching
         def strip_accents(s: str) -> str:
             return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
-        import logging
-        logger = logging.getLogger(__name__)
-
-        normalized_days: List[str] = []
         from src.domain.models import Weekday as WeekdayEnum
 
+        normalized_days: List[str] = []
         for d in days:
             val: Optional[str] = None
 
@@ -73,14 +66,23 @@ class SubjectRepository:
             if val is not None:
                 normalized_days.append(val)
 
+        return normalized_days
+
+    def get_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
+        """Return existing subjects for the student that overlap at the same time and days.
+
+        Uses `_normalize_days` to produce valid enum textual values for the DB query.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        normalized_days = self._normalize_days(days)
         logger.debug("SubjectRepository.get_conflicting - normalized_days: %s (input days: %s)", normalized_days, days)
 
         # Nothing we can match - avoid querying with invalid values
         if not normalized_days:
             return []
 
-        # normalized_days already contains the correct enum values (e.g., 'Lunes', 'Martes')
-        # No need to re-process them, just use them directly in the query
         logger.debug("SubjectRepository.get_conflicting - days for query: %s", normalized_days)
 
         return self.db.query(Subject).filter(
@@ -135,7 +137,7 @@ class SubjectRepository:
 
         # Normalize days to their string values (e.g., "Lunes", "Martes") for DB storage
         # This ensures we always pass the enum VALUE (not NAME) to PostgreSQL
-        normalized_days = [d.value if isinstance(d, Weekday) else d for d in days]
+        normalized_days = self._normalize_days(days)
 
         subject = Subject(
             student_id=student_id,
@@ -203,7 +205,7 @@ class SubjectRepository:
             subject.name = name
         if days is not None:
             # Normalize days to their string values (e.g., "Lunes", "Martes") for DB storage
-            subject.days = [d.value if isinstance(d, Weekday) else d for d in days]
+            subject.days = self._normalize_days(days)
         if time is not None:
             subject.time = time
         if teacher is not None:
