@@ -21,50 +21,70 @@ class SubjectRepository:
         self.db = db
 
     def _normalize_days(self, days: List[Weekday]) -> List[str]:
-        """Normalize a sequence of weekday inputs to their enum *values* (e.g., "Lunes").
+        """Normalize a sequence of weekday inputs to their PostgreSQL enum values.
 
         Accepts enum members, enum names ("LUNES"), values in any case ("lunes"),
         and accent-insensitive strings ("MIERCOLES" / "Miercoles" / "Miércoles").
-        Returns a list of valid enum values suitable for DB queries.
+        Returns a list of valid enum values (e.g., "Monday", "Sábado") suitable for DB queries.
         """
         import unicodedata
         def strip_accents(s: str) -> str:
             return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
-        from src.domain.models import Weekday as WeekdayEnum
+        # Import the current Weekday enum from models.py (which uses Spanish names)
+        from src.domain.models import Weekday as SpanishWeekdayEnum
+
+        # Define the mapping to the *expected database values*.
+        # Assuming DB expects English weekdays and Spanish weekend names as added by migration.
+        db_day_values_mapping = {
+            "Lunes": "Monday",
+            "Martes": "Tuesday",
+            "Miércoles": "Wednesday",
+            "Jueves": "Thursday",
+            "Viernes": "Friday",
+            # Weekend days from migration - assume these are the exact values the DB expects.
+            "Sábado": "Sábado",
+            "Domingo": "Domingo",
+        }
 
         normalized_days: List[str] = []
         for d in days:
-            val: Optional[str] = None
+            identified_spanish_value: Optional[str] = None
 
-            # Enum instance -> use its value directly
-            if isinstance(d, WeekdayEnum):
-                val = d.value
+            # 1. If input is the current Python enum instance (Spanish values)
+            if isinstance(d, SpanishWeekdayEnum):
+                identified_spanish_value = d.value # e.g., "Lunes"
 
-            # Try string-based matching
+            # 2. Try string-based matching
             elif isinstance(d, str):
                 s = d.strip()
-                # 1) direct case-insensitive match against enum values
-                for member in WeekdayEnum:
-                    if s.lower() == member.value.lower():
-                        val = member.value
+                s_lower = s.lower()
+                s_upper = s.upper()
+
+                # Try to map from input string to Spanish enum value first
+                for spanish_val_key in db_day_values_mapping.keys(): # Iterate through Spanish keys
+                    # Case-insensitive match against Spanish value
+                    if s_lower == spanish_val_key.lower():
+                        identified_spanish_value = spanish_val_key
                         break
-                # 2) try matching by enum name, e.g., 'LUNES' using __members__ for safety
-                if val is None:
-                    member = WeekdayEnum.__members__.get(s.upper())
-                    if member is not None:
-                        val = member.value
-                # 3) accent-insensitive match as a last resort
-                if val is None:
-                    s_norm = strip_accents(s.lower())
-                    for member in WeekdayEnum:
-                        if strip_accents(member.value.lower()) == s_norm:
-                            val = member.value
+                    # Match uppercase Spanish name (like 'LUNES') to get its Spanish value
+                    if s_upper == spanish_val_key.upper():
+                         identified_spanish_value = spanish_val_key
+                         break
+                
+                # Accent-insensitive match as a last resort for Spanish value
+                if identified_spanish_value is None:
+                    s_norm = strip_accents(s_lower)
+                    for spanish_val_key in db_day_values_mapping.keys():
+                        if strip_accents(spanish_val_key.lower()) == s_norm:
+                            identified_spanish_value = spanish_val_key
                             break
 
-            # If we found a normalized textual value, append
-            if val is not None:
-                normalized_days.append(val)
+            # If we successfully identified a Spanish day value, map it to its DB representation
+            if identified_spanish_value is not None:
+                db_value = db_day_values_mapping.get(identified_spanish_value)
+                if db_value: # Ensure mapping exists
+                    normalized_days.append(db_value)
 
         return normalized_days
 
