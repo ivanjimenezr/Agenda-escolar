@@ -12,6 +12,7 @@ import { getMyStudents } from './services/studentService';
 import { getStudentMenus } from './services/menuService';
 import { getDinners } from './services/dinnerService';
 import { getActiveModules } from './services/activeModulesService';
+import { getSubjectsByStudent } from './services/subjectService';
 import { transformStudent, transformMenu } from './utils/dataTransformers';
 
 const defaultActiveModules: ActiveModules = {
@@ -34,7 +35,7 @@ const App: React.FC = () => {
   const [activeProfileId, setActiveProfileId] = useLocalStorage<string>('school-agenda-active-id', '');
   const [loading, setLoading] = useState(true);
 
-  const [allSubjects, setAllSubjects] = useLocalStorage<Subject[]>('school-agenda-subjects', []);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]); // Changed from localStorage to state
   const [allExams, setAllExams] = useLocalStorage<Exam[]>('school-agenda-exams', []);
   const [allDinners, setAllDinners] = useState<DinnerItem[]>([]); // Changed from localStorage to state
 
@@ -52,9 +53,10 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  // Load menus and dinners when active profile changes
+  // Load subjects, menus, and dinners when active profile changes
   useEffect(() => {
     if (activeProfileId) {
+      loadSubjects(activeProfileId);
       loadMenus(activeProfileId);
       loadDinners(activeProfileId);
     }
@@ -114,6 +116,29 @@ const App: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSubjects = async (studentId: string) => {
+    try {
+      console.log('[App] Loading subjects for student:', studentId);
+      const subjects = await getSubjectsByStudent(studentId);
+      console.log('[App] Received subjects from API:', subjects);
+      // Transform backend format (student_id) to frontend format (studentId)
+      const transformedSubjects: Subject[] = subjects.map(s => ({
+        id: s.id,
+        studentId: s.student_id || s.studentId,
+        name: s.name,
+        days: s.days,
+        time: s.time,
+        teacher: s.teacher,
+        color: s.color,
+        type: s.type
+      }));
+      console.log('[App] Transformed subjects:', transformedSubjects);
+      setAllSubjects(transformedSubjects);
+    } catch (error) {
+      console.error('[App] Error loading subjects:', error);
     }
   };
 
@@ -247,16 +272,7 @@ const App: React.FC = () => {
         return <ManagePage
                   activeProfileId={activeProfileId}
                   subjects={subjects}
-                  setSubjects={(val) => {
-                      if (typeof val === 'function') {
-                          setAllSubjects(prev => {
-                              const other = prev.filter(s => s.studentId !== activeProfileId);
-                              const current = prev.filter(s => s.studentId === activeProfileId);
-                              const updated = val(current);
-                              return [...other, ...updated.map(s => ({...s, studentId: activeProfileId}))];
-                          });
-                      }
-                  }}
+                  reloadSubjects={() => loadSubjects(activeProfileId)}
                   exams={exams}
                   setExams={(val) => {
                     if (typeof val === 'function') {

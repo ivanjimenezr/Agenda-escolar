@@ -5,6 +5,7 @@ import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 import ItemFormModal from '../components/ItemFormModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { createMenu, updateMenu, deleteMenu, upsertMenu } from '../services/menuService';
+import { deleteSubject } from '../services/subjectService';
 import { transformMenuForCreate, transformMenuForUpdate } from '../utils/dataTransformers';
 
 type Manageable = Exclude<ModuleKey, 'dinner'> | 'centers' | 'contacts';
@@ -13,7 +14,7 @@ type Item = Subject | Exam | MenuItem | SchoolEvent | Center | Contact;
 interface ManagePageProps {
   activeProfileId: string;
   subjects: Subject[];
-  setSubjects: (val: any) => void;
+  reloadSubjects: () => void;
   exams: Exam[];
   setExams: (val: any) => void;
   menu: MenuItem[];
@@ -29,11 +30,11 @@ interface ManagePageProps {
 }
 
 const ManagePage: React.FC<ManagePageProps> = ({
-  activeProfileId, subjects, setSubjects, exams, setExams, menu, setMenu, events, setEvents,
+  activeProfileId, subjects, reloadSubjects, exams, setExams, menu, setMenu, events, setEvents,
   centers, setCenters, contacts, setContacts, activeModules, reloadMenus,
 }) => {
   const dataMap = {
-    subjects: { title: 'Clases', data: subjects, setData: setSubjects },
+    subjects: { title: 'Clases', data: subjects },
     exams: { title: 'Exámenes', data: exams, setData: setExams },
     menu: { title: 'Comedor', data: menu, setData: setMenu },
     events: { title: 'Eventos', data: events, setData: setEvents },
@@ -89,7 +90,15 @@ const ManagePage: React.FC<ManagePageProps> = ({
   const handleDelete = async (item: Item, type: Manageable) => {
     if (!confirm('¿Borrar este elemento?')) return;
 
-    if (type === 'menu') {
+    if (type === 'subjects') {
+      try {
+        await deleteSubject(activeProfileId, item.id);
+        reloadSubjects();
+      } catch (error) {
+        console.error('Error deleting subject:', error);
+        alert('Error al eliminar la asignatura');
+      }
+    } else if (type === 'menu') {
       try {
         await deleteMenu(item.id);
         if (reloadMenus) await reloadMenus();
@@ -252,11 +261,8 @@ const ManagePage: React.FC<ManagePageProps> = ({
             onClose={() => setIsModalOpen(false)}
             onSave={(result) => {
                 if (activeTab === 'subjects') {
-                    if (editingItem) {
-                        setSubjects((prev: Subject[]) => prev.map(s => s.id === (editingItem as Subject).id ? result as Subject : s));
-                    } else {
-                        setSubjects((prev: Subject[]) => [...prev, result as Subject]);
-                    }
+                    // Subject already saved to backend by ItemFormModal, just reload
+                    reloadSubjects();
                     setIsModalOpen(false);
                 } else if (activeTab === 'menu') {
                     // Existing menu saving logic starts here
