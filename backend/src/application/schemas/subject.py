@@ -39,6 +39,20 @@ class SubjectCreateRequest(BaseModel):
             return None
         return v
 
+    @field_validator('time', mode='before')
+    @classmethod
+    def parse_time(cls, v):
+        # Convert time string to time object if needed
+        if isinstance(v, str):
+            from datetime import time as time_class
+            # Parse "HH:MM:SS" or "HH:MM" format
+            parts = v.split(':')
+            hour = int(parts[0])
+            minute = int(parts[1]) if len(parts) > 1 else 0
+            second = int(parts[2]) if len(parts) > 2 else 0
+            return time_class(hour, minute, second)
+        return v
+
     @field_validator('type', mode='before')
     @classmethod
     def normalize_type(cls, v):
@@ -62,6 +76,30 @@ class SubjectUpdateRequest(BaseModel):
     def validate_days(cls, v):
         if v is not None and len(v) == 0:
             raise ValueError('At least one day must be specified')
+        return v
+
+    @field_validator('time', mode='before')
+    @classmethod
+    def parse_time(cls, v):
+        # Convert time string to time object if needed
+        if v is None:
+            return v
+        if isinstance(v, str):
+            from datetime import time as time_class
+            # Parse "HH:MM:SS" or "HH:MM" format
+            parts = v.split(':')
+            hour = int(parts[0])
+            minute = int(parts[1]) if len(parts) > 1 else 0
+            second = int(parts[2]) if len(parts) > 2 else 0
+            return time_class(hour, minute, second)
+        return v
+
+    @field_validator('type', mode='before')
+    @classmethod
+    def normalize_type_update(cls, v):
+        # Convert type to lowercase to handle frontend sending uppercase
+        if isinstance(v, str):
+            return v.lower()
         return v
 
 
