@@ -132,12 +132,15 @@ class SubjectRepository:
 
         # Ensure teacher is not None to avoid DB NOT NULL constraint from older migrations
         teacher_value = teacher if teacher is not None else ""
-        
-        
+
+        # Normalize days to their string values (e.g., "Lunes", "Martes") for DB storage
+        # This ensures we always pass the enum VALUE (not NAME) to PostgreSQL
+        normalized_days = [d.value if isinstance(d, Weekday) else d for d in days]
+
         subject = Subject(
             student_id=student_id,
             name=name,
-            days=days,
+            days=normalized_days,
             time=time,
             teacher=teacher_value,
             color=color,
@@ -199,7 +202,8 @@ class SubjectRepository:
         if name is not None:
             subject.name = name
         if days is not None:
-            subject.days = days
+            # Normalize days to their string values (e.g., "Lunes", "Martes") for DB storage
+            subject.days = [d.value if isinstance(d, Weekday) else d for d in days]
         if time is not None:
             subject.time = time
         if teacher is not None:
