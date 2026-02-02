@@ -212,8 +212,8 @@ class Subject(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     student_id = Column(GUID(), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    # Store weekdays as native PostgreSQL ENUM ARRAY when using Postgres; fall back to JSON list for SQLite tests.
-    days = Column(ArrayType(SQLEnum(Weekday, name="weekday", create_type=True)), nullable=False)
+    # Store weekdays as simple text array (no enum to avoid serialization issues)
+    days = Column(ArrayType(Text), nullable=False)
     time = Column(Time, nullable=False)
     teacher = Column(String(255), nullable=True)
     color = Column(String(7), nullable=False)

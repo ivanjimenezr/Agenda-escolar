@@ -10,7 +10,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from src.domain.models import SubjectType, Weekday
+from src.domain.models import SubjectType
 
 
 # ==================== REQUEST SCHEMAS ====================
@@ -20,7 +20,7 @@ class SubjectCreateRequest(BaseModel):
     # student_id can be omitted in the request - it will be filled from the path
     student_id: Optional[UUID] = None
     name: str = Field(..., min_length=1, max_length=255)
-    days: List[Weekday] = Field(..., min_length=1)
+    days: List[str] = Field(..., min_length=1)  # Changed from Weekday enum to str
     time: time
     teacher: Optional[str] = Field(None, max_length=255)
     color: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
@@ -45,7 +45,7 @@ class SubjectCreateRequest(BaseModel):
 class SubjectUpdateRequest(BaseModel):
     """Schema for updating an existing subject"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
-    days: Optional[List[Weekday]] = Field(None, min_length=1)
+    days: Optional[List[str]] = Field(None, min_length=1)  # Changed from Weekday enum to str
     time: Optional[time] = None
     teacher: Optional[str] = Field(None, max_length=255)
     color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
@@ -66,7 +66,7 @@ class SubjectResponse(BaseModel):
     id: UUID
     student_id: UUID
     name: str
-    days: List[Weekday]
+    days: List[str]  # Changed from Weekday enum to str
     time: time
     teacher: Optional[str]
     color: str

@@ -11,7 +11,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from src.domain.models import Subject, SubjectType, Weekday
+from src.domain.models import Subject, SubjectType
 
 
 class SubjectRepository:
@@ -20,78 +20,22 @@ class SubjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def _normalize_days(self, days: List[Weekday]) -> List[str]:
-        """Normalize a sequence of weekday inputs to their PostgreSQL enum values.
+    def _normalize_days(self, days: List[str]) -> List[str]:
+        """Normalize weekday strings - simply returns them as-is since we're using plain strings now.
 
-        Accepts enum members, enum names ("LUNES"), values in any case ("lunes"),
-        and accent-insensitive strings ("MIERCOLES" / "Miercoles" / "Miércoles").
-        Returns a list of valid enum values (e.g., "Monday", "Sábado") suitable for DB queries.
+        This method validates that days is a non-empty list and returns the values.
+        No enum conversion needed anymore.
         """
-        import unicodedata
-        def strip_accents(s: str) -> str:
-            return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+        if not days:
+            return []
 
-        # Import the current Weekday enum from models.py (which uses Spanish names)
-        from src.domain.models import Weekday as SpanishWeekdayEnum
+        # Simply return the days as they are - they're already strings
+        return [str(d).strip() for d in days if d]
 
-        # Define the mapping to the *expected database values*.
-        # Assuming DB expects English weekdays and Spanish weekend names as added by migration.
-        db_day_values_mapping = {
-            "Lunes": "Monday",
-            "Martes": "Tuesday",
-            "Miércoles": "Wednesday",
-            "Jueves": "Thursday",
-            "Viernes": "Friday",
-            # Weekend days from migration - assume these are the exact values the DB expects.
-            "Sábado": "Sábado",
-            "Domingo": "Domingo",
-        }
-
-        normalized_days: List[str] = []
-        for d in days:
-            identified_spanish_value: Optional[str] = None
-
-            # 1. If input is the current Python enum instance (Spanish values)
-            if isinstance(d, SpanishWeekdayEnum):
-                identified_spanish_value = d.value # e.g., "Lunes"
-
-            # 2. Try string-based matching
-            elif isinstance(d, str):
-                s = d.strip()
-                s_lower = s.lower()
-                s_upper = s.upper()
-
-                # Try to map from input string to Spanish enum value first
-                for spanish_val_key in db_day_values_mapping.keys(): # Iterate through Spanish keys
-                    # Case-insensitive match against Spanish value
-                    if s_lower == spanish_val_key.lower():
-                        identified_spanish_value = spanish_val_key
-                        break
-                    # Match uppercase Spanish name (like 'LUNES') to get its Spanish value
-                    if s_upper == spanish_val_key.upper():
-                         identified_spanish_value = spanish_val_key
-                         break
-                
-                # Accent-insensitive match as a last resort for Spanish value
-                if identified_spanish_value is None:
-                    s_norm = strip_accents(s_lower)
-                    for spanish_val_key in db_day_values_mapping.keys():
-                        if strip_accents(spanish_val_key.lower()) == s_norm:
-                            identified_spanish_value = spanish_val_key
-                            break
-
-            # If we successfully identified a Spanish day value, map it to its DB representation
-            if identified_spanish_value is not None:
-                db_value = db_day_values_mapping.get(identified_spanish_value)
-                if db_value: # Ensure mapping exists
-                    normalized_days.append(db_value)
-
-        return normalized_days
-
-    def get_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
+    def get_conflicting(self, student_id: UUID, days: List[str], time: time) -> List[Subject]:
         """Return existing subjects for the student that overlap at the same time and days.
 
-        Uses `_normalize_days` to produce valid enum textual values for the DB query.
+        Uses `_normalize_days` to clean up the day strings for the DB query.
         """
         import logging
         logger = logging.getLogger(__name__)
@@ -133,7 +77,7 @@ class SubjectRepository:
                     result.append(s)
             return result
 
-    def delete_conflicting(self, student_id: UUID, days: List[Weekday], time: time) -> List[Subject]:
+    def delete_conflicting(self, student_id: UUID, days: List[str], time: time) -> List[Subject]:
         """Soft delete conflicting subjects and return them."""
         conflicts = self.get_conflicting(student_id, days, time)
         for c in conflicts:
@@ -146,7 +90,7 @@ class SubjectRepository:
         self,
         student_id: UUID,
         name: str,
-        days: List[Weekday],
+        days: List[str],
         time: time,
         teacher: str,
         color: str,
@@ -176,8 +120,7 @@ class SubjectRepository:
         # Ensure teacher is not None to avoid DB NOT NULL constraint from older migrations
         teacher_value = teacher if teacher is not None else ""
 
-        # Normalize days to their string values (e.g., "Lunes", "Martes") for DB storage
-        # This ensures we always pass the enum VALUE (not NAME) to PostgreSQL
+        # Normalize/clean the days (just strips whitespace now since we use plain strings)
         normalized_days = self._normalize_days(days)
 
         subject = Subject(
@@ -231,7 +174,7 @@ class SubjectRepository:
         self,
         subject_id: UUID,
         name: Optional[str] = None,
-        days: Optional[List[Weekday]] = None,
+        days: Optional[List[str]] = None,
         time: Optional[time] = None,
         teacher: Optional[str] = None,
         color: Optional[str] = None,
@@ -245,7 +188,7 @@ class SubjectRepository:
         if name is not None:
             subject.name = name
         if days is not None:
-            # Normalize days to their string values (e.g., "Lunes", "Martes") for DB storage
+            # Clean/normalize the days (just strips whitespace now since we use plain strings)
             subject.days = self._normalize_days(days)
         if time is not None:
             subject.time = time
