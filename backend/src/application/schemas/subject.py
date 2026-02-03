@@ -4,7 +4,7 @@ Subject Schemas
 Pydantic schemas for subject request/response validation
 """
 
-from datetime import time, datetime
+import datetime as dt
 from typing import List, Optional, Literal
 from uuid import UUID
 
@@ -19,7 +19,7 @@ class SubjectCreateRequest(BaseModel):
     student_id: Optional[UUID] = None
     name: str = Field(..., min_length=1, max_length=255)
     days: List[str] = Field(..., min_length=1)  # Changed from Weekday enum to str
-    time: time
+    time: dt.time
     teacher: Optional[str] = Field(None, max_length=255)
     color: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
     type: Literal["colegio", "extraescolar"]  # Changed from enum to string literal
@@ -43,14 +43,17 @@ class SubjectCreateRequest(BaseModel):
     @classmethod
     def parse_time(cls, v):
         # Convert time string to time object if needed
+        from datetime import time
+        # If it's already a time object, return it
+        if isinstance(v, dt.time):
+            return v
         if isinstance(v, str):
-            from datetime import time as time_class
             # Parse "HH:MM:SS" or "HH:MM" format
             parts = v.split(':')
             hour = int(parts[0])
             minute = int(parts[1]) if len(parts) > 1 else 0
             second = int(parts[2]) if len(parts) > 2 else 0
-            return time_class(hour, minute, second)
+            return dt.time(hour, minute, second)
         return v
 
     @field_validator('type', mode='before')
@@ -66,7 +69,7 @@ class SubjectUpdateRequest(BaseModel):
     """Schema for updating an existing subject"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     days: Optional[List[str]] = Field(None, min_length=1)  # Changed from Weekday enum to str
-    time: Optional[time] = None
+    time: Optional[dt.time] = None  # Don't use Field() here to avoid recursion
     teacher: Optional[str] = Field(None, max_length=255)
     color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
     type: Optional[Literal["colegio", "extraescolar"]] = None  # Changed from enum to string literal
@@ -84,14 +87,17 @@ class SubjectUpdateRequest(BaseModel):
         # Convert time string to time object if needed
         if v is None:
             return v
+        # If it's already a time object, return it
+        from datetime import time
+        if isinstance(v, dt.time):
+            return v
         if isinstance(v, str):
-            from datetime import time as time_class
             # Parse "HH:MM:SS" or "HH:MM" format
             parts = v.split(':')
             hour = int(parts[0])
             minute = int(parts[1]) if len(parts) > 1 else 0
             second = int(parts[2]) if len(parts) > 2 else 0
-            return time_class(hour, minute, second)
+            return dt.time(hour, minute, second)
         return v
 
     @field_validator('type', mode='before')
@@ -111,11 +117,11 @@ class SubjectResponse(BaseModel):
     student_id: UUID
     name: str
     days: List[str]  # Changed from Weekday enum to str
-    time: time
+    time: dt.time
     teacher: Optional[str]
     color: str
     type: str  # Changed from enum to string
-    created_at: datetime
-    updated_at: datetime
+    created_at: dt.datetime
+    updated_at: dt.datetime
 
     model_config = ConfigDict(from_attributes=True, extra='ignore')
