@@ -132,8 +132,6 @@ class SubjectRepository:
             color=color,
             type=type
         )
-        print("###Asignatura a crear:")
-        print(student_id, name, days, time, teacher_value, color, type, replace)
 
         self.db.add(subject)
         try:

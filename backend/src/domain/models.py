@@ -135,10 +135,10 @@ class User(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    student_profiles = relationship("StudentProfile", back_populates="user", cascade="all, delete-orphan", repr=False)
-    school_events = relationship("SchoolEvent", back_populates="user", cascade="all, delete-orphan", repr=False)
-    centers = relationship("Center", back_populates="user", cascade="all, delete-orphan", repr=False)
-    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan", repr=False)
+    student_profiles = relationship("StudentProfile", back_populates="user", cascade="all, delete-orphan")
+    school_events = relationship("SchoolEvent", back_populates="user", cascade="all, delete-orphan")
+    centers = relationship("Center", back_populates="user", cascade="all, delete-orphan")
+    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', name='{self.name}')>"
@@ -163,12 +163,12 @@ class StudentProfile(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="student_profiles", repr=False)
-    active_modules = relationship("ActiveModule", back_populates="student", uselist=False, cascade="all, delete-orphan", repr=False)
-    subjects = relationship("Subject", back_populates="student", cascade="all, delete-orphan", repr=False)
-    exams = relationship("Exam", back_populates="student", cascade="all, delete-orphan", repr=False)
-    menu_items = relationship("MenuItem", back_populates="student", cascade="all, delete-orphan", repr=False)
-    dinners = relationship("Dinner", back_populates="student", cascade="all, delete-orphan", repr=False)
+    user = relationship("User", back_populates="student_profiles")
+    active_modules = relationship("ActiveModule", back_populates="student", uselist=False, cascade="all, delete-orphan")
+    subjects = relationship("Subject", back_populates="student", cascade="all, delete-orphan")
+    exams = relationship("Exam", back_populates="student", cascade="all, delete-orphan")
+    menu_items = relationship("MenuItem", back_populates="student", cascade="all, delete-orphan")
+    dinners = relationship("Dinner", back_populates="student", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<StudentProfile(id={self.id}, name='{self.name}', grade='{self.grade}')>"
@@ -199,7 +199,7 @@ class ActiveModule(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="active_modules", repr=False)
+    student = relationship("StudentProfile", back_populates="active_modules")
 
     def __repr__(self):
         return f"<ActiveModule(student_id={self.student_id})>"
@@ -230,7 +230,7 @@ class Subject(Base):
     __table_args__ = ()
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="subjects", repr=False)
+    student = relationship("StudentProfile", back_populates="subjects")
 
     def __repr__(self):
         return f"<Subject(id={self.id}, name='{self.name}', type={self.type})>"
@@ -253,7 +253,7 @@ class Exam(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="exams", repr=False)
+    student = relationship("StudentProfile", back_populates="exams")
 
     def __repr__(self):
         return f"<Exam(id={self.id}, subject='{self.subject}', date={self.date})>"
@@ -283,7 +283,7 @@ class MenuItem(Base):
     )
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="menu_items", repr=False)
+    student = relationship("StudentProfile", back_populates="menu_items")
 
     def __repr__(self):
         return f"<MenuItem(id={self.id}, date={self.date}, first_course='{self.first_course}')>"
@@ -310,7 +310,7 @@ class Dinner(Base):
     )
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="dinners", repr=False)
+    student = relationship("StudentProfile", back_populates="dinners")
 
     def __repr__(self):
         return f"<Dinner(id={self.id}, date={self.date}, meal='{self.meal}')>"
@@ -332,7 +332,7 @@ class SchoolEvent(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="school_events", repr=False)
+    user = relationship("User", back_populates="school_events")
 
     def __repr__(self):
         return f"<SchoolEvent(id={self.id}, name='{self.name}', date={self.date}, type={self.type})>"
@@ -352,8 +352,8 @@ class Center(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="centers", repr=False)
-    contacts = relationship("Contact", back_populates="center", cascade="all, delete-orphan", repr=False)
+    user = relationship("User", back_populates="centers")
+    contacts = relationship("Contact", back_populates="center", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Center(id={self.id}, name='{self.name}')>"
@@ -375,7 +375,7 @@ class Contact(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    center = relationship("Center", back_populates="contacts", repr=False)
+    center = relationship("Center", back_populates="contacts")
 
     def __repr__(self):
         return f"<Contact(id={self.id}, name='{self.name}', phone='{self.phone}')>"
@@ -396,7 +396,7 @@ class UserPreference(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
-    user = relationship("User", back_populates="preferences", repr=False)
+    user = relationship("User", back_populates="preferences")
 
     def __repr__(self):
         return f"<UserPreference(user_id={self.user_id}, theme={self.theme})>"
