@@ -4,7 +4,7 @@ Menu Item Schemas
 Pydantic schemas for school menu request/response validation
 """
 
-from datetime import date, datetime
+import datetime as dt
 from typing import List, Optional
 from uuid import UUID
 
@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class MenuItemCreateRequest(BaseModel):
     """Schema for creating a new menu item"""
     student_id: UUID
-    date: date
+    date: dt.date
     first_course: str = Field(..., min_length=1, max_length=255)
     second_course: str = Field(..., min_length=1, max_length=255)
     side_dish: Optional[str] = Field(None, max_length=255)
@@ -26,7 +26,7 @@ class MenuItemCreateRequest(BaseModel):
 
 class MenuItemUpdateRequest(BaseModel):
     """Schema for updating an existing menu item"""
-    date: Optional[date] = None
+    date: Optional[dt.date] = None
     first_course: Optional[str] = Field(None, min_length=1, max_length=255)
     second_course: Optional[str] = Field(None, min_length=1, max_length=255)
     side_dish: Optional[str] = Field(None, max_length=255)
@@ -40,13 +40,13 @@ class MenuItemResponse(BaseModel):
     """Schema for menu item response"""
     id: UUID
     student_id: UUID
-    date: date
+    date: dt.date
     first_course: str
     second_course: str
     side_dish: Optional[str]
     dessert: Optional[str]
     allergens: List[str]
-    created_at: datetime
-    updated_at: datetime
+    created_at: dt.datetime
+    updated_at: dt.datetime
 
     model_config = ConfigDict(from_attributes=True, extra='ignore')

@@ -4,7 +4,7 @@ User schemas - Pydantic models for user-related operations.
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+import datetime as dt
 
 
 # ================ REQUEST SCHEMAS ================
@@ -84,7 +84,7 @@ class UserResponse(BaseModel):
     name: str
     is_active: bool
     email_verified: bool
-    created_at: datetime
+    created_at: dt.datetime
 
     model_config = ConfigDict(
         from_attributes=True,

@@ -43,7 +43,6 @@ class SubjectCreateRequest(BaseModel):
     @classmethod
     def parse_time(cls, v):
         # Convert time string to time object if needed
-        from datetime import time
         # If it's already a time object, return it
         if isinstance(v, dt.time):
             return v
@@ -88,7 +87,6 @@ class SubjectUpdateRequest(BaseModel):
         if v is None:
             return v
         # If it's already a time object, return it
-        from datetime import time
         if isinstance(v, dt.time):
             return v
         if isinstance(v, str):

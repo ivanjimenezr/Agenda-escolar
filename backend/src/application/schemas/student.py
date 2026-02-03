@@ -4,7 +4,7 @@ Student Profile Schemas
 Pydantic schemas for student profile request/response validation
 """
 
-from datetime import datetime
+import datetime as dt
 from typing import List, Optional
 from uuid import UUID
 
@@ -45,7 +45,7 @@ class StudentResponse(BaseModel):
     avatar_url: Optional[str]
     allergies: List[str]
     excluded_foods: List[str]
-    created_at: datetime
-    updated_at: datetime
+    created_at: dt.datetime
+    updated_at: dt.datetime
 
     model_config = ConfigDict(from_attributes=True, extra='ignore')
