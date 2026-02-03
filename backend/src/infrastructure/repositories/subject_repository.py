@@ -134,7 +134,7 @@ class SubjectRepository:
         )
         print("###Asignatura a crear:")
         print(student_id, name, days, time, teacher_value, color, type, replace)
-        print(f"Creating subject: {subject}")
+
         self.db.add(subject)
         try:
             self.db.commit()
