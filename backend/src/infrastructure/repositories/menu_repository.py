@@ -4,7 +4,7 @@ Menu Item Repository
 Data access layer for MenuItem entity
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -128,7 +128,7 @@ class MenuRepository:
         if allergens is not None:
             menu.allergens = allergens
 
-        menu.updated_at = datetime.utcnow()
+        menu.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(menu)
@@ -140,7 +140,7 @@ class MenuRepository:
         if not menu:
             return False
 
-        menu.deleted_at = datetime.utcnow()
+        menu.deleted_at = datetime.now(timezone.utc)
         self.db.commit()
         return True
 

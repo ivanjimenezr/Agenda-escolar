@@ -4,7 +4,7 @@ Active Modules Repository
 Data access layer for ActiveModule entity
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -72,7 +72,7 @@ class ActiveModulesRepository:
         if contacts is not None:
             active_modules.contacts = contacts
 
-        active_modules.updated_at = datetime.utcnow()
+        active_modules.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(active_modules)

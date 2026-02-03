@@ -4,7 +4,7 @@ Dinner Repository
 Data access layer for Dinner entity
 """
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -94,7 +94,7 @@ class DinnerRepository:
         if ingredients is not None:
             dinner.ingredients = ingredients
 
-        dinner.updated_at = datetime.utcnow()
+        dinner.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(dinner)
@@ -106,7 +106,7 @@ class DinnerRepository:
         if not dinner:
             return False
 
-        dinner.deleted_at = datetime.utcnow()
+        dinner.deleted_at = datetime.now(timezone.utc)
         self.db.commit()
         return True
 
@@ -116,7 +116,7 @@ class DinnerRepository:
         if not dinner:
             return False
 
-        dinner.deleted_at = datetime.utcnow()
+        dinner.deleted_at = datetime.now(timezone.utc)
         self.db.commit()
         return True
 
@@ -139,7 +139,7 @@ class DinnerRepository:
             existing.meal = meal
             existing.ingredients = ingredients or []
             existing.deleted_at = None  # Restore if was soft-deleted
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(existing)
             return existing

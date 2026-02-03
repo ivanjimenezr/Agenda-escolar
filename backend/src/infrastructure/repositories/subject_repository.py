@@ -4,7 +4,7 @@ Subject Repository
 Data access layer for Subject entity
 """
 
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -81,7 +81,7 @@ class SubjectRepository:
         """Soft delete conflicting subjects and return them."""
         conflicts = self.get_conflicting(student_id, days, time)
         for c in conflicts:
-            c.deleted_at = datetime.utcnow()
+            c.deleted_at = datetime.now(timezone.utc)
         if conflicts:
             self.db.commit()
         return conflicts
@@ -115,7 +115,7 @@ class SubjectRepository:
 
         if conflicts and replace:
             for c in conflicts:
-                c.deleted_at = datetime.utcnow()
+                c.deleted_at = datetime.now(timezone.utc)
 
         # Ensure teacher is not None to avoid DB NOT NULL constraint from older migrations
         teacher_value = teacher if teacher is not None else ""
@@ -199,7 +199,7 @@ class SubjectRepository:
         if type is not None:
             subject.type = type
 
-        subject.updated_at = datetime.utcnow()
+        subject.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(subject)
@@ -211,6 +211,6 @@ class SubjectRepository:
         if not subject:
             return False
 
-        subject.deleted_at = datetime.utcnow()
+        subject.deleted_at = datetime.now(timezone.utc)
         self.db.commit()
         return True

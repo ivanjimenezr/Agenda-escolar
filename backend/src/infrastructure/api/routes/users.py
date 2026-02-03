@@ -94,8 +94,8 @@ def delete_current_user(
         db: Database session
     """
     # Soft delete the user
-    from datetime import datetime
-    current_user.deleted_at = datetime.utcnow()
+    from datetime import datetime, timezone
+    current_user.deleted_at = datetime.now(timezone.utc)
     db.commit()
 
     return None

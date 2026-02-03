@@ -4,7 +4,7 @@ Student Profile Repository
 Data access layer for StudentProfile entity
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -86,7 +86,7 @@ class StudentRepository:
         if excluded_foods is not None:
             student.excluded_foods = excluded_foods
 
-        student.updated_at = datetime.utcnow()
+        student.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(student)
@@ -98,7 +98,7 @@ class StudentRepository:
         if not student:
             return False
 
-        student.deleted_at = datetime.utcnow()
+        student.deleted_at = datetime.now(timezone.utc)
         self.db.commit()
         return True
 

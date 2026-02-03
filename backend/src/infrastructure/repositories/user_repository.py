@@ -3,7 +3,7 @@ User Repository - Data access layer for User entity.
 """
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -135,7 +135,7 @@ class UserRepository:
                 updated = True
 
         if updated:
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()
         self.db.refresh(user)
@@ -157,7 +157,7 @@ class UserRepository:
         if not user:
             return False
 
-        user.deleted_at = datetime.utcnow()
+        user.deleted_at = datetime.now(timezone.utc)
         self.db.commit()
 
         return True
