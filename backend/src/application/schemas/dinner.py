@@ -54,7 +54,7 @@ class DinnerResponse(BaseModel):
     created_at: dt_datetime
     updated_at: dt_datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra='ignore')
 
 
 class ShoppingListCategoryResponse(BaseModel):
