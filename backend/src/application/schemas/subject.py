@@ -66,7 +66,7 @@ class SubjectUpdateRequest(BaseModel):
     """Schema for updating an existing subject"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     days: Optional[List[str]] = Field(None, min_length=1)  # Changed from Weekday enum to str
-    time: Optional[time] = None
+    time: Optional[time] = Field(default=None)
     teacher: Optional[str] = Field(None, max_length=255)
     color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
     type: Optional[Literal["colegio", "extraescolar"]] = None  # Changed from enum to string literal
