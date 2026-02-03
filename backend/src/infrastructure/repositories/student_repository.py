@@ -66,20 +66,27 @@ class StudentRepository:
         grade: Optional[str] = None,
         avatar_url: Optional[str] = None,
         allergies: Optional[List[str]] = None,
-        excluded_foods: Optional[List[str]] = None
+        excluded_foods: Optional[List[str]] = None,
+        _update_avatar: bool = False,
+        **kwargs
     ) -> Optional[StudentProfile]:
-        """Update student profile"""
+        """Update student profile
+
+        Note: _update_avatar flag indicates if avatar_url should be updated even if None
+        """
         student = self.get_by_id(student_id)
         if not student:
             return None
 
+        # Check if field was explicitly provided (even if None)
         if name is not None:
             student.name = name
         if school is not None:
             student.school = school
         if grade is not None:
             student.grade = grade
-        if avatar_url is not None:
+        # For avatar_url, use flag to allow explicitly setting to None
+        if _update_avatar:
             student.avatar_url = avatar_url
         if allergies is not None:
             student.allergies = allergies

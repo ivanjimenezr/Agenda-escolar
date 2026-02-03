@@ -107,22 +107,30 @@ class StudentUseCases:
             ValueError: If student not found
             PermissionError: If user doesn't own the student
         """
+        # Check if student exists first
+        student = self.student_repo.get_by_id(student_id)
+        if not student:
+            raise ValueError("Student not found")
+
         # Verify ownership
-        if not self.student_repo.verify_ownership(student_id, user_id):
+        if student.user_id != user_id:
             raise PermissionError("Access denied")
 
+        # Build kwargs - Pydantic sets all fields, so check model_dump(exclude_unset=True)
+        update_data_dict = data.model_dump(exclude_unset=True)
+
+        # Pass all updates directly, letting repository handle None values
         updated = self.student_repo.update(
             student_id=student_id,
-            name=data.name,
-            school=data.school,
-            grade=data.grade,
-            avatar_url=data.avatar_url,
-            allergies=data.allergies,
-            excluded_foods=data.excluded_foods
+            name=update_data_dict.get('name'),
+            school=update_data_dict.get('school'),
+            grade=update_data_dict.get('grade'),
+            avatar_url=update_data_dict.get('avatar_url') if 'avatar_url' not in update_data_dict else data.avatar_url,
+            allergies=update_data_dict.get('allergies'),
+            excluded_foods=update_data_dict.get('excluded_foods'),
+            # Pass set_avatar_url flag to indicate explicit update
+            _update_avatar=('avatar_url' in update_data_dict)
         )
-
-        if not updated:
-            raise ValueError("Student not found")
 
         return updated
 

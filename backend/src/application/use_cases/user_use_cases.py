@@ -11,6 +11,8 @@ from src.infrastructure.security.jwt import create_access_token
 from src.application.schemas.user import (
     UserRegisterRequest,
     UserLoginRequest,
+    UserUpdateRequest,
+    PasswordChangeRequest,
     UserResponse,
 )
 
@@ -111,19 +113,19 @@ class UserUseCases:
 
         return user
 
-    def update_user(self, user_id: UUID, **kwargs) -> User:
+    def update_user(self, user_id: UUID, data: UserUpdateRequest) -> User:
         """
         Update user information.
 
         Args:
             user_id: User UUID
-            **kwargs: Fields to update
+            data: User update data
 
         Returns:
             User: Updated user instance
 
         Raises:
-            ValueError: If user not found or email already taken
+            ValueError: If user not found, email already taken, or password validation fails
         """
         # Check if user exists
         user = self.user_repo.get_by_id(user_id)
@@ -131,27 +133,45 @@ class UserUseCases:
         if not user:
             raise ValueError("User not found")
 
-        # If updating email, check if it's available
-        if "email" in kwargs and kwargs["email"] != user.email:
-            if self.user_repo.exists_by_email(kwargs["email"]):
-                raise ValueError("Email already taken")
+        # Handle password change if both passwords provided
+        if data.current_password and data.new_password:
+            # Verify current password
+            if not verify_password(data.current_password, user.password_hash):
+                raise ValueError("Current password is incorrect")
+            # Hash and update password
+            password_hash = hash_password(data.new_password)
+            self.user_repo.update(user_id, password_hash=password_hash)
+        elif data.current_password or data.new_password:
+            # One provided but not both
+            raise ValueError("Both current_password and new_password are required")
 
-        # Update user
-        updated_user = self.user_repo.update(user_id, **kwargs)
+        # Build update kwargs for other fields
+        update_kwargs = {}
+        if data.name is not None:
+            update_kwargs['name'] = data.name
+        if data.email is not None:
+            # Check if email is available
+            if data.email != user.email and self.user_repo.exists_by_email(data.email):
+                raise ValueError("Email already registered")
+            update_kwargs['email'] = data.email
 
-        return updated_user
+        # Update user if there are changes
+        if update_kwargs:
+            updated_user = self.user_repo.update(user_id, **update_kwargs)
+            return updated_user
 
-    def change_password(self, user_id: UUID, current_password: str, new_password: str) -> User:
+        return user
+
+    def change_password(self, user_id: UUID, data: PasswordChangeRequest) -> bool:
         """
         Change user password.
 
         Args:
             user_id: User UUID
-            current_password: Current password for verification
-            new_password: New password to set
+            data: Password change data
 
         Returns:
-            User: Updated user instance
+            bool: True if successful
 
         Raises:
             ValueError: If user not found or current password is incorrect
@@ -163,16 +183,16 @@ class UserUseCases:
             raise ValueError("User not found")
 
         # Verify current password
-        if not verify_password(current_password, user.password_hash):
+        if not verify_password(data.current_password, user.password_hash):
             raise ValueError("Current password is incorrect")
 
         # Hash new password
-        new_password_hash = hash_password(new_password)
+        new_password_hash = hash_password(data.new_password)
 
         # Update password
-        updated_user = self.user_repo.update(user_id, password_hash=new_password_hash)
+        self.user_repo.update(user_id, password_hash=new_password_hash)
 
-        return updated_user
+        return True
 
     def delete_user(self, user_id: UUID) -> bool:
         """
