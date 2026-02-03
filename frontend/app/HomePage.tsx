@@ -112,6 +112,15 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
   const upcomingExams = exams.filter(e => new Date(e.date) >= new Date(today.setHours(0,0,0,0))).sort((a,b) => a.date.localeCompare(b.date)).slice(0, 2);
   const upcomingEvents = events.filter(e => new Date(e.date) >= new Date(new Date().setHours(0,0,0,0))).sort((a,b) => a.date.localeCompare(b.date));
 
+  // Check if subject time has passed
+  const isSubjectPassed = (time: string): boolean => {
+    const now = new Date();
+    const [hours, minutes] = time.split(':').map(Number);
+    const subjectTime = new Date();
+    subjectTime.setHours(hours, minutes, 0, 0);
+    return now > subjectTime;
+  };
+
   const deleteEvent = (id: string) => {
       if (confirm('¿Eliminar este evento?')) {
           setEvents(prev => prev.filter(e => e.id !== id));
@@ -124,20 +133,23 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
           case 'subjects':
               return (
                 <InfoCard key={key} icon={<BookOpenIcon />} title="Clases de Hoy" index={index} isEditMode={isEditMode} onMoveUp={() => moveCard(index, 'up')} onMoveDown={() => moveCard(index, 'down')}>
-                    {todaysSubjects.length > 0 ? todaysSubjects.map(s => (
-                        <div key={s.id} className="flex items-center p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm">
-                            <div className="w-1.5 h-10 rounded-full mr-3" style={{ backgroundColor: s.color || (s.type === 'extraescolar' ? '#a855f7' : '#3b82f6') }}></div>
+                    {todaysSubjects.length > 0 ? todaysSubjects.map(s => {
+                        const isPassed = isSubjectPassed(s.time);
+                        return (
+                        <div key={s.id} className={`flex items-center p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm transition-all ${isPassed ? 'opacity-50' : ''}`}>
+                            <div className="w-1.5 h-10 rounded-full mr-3" style={{ backgroundColor: isPassed ? '#9ca3af' : (s.color || (s.type === 'extraescolar' ? '#a855f7' : '#3b82f6')) }}></div>
                             <div className="flex-grow">
                                 <div className="flex justify-between items-start">
-                                    <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{s.name}</p>
-                                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${s.type === 'extraescolar' ? 'border-purple-200 text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800' : 'border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'}`}>
+                                    <p className={`font-bold text-sm ${isPassed ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-100'}`}>{s.name}</p>
+                                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${isPassed ? 'border-gray-300 text-gray-400 bg-gray-100 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700' : s.type === 'extraescolar' ? 'border-purple-200 text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800' : 'border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'}`}>
                                         {s.type === 'extraescolar' ? 'Extra' : 'Cole'}
                                     </span>
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{s.time} • {s.teacher}</p>
+                                <p className={`text-xs font-medium ${isPassed ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>{s.time} • {s.teacher}</p>
                             </div>
                         </div>
-                    )) : <p className="text-center py-3 text-gray-400 dark:text-gray-500 text-sm font-medium italic">No hay clases hoy</p>}
+                        );
+                    }) : <p className="text-center py-3 text-gray-400 dark:text-gray-500 text-sm font-medium italic">No hay clases hoy</p>}
                 </InfoCard>
               );
           case 'contacts':

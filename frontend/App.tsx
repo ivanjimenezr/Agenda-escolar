@@ -103,7 +103,16 @@ const App: React.FC = () => {
 
       // Set active profile to first student if none selected
       if (!activeProfileId && transformedStudents.length > 0) {
-        setActiveProfileId(transformedStudents[0].id);
+        const firstStudentId = transformedStudents[0].id;
+        setActiveProfileId(firstStudentId);
+
+        // Load data immediately for first student on initial login
+        // This prevents the empty state issue before useEffect triggers
+        await Promise.all([
+          loadSubjects(firstStudentId),
+          loadMenus(firstStudentId),
+          loadDinners(firstStudentId)
+        ]);
       }
     } catch (error: any) {
       console.error('[App] Error loading students:', error);
