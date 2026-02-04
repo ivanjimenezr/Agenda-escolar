@@ -366,7 +366,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
           </div>
       )}
 
-      {editingEvent && <ItemFormModal item={editingEvent} type="events" title="Evento" onClose={() => setEditingEvent(null)} onSave={(data) => { setEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...e, ...data } : e)); setEditingEvent(null); }} />}
+      {editingEvent && <ItemFormModal item={editingEvent} type="events" title="Evento" studentId={activeProfileId} onClose={() => setEditingEvent(null)} onSave={(data) => { setEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...e, ...data } : e)); setEditingEvent(null); }} />}
     </div>
   );
 };
