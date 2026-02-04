@@ -404,6 +404,9 @@ const ManagePage: React.FC<ManagePageProps> = ({
                         alert(`Error al guardar el menú: ${errorMessage}`);
                     }
                     // Existing menu saving logic ends here
+                } else if (activeTab === 'exams') {
+                    // Exams use backend API
+                    handleSave(result);
                 } else {
                     // Other types still use local state for now
                     const setData = dataMap[activeTab].setData as any;

@@ -61,10 +61,9 @@ class ExamRepository:
             raise ValueError(f"Failed to create exam: {str(e)}")
 
     def get_by_id(self, exam_id: UUID) -> Optional[Exam]:
-        """Get exam by ID (excludes soft-deleted)"""
+        """Get exam by ID"""
         return self.db.query(Exam).filter(
-            Exam.id == exam_id,
-            Exam.deleted_at.is_(None)
+            Exam.id == exam_id
         ).first()
 
     def get_by_student_id(
@@ -73,7 +72,7 @@ class ExamRepository:
         from_date: Optional[date] = None,
         to_date: Optional[date] = None
     ) -> List[Exam]:
-        """Get all exams for a student (excludes soft-deleted)
+        """Get all exams for a student
 
         Args:
             student_id: UUID of the student
@@ -84,8 +83,7 @@ class ExamRepository:
             List of exams ordered by date ascending
         """
         query = self.db.query(Exam).filter(
-            Exam.student_id == student_id,
-            Exam.deleted_at.is_(None)
+            Exam.student_id == student_id
         )
 
         if from_date:
