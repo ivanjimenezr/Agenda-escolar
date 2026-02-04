@@ -65,6 +65,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [editingEvent, setEditingEvent] = useState<SchoolEvent | null>(null);
   const [dayOffset, setDayOffset] = useState(0);
+  const [expandedExamId, setExpandedExamId] = useState<string | null>(null);
 
   const moveCard = (index: number, direction: 'up' | 'down') => {
       const newOrder = [...cardOrder];
@@ -269,18 +270,64 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
           case 'exams':
               return (
                 <InfoCard key={key} icon={<AcademicCapIcon />} title="Próximos Exámenes" index={index} isEditMode={isEditMode} onMoveUp={() => moveCard(index, 'up')} onMoveDown={() => moveCard(index, 'down')}>
-                    {upcomingExams.length > 0 ? upcomingExams.map(e => (
-                        <div key={e.id} className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 flex justify-between items-center shadow-sm">
-                            <div className="flex-1 mr-2">
-                                <p className="font-bold text-red-950 dark:text-red-100 text-sm">{e.subject}</p>
-                                <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wide">{e.topic}</p>
+                    {upcomingExams.length > 0 ? upcomingExams.map(e => {
+                        const isExpanded = expandedExamId === e.id;
+                        return (
+                            <div key={e.id} className="rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 shadow-sm overflow-hidden">
+                                <div
+                                    className="p-3 flex justify-between items-center cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                                    onClick={() => setExpandedExamId(isExpanded ? null : e.id)}
+                                >
+                                    <div className="flex-1 mr-2">
+                                        <p className="font-bold text-red-950 dark:text-red-100 text-sm">{e.subject}</p>
+                                        <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wide">{e.topic}</p>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-base font-bold leading-none text-red-900 dark:text-red-200">{new Date(e.date).getDate()}</p>
+                                            <p className="text-[9px] text-red-500/70 dark:text-red-400/70 font-bold uppercase">{new Date(e.date).toLocaleDateString('es-ES', { month: 'short' })}</p>
+                                        </div>
+                                        {isExpanded ? (
+                                            <ChevronUpIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                        ) : (
+                                            <ChevronDownIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                        )}
+                                    </div>
+                                </div>
+                                {isExpanded && (
+                                    <div className="px-3 pb-3 pt-2 border-t border-red-200 dark:border-red-900/50 bg-red-100/50 dark:bg-red-900/20">
+                                        <div className="space-y-2">
+                                            <div>
+                                                <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wide mb-1">Asignatura</p>
+                                                <p className="text-sm text-red-950 dark:text-red-100 font-semibold">{e.subject}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wide mb-1">Tema</p>
+                                                <p className="text-sm text-red-950 dark:text-red-100">{e.topic}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wide mb-1">Fecha</p>
+                                                <p className="text-sm text-red-950 dark:text-red-100">
+                                                    {new Date(e.date).toLocaleDateString('es-ES', {
+                                                        weekday: 'long',
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </p>
+                                            </div>
+                                            {e.notes && (
+                                                <div>
+                                                    <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wide mb-1">Notas</p>
+                                                    <p className="text-sm text-red-950 dark:text-red-100 whitespace-pre-wrap">{e.notes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            <div className="text-right flex-shrink-0">
-                                <p className="text-base font-bold leading-none text-red-900 dark:text-red-200">{new Date(e.date).getDate()}</p>
-                                <p className="text-[9px] text-red-500/70 dark:text-red-400/70 font-bold uppercase">{new Date(e.date).toLocaleDateString('es-ES', { month: 'short' })}</p>
-                            </div>
-                        </div>
-                    )) : <p className="text-center py-3 text-green-600 dark:text-green-400 text-sm font-bold">¡Sin exámenes pronto! 🎉</p>}
+                        );
+                    }) : <p className="text-center py-3 text-green-600 dark:text-green-400 text-sm font-bold">¡Sin exámenes pronto! 🎉</p>}
                 </InfoCard>
               );
           default: return null;
