@@ -31,7 +31,10 @@ export interface UpdateExamRequest {
  * Create a new exam for a student
  */
 export const createExam = async (studentId: string, data: CreateExamRequest): Promise<Exam> => {
-  return apiClient.post<Exam>(`/api/v1/students/${studentId}/exams`, data);
+  console.log('[examService] createExam called:', { studentId, data });
+  const result = await apiClient.post<Exam>(`/api/v1/students/${studentId}/exams`, data);
+  console.log('[examService] createExam result:', result);
+  return result;
 };
 
 /**
@@ -70,7 +73,10 @@ export const updateExam = async (
   examId: string,
   data: UpdateExamRequest
 ): Promise<Exam> => {
-  return apiClient.put<Exam>(`/api/v1/students/${studentId}/exams/${examId}`, data);
+  console.log('[examService] updateExam called:', { studentId, examId, data });
+  const result = await apiClient.put<Exam>(`/api/v1/students/${studentId}/exams/${examId}`, data);
+  console.log('[examService] updateExam result:', result);
+  return result;
 };
 
 /**

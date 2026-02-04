@@ -123,27 +123,34 @@ const ManagePage: React.FC<ManagePageProps> = ({
   };
 
   const handleSave = async (data: any) => {
+    console.log('[ManagePage] handleSave called with:', { activeTab, data });
     if (activeTab === 'exams') {
       try {
+        console.log('[ManagePage] Processing exam save...');
         const payload = {
           subject: data.subject,
           date: data.date,
           topic: data.topic,
           notes: data.notes || undefined
         };
+        console.log('[ManagePage] Exam payload:', payload);
 
         if (editingItem) {
           // Update existing exam
+          console.log('[ManagePage] Updating exam:', editingItem.id);
           await updateExam(activeProfileId, editingItem.id, payload);
         } else {
           // Create new exam
+          console.log('[ManagePage] Creating new exam for student:', activeProfileId);
           await createExam(activeProfileId, payload);
         }
 
+        console.log('[ManagePage] Exam saved successfully, reloading...');
         reloadExams();
         setIsModalOpen(false);
+        console.log('[ManagePage] Modal closed, exam operation complete');
       } catch (error: any) {
-        console.error('Error saving exam:', error);
+        console.error('[ManagePage] Error saving exam:', error);
         let errorMessage = 'Error desconocido';
 
         if (error instanceof Error) {
@@ -306,6 +313,7 @@ const ManagePage: React.FC<ManagePageProps> = ({
             centers={centers}
             onClose={() => setIsModalOpen(false)}
             onSave={(result) => {
+                console.log('[ManagePage] onSave callback triggered:', { activeTab, result });
                 if (activeTab === 'subjects') {
                     // Subject already saved to backend by ItemFormModal, just reload
                     reloadSubjects();
@@ -406,6 +414,7 @@ const ManagePage: React.FC<ManagePageProps> = ({
                     // Existing menu saving logic ends here
                 } else if (activeTab === 'exams') {
                     // Exams use backend API
+                    console.log('[ManagePage] Routing to handleSave for exams');
                     handleSave(result);
                 } else {
                     // Other types still use local state for now
