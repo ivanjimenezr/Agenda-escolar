@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { StudentProfile, Subject, Exam, MenuItem, SchoolEvent, ActiveModules, DinnerItem, ModuleKey, Center, Contact, View } from '../types';
-import { BookOpenIcon, CakeIcon, AcademicCapIcon, FlagIcon, MoonIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, TrashIcon, PencilIcon, UserIcon, PlusIcon, PencilIcon as EditIcon } from '../components/icons';
+import { BookOpenIcon, CakeIcon, AcademicCapIcon, FlagIcon, MoonIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, TrashIcon, PencilIcon, UserIcon, PlusIcon, PencilIcon as EditIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import { generateDinners } from '../services/dinnerService';
 import ItemFormModal from '../components/ItemFormModal';
 
@@ -64,6 +64,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
   const [generating, setGenerating] = useState(false);
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [editingEvent, setEditingEvent] = useState<SchoolEvent | null>(null);
+  const [dayOffset, setDayOffset] = useState(0);
 
   const moveCard = (index: number, direction: 'up' | 'down') => {
       const newOrder = [...cardOrder];
@@ -106,7 +107,6 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
     }
   };
 
-  const todaysSubjects = subjects.filter(s => s.days.includes(dayOfWeek as any)).sort((a, b) => a.time.localeCompare(b.time));
   const todaysMenu = menu.find(m => m.date === todayISO);
   const todaysDinner = dinners.find(d => d.date === todayISO);
   const upcomingExams = exams.filter(e => new Date(e.date) >= new Date(today.setHours(0,0,0,0))).sort((a,b) => a.date.localeCompare(b.date)).slice(0, 2);
@@ -114,6 +114,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
 
   // Check if subject time has passed
   const isSubjectPassed = (time: string): boolean => {
+    if (dayOffset > 0) return false;
     const now = new Date();
     const [hours, minutes] = time.split(':').map(Number);
     const subjectTime = new Date();
@@ -131,9 +132,46 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
       if (!activeModules[key]) return null;
       switch(key) {
           case 'subjects':
+              const targetDate = new Date(today);
+              targetDate.setDate(today.getDate() + dayOffset);
+              const targetDayOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][targetDate.getDay()];
+              const subjectsForDay = subjects
+                .filter(s => s.days.includes(targetDayOfWeek as any))
+                .sort((a, b) => a.time.localeCompare(b.time));
+
+              const dateLabel = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(targetDate);
+
               return (
-                <InfoCard key={key} icon={<BookOpenIcon />} title="Clases de Hoy" index={index} isEditMode={isEditMode} onMoveUp={() => moveCard(index, 'up')} onMoveDown={() => moveCard(index, 'down')}>
-                    {todaysSubjects.length > 0 ? todaysSubjects.map(s => {
+                <InfoCard 
+                    key={key} 
+                    icon={<BookOpenIcon />} 
+                    title={dayOffset === 0 ? 'Clases de Hoy' : dateLabel}
+                    index={index} 
+                    isEditMode={isEditMode} 
+                    onMoveUp={() => moveCard(index, 'up')} 
+                    onMoveDown={() => moveCard(index, 'down')}
+                >
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        <button 
+                            onClick={() => setDayOffset(d => Math.max(d - 1, 0))} 
+                            disabled={dayOffset === 0}
+                            className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 disabled:opacity-30"
+                        >
+                            <ChevronLeftIcon className="w-4 h-4" />
+                        </button>
+                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
+                            {dayOffset === 0 ? 'Hoy' : targetDayOfWeek}
+                        </span>
+                        <button 
+                            onClick={() => setDayOffset(d => Math.min(d + 1, 4))} 
+                            disabled={dayOffset === 4}
+                            className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 disabled:opacity-30"
+                        >
+                            <ChevronRightIcon className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    {subjectsForDay.length > 0 ? subjectsForDay.map(s => {
                         const isPassed = isSubjectPassed(s.time);
                         return (
                         <div key={s.id} className={`flex items-center p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm transition-all ${isPassed ? 'opacity-50' : ''}`}>
@@ -149,7 +187,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
                             </div>
                         </div>
                         );
-                    }) : <p className="text-center py-3 text-gray-400 dark:text-gray-500 text-sm font-medium italic">No hay clases hoy</p>}
+                    }) : <p className="text-center py-3 text-gray-400 dark:text-gray-500 text-sm font-medium italic">No hay clases este día</p>}
                 </InfoCard>
               );
           case 'contacts':
