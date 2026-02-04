@@ -6,6 +6,7 @@ import ItemFormModal from '../components/ItemFormModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { createMenu, updateMenu, deleteMenu, upsertMenu } from '../services/menuService';
 import { deleteSubject } from '../services/subjectService';
+import { createExam, updateExam, deleteExam } from '../services/examService';
 import { transformMenuForCreate, transformMenuForUpdate } from '../utils/dataTransformers';
 
 type Manageable = Exclude<ModuleKey, 'dinner'> | 'centers' | 'contacts';
@@ -17,6 +18,7 @@ interface ManagePageProps {
   reloadSubjects: () => void;
   exams: Exam[];
   setExams: (val: any) => void;
+  reloadExams: () => void;
   menu: MenuItem[];
   setMenu: React.Dispatch<React.SetStateAction<MenuItem[]>>;
   events: SchoolEvent[];
@@ -30,7 +32,7 @@ interface ManagePageProps {
 }
 
 const ManagePage: React.FC<ManagePageProps> = ({
-  activeProfileId, subjects, reloadSubjects, exams, setExams, menu, setMenu, events, setEvents,
+  activeProfileId, subjects, reloadSubjects, exams, setExams, reloadExams, menu, setMenu, events, setEvents,
   centers, setCenters, contacts, setContacts, activeModules, reloadMenus,
 }) => {
   const dataMap = {
@@ -98,6 +100,14 @@ const ManagePage: React.FC<ManagePageProps> = ({
         console.error('Error deleting subject:', error);
         alert('Error al eliminar la asignatura');
       }
+    } else if (type === 'exams') {
+      try {
+        await deleteExam(activeProfileId, item.id);
+        reloadExams();
+      } catch (error) {
+        console.error('Error deleting exam:', error);
+        alert('Error al eliminar el examen');
+      }
     } else if (type === 'menu') {
       try {
         await deleteMenu(item.id);
@@ -113,7 +123,43 @@ const ManagePage: React.FC<ManagePageProps> = ({
   };
 
   const handleSave = async (data: any) => {
-    if (activeTab === 'menu') {
+    if (activeTab === 'exams') {
+      try {
+        const payload = {
+          subject: data.subject,
+          date: data.date,
+          topic: data.topic,
+          notes: data.notes || undefined
+        };
+
+        if (editingItem) {
+          // Update existing exam
+          await updateExam(activeProfileId, editingItem.id, payload);
+        } else {
+          // Create new exam
+          await createExam(activeProfileId, payload);
+        }
+
+        reloadExams();
+        setIsModalOpen(false);
+      } catch (error: any) {
+        console.error('Error saving exam:', error);
+        let errorMessage = 'Error desconocido';
+
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error?.details) {
+          errorMessage = JSON.stringify(error.details);
+        } else if (error?.message) {
+          errorMessage = String(error.message);
+        }
+
+        console.error('Full error details:', JSON.stringify(error, null, 2));
+        alert(`Error al guardar el examen: ${errorMessage}`);
+      }
+    } else if (activeTab === 'menu') {
       try {
         // Debug: raw form data from modal
         console.debug('[ManagePage] raw menu form data:', data);

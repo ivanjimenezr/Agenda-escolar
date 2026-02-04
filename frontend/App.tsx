@@ -13,6 +13,7 @@ import { getStudentMenus } from './services/menuService';
 import { getDinners } from './services/dinnerService';
 import { getActiveModules } from './services/activeModulesService';
 import { getSubjectsByStudent } from './services/subjectService';
+import { getExamsByStudent } from './services/examService';
 import { transformStudent, transformMenu } from './utils/dataTransformers';
 
 const defaultActiveModules: ActiveModules = {
@@ -36,7 +37,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]); // Changed from localStorage to state
-  const [allExams, setAllExams] = useLocalStorage<Exam[]>('school-agenda-exams', []);
+  const [allExams, setAllExams] = useState<Exam[]>([]); // Changed from localStorage to state
   const [allDinners, setAllDinners] = useState<DinnerItem[]>([]); // Changed from localStorage to state
 
   const [menu, setMenu] = useState<MenuItem[]>([]);
@@ -53,12 +54,13 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  // Load subjects, menus, and dinners when active profile changes
+  // Load subjects, menus, dinners, and exams when active profile changes
   useEffect(() => {
     if (activeProfileId) {
       loadSubjects(activeProfileId);
       loadMenus(activeProfileId);
       loadDinners(activeProfileId);
+      loadExams(activeProfileId);
     }
   }, [activeProfileId]);
 
@@ -111,7 +113,8 @@ const App: React.FC = () => {
         await Promise.all([
           loadSubjects(firstStudentId),
           loadMenus(firstStudentId),
-          loadDinners(firstStudentId)
+          loadDinners(firstStudentId),
+          loadExams(firstStudentId)
         ]);
       }
     } catch (error: any) {
@@ -181,6 +184,27 @@ const App: React.FC = () => {
       setAllDinners(transformedDinners);
     } catch (error) {
       console.error('[App] Error loading dinners:', error);
+    }
+  };
+
+  const loadExams = async (studentId: string) => {
+    try {
+      console.log('[App] Loading exams for student:', studentId);
+      const exams = await getExamsByStudent(studentId);
+      console.log('[App] Received exams from API:', exams);
+      // Transform backend format (student_id) to frontend format (studentId)
+      const transformedExams: Exam[] = exams.map(e => ({
+        id: e.id,
+        studentId: e.student_id || e.studentId,
+        subject: e.subject,
+        date: e.date,
+        topic: e.topic,
+        notes: e.notes
+      }));
+      console.log('[App] Transformed exams:', transformedExams);
+      setAllExams(transformedExams);
+    } catch (error) {
+      console.error('[App] Error loading exams:', error);
     }
   };
 
@@ -293,6 +317,7 @@ const App: React.FC = () => {
                         });
                     }
                   }}
+                  reloadExams={() => loadExams(activeProfileId)}
                   menu={menu} setMenu={setMenu}
                   events={events} setEvents={setEvents}
                   centers={centers} setCenters={setCenters}
