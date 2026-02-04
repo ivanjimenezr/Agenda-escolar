@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { createMenu, updateMenu, deleteMenu, upsertMenu } from '../services/menuService';
 import { deleteSubject } from '../services/subjectService';
 import { createExam, updateExam, deleteExam } from '../services/examService';
+import { createEvent, updateEvent, deleteEvent } from '../services/eventService';
 import { transformMenuForCreate, transformMenuForUpdate } from '../utils/dataTransformers';
 
 type Manageable = Exclude<ModuleKey, 'dinner'> | 'centers' | 'contacts';
@@ -23,6 +24,7 @@ interface ManagePageProps {
   setMenu: React.Dispatch<React.SetStateAction<MenuItem[]>>;
   events: SchoolEvent[];
   setEvents: React.Dispatch<React.SetStateAction<SchoolEvent[]>>;
+  reloadEvents: () => void;
   centers: Center[];
   setCenters: React.Dispatch<React.SetStateAction<Center[]>>;
   contacts: Contact[];
@@ -32,7 +34,7 @@ interface ManagePageProps {
 }
 
 const ManagePage: React.FC<ManagePageProps> = ({
-  activeProfileId, subjects, reloadSubjects, exams, setExams, reloadExams, menu, setMenu, events, setEvents,
+  activeProfileId, subjects, reloadSubjects, exams, setExams, reloadExams, menu, setMenu, events, setEvents, reloadEvents,
   centers, setCenters, contacts, setContacts, activeModules, reloadMenus,
 }) => {
   const dataMap = {
@@ -115,6 +117,15 @@ const ManagePage: React.FC<ManagePageProps> = ({
       } catch (error) {
         console.error('Error deleting menu:', error);
         alert('Error al eliminar el menú');
+      }
+    } else if (type === 'events') {
+      try {
+        console.log('[ManagePage] Deleting event:', item.id);
+        await deleteEvent(item.id);
+        reloadEvents();
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        alert('Error al eliminar el evento');
       }
     } else {
       // Other types still use local state
@@ -255,6 +266,47 @@ const ManagePage: React.FC<ManagePageProps> = ({
         console.error('Full error details:', JSON.stringify(error, null, 2));
 
         alert(`Error al guardar el menú: ${errorMessage}`);
+      }
+    } else if (activeTab === 'events') {
+      try {
+        console.log('[ManagePage] Processing event save...');
+        const payload = {
+          date: data.date,
+          name: data.name,
+          type: data.type
+        };
+        console.log('[ManagePage] Event payload:', payload);
+
+        if (editingItem) {
+          // Update existing event
+          console.log('[ManagePage] Updating event:', editingItem.id);
+          await updateEvent(editingItem.id, payload);
+        } else {
+          // Create new event
+          console.log('[ManagePage] Creating new event');
+          await createEvent(payload);
+        }
+
+        console.log('[ManagePage] Event saved successfully, reloading...');
+        reloadEvents();
+        setIsModalOpen(false);
+        console.log('[ManagePage] Modal closed, event operation complete');
+      } catch (error: any) {
+        console.error('[ManagePage] Error saving event:', error);
+        let errorMessage = 'Error desconocido';
+
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error?.details) {
+          errorMessage = JSON.stringify(error.details);
+        } else if (error?.message) {
+          errorMessage = String(error.message);
+        }
+
+        console.error('Full error details:', JSON.stringify(error, null, 2));
+        alert(`Error al guardar el evento: ${errorMessage}`);
       }
     } else {
       // Other types still use local state
@@ -415,6 +467,10 @@ const ManagePage: React.FC<ManagePageProps> = ({
                 } else if (activeTab === 'exams') {
                     // Exams use backend API
                     console.log('[ManagePage] Routing to handleSave for exams');
+                    handleSave(result);
+                } else if (activeTab === 'events') {
+                    // Events use backend API
+                    console.log('[ManagePage] Routing to handleSave for events');
                     handleSave(result);
                 } else {
                     // Other types still use local state for now

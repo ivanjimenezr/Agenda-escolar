@@ -14,6 +14,7 @@ import { getDinners } from './services/dinnerService';
 import { getActiveModules } from './services/activeModulesService';
 import { getSubjectsByStudent } from './services/subjectService';
 import { getExamsByStudent } from './services/examService';
+import { getEvents } from './services/eventService';
 import { transformStudent, transformMenu } from './utils/dataTransformers';
 
 const defaultActiveModules: ActiveModules = {
@@ -41,7 +42,7 @@ const App: React.FC = () => {
   const [allDinners, setAllDinners] = useState<DinnerItem[]>([]); // Changed from localStorage to state
 
   const [menu, setMenu] = useState<MenuItem[]>([]);
-  const [events, setEvents] = useLocalStorage<SchoolEvent[]>('school-agenda-events', []);
+  const [events, setEvents] = useState<SchoolEvent[]>([]); // Changed from localStorage to state
   const [centers, setCenters] = useLocalStorage<Center[]>('school-agenda-centers', []);
   const [contacts, setContacts] = useLocalStorage<Contact[]>('school-agenda-contacts', []);
 
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadStudents();
+      loadEvents(); // Load events once for the user
     }
   }, [user]);
 
@@ -208,6 +210,25 @@ const App: React.FC = () => {
     }
   };
 
+  const loadEvents = async () => {
+    try {
+      console.log('[App] Loading events for user');
+      const eventsData = await getEvents();
+      console.log('[App] Received events from API:', eventsData);
+      // Transform backend format (user_id) to frontend format
+      const transformedEvents: SchoolEvent[] = eventsData.map(e => ({
+        id: e.id,
+        date: e.date,
+        name: e.name,
+        type: e.type as 'Festivo' | 'Lectivo' | 'Vacaciones'
+      }));
+      console.log('[App] Transformed events:', transformedEvents);
+      setEvents(transformedEvents);
+    } catch (error) {
+      console.error('[App] Error loading events:', error);
+    }
+  };
+
   const activeProfile = useMemo(() => 
     profiles.find(p => p.id === activeProfileId) || profiles[0], 
     [profiles, activeProfileId]
@@ -320,6 +341,7 @@ const App: React.FC = () => {
                   reloadExams={() => loadExams(activeProfileId)}
                   menu={menu} setMenu={setMenu}
                   events={events} setEvents={setEvents}
+                  reloadEvents={loadEvents}
                   centers={centers} setCenters={setCenters}
                   contacts={contacts} setContacts={setContacts}
                   activeModules={activeModules}

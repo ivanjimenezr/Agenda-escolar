@@ -11,8 +11,7 @@ env:
   PYTHON_VERSION: '3.11'
 
 jobs:
-  # ==================== TEST & LINT ====================
-  test:
+  test-and-deploy:
     name: Test & Lint Backend
     runs-on: ubuntu-latest
 
@@ -35,7 +34,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -49,50 +48,32 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Run linters
+      - name: Run Quality Checks (Lint/Type)
         working-directory: ./backend
         run: |
-          echo "🔍 Running code formatters and linters..."
-
-          # Formato con black (check only)
-          black --check src/ tests/ || echo "⚠️ Black formatting issues found"
-
-          # Imports con isort (check only)
-          isort --check-only src/ tests/ || echo "⚠️ Import sorting issues found"
-
-          # Linting con flake8
-          flake8 src/ tests/ --max-line-length=120 --exclude=__pycache__,.venv
-
-      - name: Run type checking
-        working-directory: ./backend
-        run: |
-          echo "🔍 Running type checking..."
-          mypy src/ --ignore-missing-imports || echo "⚠️ Type checking issues found"
+          black --check src/ tests/
+          isort --check-only src/ tests/
+          flake8 src/ tests/ --max-line-length=120
+          mypy src/ --ignore-missing-imports
 
       - name: Run tests with coverage
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-          SECRET_KEY: test_secret_key_for_ci_only
-          GEMINI_API_KEY: test_api_key
+          SECRET_KEY: ${{ secrets.CI_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "🧪 Running tests..."
-          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+          pytest tests/ -v --cov=src --cov-report=xml
 
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./backend/coverage.xml
-          flags: backend
-          fail_ci_if_error: false
+      # PASO CLAVE: Solo si los tests pasan y estamos en main, avisamos a Render
+      - name: Trigger Render Deploy
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          echo "🚀 Desplegando en Render..."
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
 
       - name: Build summary
         if: always()
         run: |
           echo "### 🎯 Backend CI Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Python Version**: ${{ env.PYTHON_VERSION }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Tests passed - Render will auto-deploy" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests**: ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY

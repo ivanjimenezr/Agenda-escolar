@@ -8,19 +8,18 @@ on:
       - '.github/workflows/frontend-ci.yml'
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20' # Actualizado a la LTS más reciente
 
 jobs:
-  # ==================== TEST & BUILD ====================
-  test-and-build:
-    name: Test & Build Frontend
+  build-and-validate:
+    name: Build & Validate Frontend
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -29,59 +28,34 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: |
-          echo "📦 Installing dependencies..."
-          npm ci
+        run: npm ci
 
-      - name: Run linter
+      - name: Quality Checks
         working-directory: ./frontend
         run: |
-          echo "🔍 Running ESLint..."
-          npm run lint || echo "⚠️ Linting issues found (non-blocking)"
+          npm run lint
+          npx tsc --noEmit
 
-      - name: Run type checking
+      - name: Run Tests
         working-directory: ./frontend
         run: |
-          echo "🔍 Running TypeScript type checking..."
-          npx tsc --noEmit || echo "⚠️ Type checking issues found (non-blocking)"
-
-      - name: Run tests
-        working-directory: ./frontend
-        run: |
-          echo "🧪 Running tests..."
-          npm run test || echo "⚠️ No tests configured yet"
+          # Usamos CI=true para que herramientas como Vitest/Jest no se queden en modo watch
+          CI=true npm test 
 
       - name: Build for production
         working-directory: ./frontend
         env:
           VITE_API_URL: https://agenda-escolar-pnpk.onrender.com
-        run: |
-          echo "🏗️ Building production bundle..."
-          npm run build
+        run: npm run build
 
       - name: Check build size
         working-directory: ./frontend
         run: |
           echo "📊 Build size analysis:"
           du -sh dist/
-          echo ""
-          echo "Largest files:"
-          find dist -type f -exec du -h {} + | sort -rh | head -10
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist
-          retention-days: 7
 
       - name: Build summary
         if: always()
         run: |
           echo "### 🎯 Frontend CI Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Build successful - Vercel will auto-deploy" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Linting, Typing y Tests completados." >> $GITHUB_STEP_SUMMARY
