@@ -272,8 +272,10 @@ const ManagePage: React.FC<ManagePageProps> = ({
         console.log('[ManagePage] Processing event save...');
         const payload = {
           date: data.date,
+          time: data.time || undefined,  // Send undefined instead of empty string
           name: data.name,
-          type: data.type
+          type: data.type,
+          description: data.description || undefined
         };
         console.log('[ManagePage] Event payload:', payload);
 
