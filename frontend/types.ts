@@ -108,8 +108,14 @@ export interface DinnerItem {
 export interface SchoolEvent {
   id: string;
   date: string;
+  time?: string;  // Optional time in HH:MM format
   name: string;
   type: 'Festivo' | 'Lectivo' | 'Vacaciones';
+  description?: string;  // Optional event description
+  // Backend fields
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type View = 'home' | 'dinners' | 'manage' | 'profile';

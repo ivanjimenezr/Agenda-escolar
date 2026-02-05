@@ -32,7 +32,14 @@ class EventUseCases:
         Raises:
             ValueError: If validation fails
         """
-        return self.event_repo.create(user_id=user_id, date=data.date, name=data.name, event_type=data.type)
+        return self.event_repo.create(
+            user_id=user_id,
+            date=data.date,
+            name=data.name,
+            event_type=data.type,
+            time=data.time,
+            description=data.description,
+        )
 
     def get_event_by_id(self, event_id: UUID, user_id: UUID) -> SchoolEvent:
         """Get an event by ID
@@ -96,7 +103,17 @@ class EventUseCases:
         if event.user_id != user_id:
             raise PermissionError("Access denied")
 
-        updated = self.event_repo.update(event_id=event_id, date=data.date, name=data.name, event_type=data.type)
+        # Use model_dump with exclude_unset to get only provided fields
+        update_data_dict = data.model_dump(exclude_unset=True)
+
+        updated = self.event_repo.update(
+            event_id=event_id,
+            date=update_data_dict.get("date") if "date" in update_data_dict else ...,
+            name=update_data_dict.get("name") if "name" in update_data_dict else ...,
+            event_type=update_data_dict.get("type") if "type" in update_data_dict else ...,
+            time=update_data_dict.get("time") if "time" in update_data_dict else ...,
+            description=update_data_dict.get("description") if "description" in update_data_dict else ...,
+        )
 
         if not updated:
             raise ValueError("Event not found")

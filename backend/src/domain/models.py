@@ -336,8 +336,10 @@ class SchoolEvent(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     date = Column(Date, nullable=False)
+    time = Column(Time, nullable=True)  # Optional time for the event
     name = Column(String(255), nullable=False)
     type = Column(SQLEnum(EventType, name="event_type", create_type=True), nullable=False)
+    description = Column(Text, nullable=True)  # Optional event description
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

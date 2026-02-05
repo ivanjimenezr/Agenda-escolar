@@ -26,7 +26,7 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
             case 'subjects': return { name: '', days: ['Lunes'], time: '09:00', teacher: '', color: '#3b82f6', type: 'colegio', studentId: studentId };
             case 'exams': return { subject: '', date: new Date().toISOString().split('T')[0], topic: '', notes: '' };
             case 'menu': return { date: new Date().toISOString().split('T')[0], mainCourse: '', sideDish: '', dessert: '' };
-            case 'events': return { date: new Date().toISOString().split('T')[0], name: '', type: 'Lectivo' };
+            case 'events': return { date: new Date().toISOString().split('T')[0], time: '', name: '', type: 'Lectivo', description: '' };
             case 'dinner': return { date: new Date().toISOString().split('T')[0], meal: '', ingredients: [] };
             case 'centers': return { name: '' };
             case 'contacts': return { centerId: centers?.[0]?.id || '', name: '', phone: '', role: '' };
@@ -276,6 +276,30 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({ item, type, onClose, onSa
                                 <input className={inputClass} placeholder="Postre" value={formData.dessert} onChange={e => setFormData({...formData, dessert: e.target.value})} />
                             </div>
                         </div>
+                    )}
+                    {type === 'events' && (
+                        <>
+                            <div>
+                                <label className={labelClass}>Nombre del Evento</label>
+                                <input className={inputClass} placeholder="Ej: Excursión al museo" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Hora (Opcional)</label>
+                                <input className={inputClass} type="time" value={formData.time || ''} onChange={e => setFormData({...formData, time: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Tipo de Evento</label>
+                                <select className={inputClass} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+                                    <option value="Lectivo">Lectivo</option>
+                                    <option value="Festivo">Festivo</option>
+                                    <option value="Vacaciones">Vacaciones</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Descripción (Opcional)</label>
+                                <textarea className={`${inputClass} min-h-[100px]`} placeholder="Detalles del evento..." value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
+                            </div>
+                        </>
                     )}
                 </div>
 

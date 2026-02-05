@@ -4,7 +4,7 @@ Event Repository
 Data access layer for SchoolEvent entity
 """
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -20,7 +20,15 @@ class EventRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, user_id: UUID, date: date, name: str, event_type: str) -> SchoolEvent:
+    def create(
+        self,
+        user_id: UUID,
+        date: date,
+        name: str,
+        event_type: str,
+        time: Optional[time] = None,
+        description: Optional[str] = None,
+    ) -> SchoolEvent:
         """Create a new school event
 
         Args:
@@ -28,6 +36,8 @@ class EventRepository:
             date: Event date
             name: Event name
             event_type: Event type (Festivo, Lectivo, Vacaciones)
+            time: Optional event time
+            description: Optional event description
 
         Returns:
             Created SchoolEvent
@@ -35,7 +45,9 @@ class EventRepository:
         Raises:
             ValueError: If database error occurs
         """
-        event = SchoolEvent(user_id=user_id, date=date, name=name, type=event_type)
+        event = SchoolEvent(
+            user_id=user_id, date=date, name=name, type=event_type, time=time, description=description
+        )
 
         self.db.add(event)
         try:
@@ -73,15 +85,23 @@ class EventRepository:
         return query.order_by(SchoolEvent.date.asc()).all()
 
     def update(
-        self, event_id: UUID, date: Optional[date] = None, name: Optional[str] = None, event_type: Optional[str] = None
+        self,
+        event_id: UUID,
+        date: Optional[date] = ...,
+        name: Optional[str] = ...,
+        event_type: Optional[str] = ...,
+        time: Optional[time] = ...,
+        description: Optional[str] = ...,
     ) -> Optional[SchoolEvent]:
         """Update event
 
         Args:
             event_id: UUID of the event
-            date: Optional new date
-            name: Optional new name
-            event_type: Optional new type
+            date: Optional new date (Ellipsis means not provided)
+            name: Optional new name (Ellipsis means not provided)
+            event_type: Optional new type (Ellipsis means not provided)
+            time: Optional new time (Ellipsis means not provided, None means clear it)
+            description: Optional new description (Ellipsis means not provided, None means clear it)
 
         Returns:
             Updated SchoolEvent or None if not found
@@ -90,12 +110,16 @@ class EventRepository:
         if not event:
             return None
 
-        if date is not None:
+        if date is not ...:
             event.date = date
-        if name is not None:
+        if name is not ...:
             event.name = name
-        if event_type is not None:
+        if event_type is not ...:
             event.type = event_type
+        if time is not ...:
+            event.time = time
+        if description is not ...:
+            event.description = description
 
         event.updated_at = datetime.now(timezone.utc)
 
