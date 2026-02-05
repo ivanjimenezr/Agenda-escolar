@@ -5,6 +5,6 @@ class ConflictError(Exception):
         conflicts -- list of conflicting model instances
     """
 
-    def __init__(self, conflicts=None):
+    def __init__(self, conflicts=None): 
         self.conflicts = conflicts or []
         super().__init__("Conflict detected")
