@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { View, StudentProfile, Subject, Exam, MenuItem, SchoolEvent, ActiveModules, DinnerItem, ModuleKey, Center, Contact, User } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import BottomNav from './components/BottomNav';
@@ -37,9 +37,6 @@ const App: React.FC = () => {
   const [activeProfileId, setActiveProfileId] = useLocalStorage<string>('school-agenda-active-id', '');
   const [loading, setLoading] = useState(true);
 
-  // Track if this is the first render to ensure data loads on mount
-  const isFirstRender = useRef(true);
-
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]); // Changed from localStorage to state
   const [allExams, setAllExams] = useState<Exam[]>([]); // Changed from localStorage to state
   const [allDinners, setAllDinners] = useState<DinnerItem[]>([]); // Changed from localStorage to state
@@ -53,24 +50,12 @@ const App: React.FC = () => {
 
   // Load students and events from backend when component mounts or user changes
   useEffect(() => {
-    console.log('[App] useEffect triggered - user:', user ? 'logged in' : 'not logged in', 'isFirstRender:', isFirstRender.current);
+    console.log('[App] useEffect triggered - user:', user ? 'logged in' : 'not logged in');
     if (user) {
       loadStudents();
       loadEvents(); // Load events once for the user
     }
-    // Mark that first render is complete
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-    }
   }, [user]);
-
-  // Ensure data loads on initial mount if user is already logged in from localStorage
-  useEffect(() => {
-    if (user && isFirstRender.current) {
-      console.log('[App] Initial mount with logged-in user - ensuring events load');
-      loadEvents();
-    }
-  }, []);
 
   // Load subjects, menus, dinners, and exams when active profile changes
   useEffect(() => {

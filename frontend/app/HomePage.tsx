@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import type { StudentProfile, Subject, Exam, MenuItem, SchoolEvent, ActiveModules, DinnerItem, ModuleKey, Center, Contact, View } from '../types';
 import { BookOpenIcon, CakeIcon, AcademicCapIcon, FlagIcon, MoonIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, TrashIcon, PencilIcon, UserIcon, PlusIcon, PencilIcon as EditIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import { generateDinners } from '../services/dinnerService';
+import { deleteEvent as deleteEventService, updateEvent } from '../services/eventService';
 import ItemFormModal from '../components/ItemFormModal';
 
 interface HomePageProps {
@@ -124,10 +125,59 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
     return now > subjectTime;
   };
 
-  const deleteEvent = (id: string) => {
-      if (confirm('¿Eliminar este evento?')) {
-          setEvents(prev => prev.filter(e => e.id !== id));
-      }
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('¿Eliminar este evento?')) return;
+
+    try {
+      // Delete from backend first
+      await deleteEventService(id);
+      // Then update local state
+      setEvents(prev => prev.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Error al eliminar el evento. Por favor, intenta de nuevo.');
+    }
+  };
+
+  const handleSaveEvent = async (data: any) => {
+    if (!editingEvent) return;
+
+    try {
+      // Normalize event type to ensure correct capitalization
+      const normalizeEventType = (type: string): 'Festivo' | 'Lectivo' | 'Vacaciones' => {
+        const normalized = type.toLowerCase();
+        if (normalized === 'festivo') return 'Festivo';
+        if (normalized === 'lectivo') return 'Lectivo';
+        if (normalized === 'vacaciones') return 'Vacaciones';
+        return 'Lectivo';
+      };
+
+      const payload = {
+        date: data.date,
+        time: data.time || undefined,
+        name: data.name,
+        type: normalizeEventType(data.type),
+        description: data.description || undefined
+      };
+
+      // Update in backend first
+      const updatedEvent = await updateEvent(editingEvent.id, payload);
+
+      // Then update local state
+      setEvents(prev => prev.map(e => e.id === editingEvent.id ? {
+        ...e,
+        date: updatedEvent.date,
+        time: updatedEvent.time,
+        name: updatedEvent.name,
+        type: normalizeEventType(updatedEvent.type),
+        description: updatedEvent.description
+      } : e));
+
+      setEditingEvent(null);
+    } catch (error) {
+      console.error('Error updating event:', error);
+      alert('Error al actualizar el evento. Por favor, intenta de nuevo.');
+    }
   };
 
   const renderModule = (key: ModuleKey, index: number) => {
@@ -450,7 +500,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
                                                       Editar
                                                   </button>
                                                   <button
-                                                      onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }}
+                                                      onClick={(e) => { e.stopPropagation(); handleDeleteEvent(ev.id); }}
                                                       className="flex-1 p-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                                                   >
                                                       Eliminar
@@ -480,7 +530,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
           </div>
       )}
 
-      {editingEvent && <ItemFormModal item={editingEvent} type="events" title="Evento" studentId={activeProfileId} onClose={() => setEditingEvent(null)} onSave={(data) => { setEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...e, ...data } : e)); setEditingEvent(null); }} />}
+      {editingEvent && <ItemFormModal item={editingEvent} type="events" title="Evento" studentId={activeProfileId} onClose={() => setEditingEvent(null)} onSave={handleSaveEvent} />}
     </div>
   );
 };
