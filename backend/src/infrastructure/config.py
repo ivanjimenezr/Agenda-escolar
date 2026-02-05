@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # CORS (for frontend communication)
     # Add your production frontend URL here (e.g., https://yourapp.vercel.app)
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,https://agenda-escolar-sage.vercel.app"
 
     @property
     def cors_origins_list(self) -> list[str]:
