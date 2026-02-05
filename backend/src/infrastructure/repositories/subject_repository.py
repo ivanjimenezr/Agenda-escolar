@@ -8,8 +8,8 @@ from datetime import datetime, time, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from src.domain.models import Subject
 
@@ -21,16 +21,41 @@ class SubjectRepository:
         self.db = db
 
     def _normalize_days(self, days: List[str]) -> List[str]:
-        """Normalize weekday strings - simply returns them as-is since we're using plain strings now.
+        """Normalize weekday strings to title case with proper Spanish accents.
 
-        This method validates that days is a non-empty list and returns the values.
-        No enum conversion needed anymore.
+        Args:
+            days: List of weekday strings in any case
+
+        Returns:
+            List of normalized weekday strings (e.g., "Lunes", "Martes")
         """
         if not days:
             return []
 
-        # Simply return the days as they are - they're already strings
-        return [str(d).strip() for d in days if d]
+        # Map of normalized day names (lowercase without accents) to proper Spanish format
+        valid_days = {
+            "lunes": "Lunes",
+            "martes": "Martes",
+            "miercoles": "Miércoles",
+            "miércoles": "Miércoles",
+            "jueves": "Jueves",
+            "viernes": "Viernes",
+            "sabado": "Sábado",
+            "sábado": "Sábado",
+            "domingo": "Domingo",
+        }
+
+        normalized = []
+        for day in days:
+            if not day:
+                continue
+            # Normalize to lowercase for lookup
+            day_lower = str(day).strip().lower()
+            # If it's a valid day, add the properly formatted version
+            if day_lower in valid_days:
+                normalized.append(valid_days[day_lower])
+
+        return normalized
 
     def get_conflicting(self, student_id: UUID, days: List[str], time: time) -> List[Subject]:
         """Return existing subjects for the student that overlap at the same time and days.
@@ -38,6 +63,7 @@ class SubjectRepository:
         Uses `_normalize_days` to clean up the day strings for the DB query.
         """
         import logging
+
         logger = logging.getLogger(__name__)
 
         normalized_days = self._normalize_days(days)
@@ -48,23 +74,27 @@ class SubjectRepository:
             return []
 
         # Detect whether the underlying database supports ARRAY overlap
-        supports_overlap = hasattr(Subject.days, 'overlap')
+        supports_overlap = hasattr(Subject.days, "overlap")
 
         if supports_overlap:
             # Use native SQL overlap operator (Postgres)
-            return self.db.query(Subject).filter(
-                Subject.student_id == student_id,
-                Subject.time == time,
-                Subject.deleted_at.is_(None),
-                Subject.days.overlap(normalized_days)
-            ).all()
+            return (
+                self.db.query(Subject)
+                .filter(
+                    Subject.student_id == student_id,
+                    Subject.time == time,
+                    Subject.deleted_at.is_(None),
+                    Subject.days.overlap(normalized_days),
+                )
+                .all()
+            )
         else:
             # Fallback for SQLite/JSON: fetch candidates and check overlap in Python
-            candidates = self.db.query(Subject).filter(
-                Subject.student_id == student_id,
-                Subject.time == time,
-                Subject.deleted_at.is_(None)
-            ).all()
+            candidates = (
+                self.db.query(Subject)
+                .filter(Subject.student_id == student_id, Subject.time == time, Subject.deleted_at.is_(None))
+                .all()
+            )
 
             result = []
             nd_set = set(normalized_days)
@@ -95,7 +125,7 @@ class SubjectRepository:
         teacher: str,
         color: str,
         type: str,
-        replace: bool = False
+        replace: bool = False,
     ) -> Subject:
         """Create a new subject
 
@@ -111,6 +141,7 @@ class SubjectRepository:
         if conflicts and not replace:
             # Let caller decide how to handle (raise a specific exception with the conflicting items)
             from src.application.exceptions import ConflictError
+
             raise ConflictError(conflicts=conflicts)
 
         if conflicts and replace:
@@ -130,7 +161,7 @@ class SubjectRepository:
             time=time,
             teacher=teacher_value,
             color=color,
-            type=type
+            type=type,
         )
 
         self.db.add(subject)
@@ -144,15 +175,9 @@ class SubjectRepository:
 
     def get_by_id(self, subject_id: UUID) -> Optional[Subject]:
         """Get subject by ID (excludes soft-deleted)"""
-        return self.db.query(Subject).filter(
-            Subject.id == subject_id,
-            Subject.deleted_at.is_(None)
-        ).first()
+        return self.db.query(Subject).filter(Subject.id == subject_id, Subject.deleted_at.is_(None)).first()
 
-    def get_by_student_id(
-        self,
-        student_id: UUID
-    ) -> List[Subject]:
+    def get_by_student_id(self, student_id: UUID) -> List[Subject]:
         """Get all subjects for a student (excludes soft-deleted)
 
         Args:
@@ -161,40 +186,40 @@ class SubjectRepository:
         Returns:
             List of subjects ordered by name
         """
-        query = self.db.query(Subject).filter(
-            Subject.student_id == student_id,
-            Subject.deleted_at.is_(None)
-        )
+        query = self.db.query(Subject).filter(Subject.student_id == student_id, Subject.deleted_at.is_(None))
 
         return query.order_by(Subject.name).all()
 
     def update(
         self,
         subject_id: UUID,
-        name: Optional[str] = None,
-        days: Optional[List[str]] = None,
-        time: Optional[time] = None,
-        teacher: Optional[str] = None,
-        color: Optional[str] = None,
-        type: Optional[str] = None
+        name: Optional[str] = ...,
+        days: Optional[List[str]] = ...,
+        time: Optional[time] = ...,
+        teacher: Optional[str] = ...,
+        color: Optional[str] = ...,
+        type: Optional[str] = ...,
     ) -> Optional[Subject]:
-        """Update subject"""
+        """Update subject
+
+        Use Ellipsis (...) as default to distinguish between "not provided" and "set to None"
+        """
         subject = self.get_by_id(subject_id)
         if not subject:
             return None
 
-        if name is not None:
+        if name is not ...:
             subject.name = name
-        if days is not None:
+        if days is not ...:
             # Clean/normalize the days (just strips whitespace now since we use plain strings)
             subject.days = self._normalize_days(days)
-        if time is not None:
+        if time is not ...:
             subject.time = time
-        if teacher is not None:
+        if teacher is not ...:
             subject.teacher = teacher
-        if color is not None:
+        if color is not ...:
             subject.color = color
-        if type is not None:
+        if type is not ...:
             subject.type = type
 
         subject.updated_at = datetime.now(timezone.utc)

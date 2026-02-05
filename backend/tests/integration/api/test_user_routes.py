@@ -1,18 +1,20 @@
 """
 Unit tests for User API routes
 """
-import pytest
-from fastapi import status
+
 from datetime import datetime
 from uuid import uuid4
+
+import pytest
+from fastapi import status
 
 from src.domain.models import User
 from src.infrastructure.security.password import hash_password
 
 
 @pytest.fixture
-def test_user(db_session):
-    """Create a test user"""
+def test_user(client, db_session):
+    """Create a test user in the same database session as the client"""
     user = User(
         id=uuid4(),
         email="test@example.com",
@@ -20,7 +22,7 @@ def test_user(db_session):
         password_hash=hash_password("TestPassword123"),
         is_active=True,
         email_verified=False,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
     db_session.add(user)
     db_session.commit()
@@ -32,6 +34,7 @@ def test_user(db_session):
 def auth_headers(test_user):
     """Get authentication headers for test user"""
     from src.infrastructure.security.jwt import create_access_token
+
     token = create_access_token(data={"sub": str(test_user.id)})
     return {"Authorization": f"Bearer {token}"}
 
@@ -58,11 +61,7 @@ def test_get_current_user_unauthorized(client):
 def test_update_user_name_success(client, test_user, auth_headers, db_session):
     """Test updating user name"""
     new_name = "Updated Name"
-    response = client.put(
-        "/api/v1/users/me",
-        headers=auth_headers,
-        json={"name": new_name}
-    )
+    response = client.put("/api/v1/users/me", headers=auth_headers, json={"name": new_name})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -76,11 +75,7 @@ def test_update_user_name_success(client, test_user, auth_headers, db_session):
 def test_update_user_email_success(client, test_user, auth_headers, db_session):
     """Test updating user email"""
     new_email = "newemail@example.com"
-    response = client.put(
-        "/api/v1/users/me",
-        headers=auth_headers,
-        json={"email": new_email}
-    )
+    response = client.put("/api/v1/users/me", headers=auth_headers, json={"email": new_email})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -101,17 +96,13 @@ def test_update_user_email_already_exists(client, test_user, auth_headers, db_se
         password_hash=hash_password("password"),
         is_active=True,
         email_verified=False,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
     db_session.add(other_user)
     db_session.commit()
 
     # Try to update to the other user's email
-    response = client.put(
-        "/api/v1/users/me",
-        headers=auth_headers,
-        json={"email": "other@example.com"}
-    )
+    response = client.put("/api/v1/users/me", headers=auth_headers, json={"email": "other@example.com"})
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert "already registered" in response.json()["detail"].lower()
@@ -122,16 +113,14 @@ def test_update_user_password_success(client, test_user, auth_headers, db_sessio
     response = client.put(
         "/api/v1/users/me",
         headers=auth_headers,
-        json={
-            "current_password": "TestPassword123",
-            "new_password": "NewPassword456"
-        }
+        json={"current_password": "TestPassword123", "new_password": "NewPassword456"},
     )
 
     assert response.status_code == status.HTTP_200_OK
 
     # Verify password was changed
     from src.infrastructure.security.password import verify_password
+
     db_session.refresh(test_user)
     assert verify_password("NewPassword456", test_user.password_hash)
     assert not verify_password("TestPassword123", test_user.password_hash)
@@ -142,10 +131,7 @@ def test_update_user_password_wrong_current(client, test_user, auth_headers):
     response = client.put(
         "/api/v1/users/me",
         headers=auth_headers,
-        json={
-            "current_password": "WrongPassword",
-            "new_password": "NewPassword456"
-        }
+        json={"current_password": "WrongPassword", "new_password": "NewPassword456"},
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -161,8 +147,8 @@ def test_update_user_combined_fields(client, test_user, auth_headers, db_session
             "name": "New Name",
             "email": "newemail@example.com",
             "current_password": "TestPassword123",
-            "new_password": "NewPassword456"
-        }
+            "new_password": "NewPassword456",
+        },
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -172,6 +158,7 @@ def test_update_user_combined_fields(client, test_user, auth_headers, db_session
 
     # Verify in database
     from src.infrastructure.security.password import verify_password
+
     db_session.refresh(test_user)
     assert test_user.name == "New Name"
     assert test_user.email == "newemail@example.com"
@@ -180,10 +167,7 @@ def test_update_user_combined_fields(client, test_user, auth_headers, db_session
 
 def test_update_user_unauthorized(client):
     """Test updating user without authentication"""
-    response = client.put(
-        "/api/v1/users/me",
-        json={"name": "New Name"}
-    )
+    response = client.put("/api/v1/users/me", json={"name": "New Name"})
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -212,11 +196,7 @@ def test_update_user_partial_fields(client, test_user, auth_headers, db_session)
     """Test updating only some fields (all fields are optional)"""
     original_email = test_user.email
 
-    response = client.put(
-        "/api/v1/users/me",
-        headers=auth_headers,
-        json={"name": "Only Name Changed"}
-    )
+    response = client.put("/api/v1/users/me", headers=auth_headers, json={"name": "Only Name Changed"})
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()

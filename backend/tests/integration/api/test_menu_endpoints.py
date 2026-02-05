@@ -5,27 +5,24 @@ These tests specifically test Pydantic serialization of SQLAlchemy models
 to catch RecursionError issues before deployment.
 """
 
-import pytest
 from datetime import date, timedelta
+
+import pytest
 from fastapi.testclient import TestClient
 
-from src.main import app
-from src.domain.models import User, StudentProfile, MenuItem
 from src.application.schemas.menu import MenuItemResponse
+from src.domain.models import MenuItem, StudentProfile, User
+from src.main import app
 
 
 @pytest.fixture
 def auth_headers(client: TestClient, db_session):
     """Create a user and return authentication headers"""
-    from src.infrastructure.security.password import hash_password
     from src.infrastructure.security.jwt import create_access_token
+    from src.infrastructure.security.password import hash_password
 
     # Create user
-    user = User(
-        email="testmenu@example.com",
-        name="Test Menu User",
-        password_hash=hash_password("testpassword123")
-    )
+    user = User(email="testmenu@example.com", name="Test Menu User", password_hash=hash_password("testpassword123"))
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
@@ -47,7 +44,7 @@ def sample_student(db_session, auth_headers):
         school="Test School",
         grade="5th Grade",
         allergies=["gluten", "lactose"],
-        excluded_foods=["nuts"]
+        excluded_foods=["nuts"],
     )
     db_session.add(student)
     db_session.commit()
@@ -71,7 +68,7 @@ class TestMenuEndpointsSerialization:
             "second_course": "Pollo asado con patatas",
             "side_dish": "Ensalada mixta",
             "dessert": "Fruta de temporada",
-            "allergens": ["gluten"]
+            "allergens": ["gluten"],
         }
 
         response = client.post("/menus", json=payload, headers=headers)
@@ -95,6 +92,7 @@ class TestMenuEndpointsSerialization:
 
         # Create multiple menu items
         from src.infrastructure.repositories.menu_repository import MenuRepository
+
         repo = MenuRepository(db_session)
 
         menu1 = repo.create(
@@ -102,7 +100,7 @@ class TestMenuEndpointsSerialization:
             date=date.today(),
             first_course="Sopa de verduras",
             second_course="Merluza al horno",
-            allergens=[]
+            allergens=[],
         )
 
         menu2 = repo.create(
@@ -110,7 +108,7 @@ class TestMenuEndpointsSerialization:
             date=date.today() + timedelta(days=1),
             first_course="Arroz con tomate",
             second_course="Filete de ternera",
-            allergens=["gluten"]
+            allergens=["gluten"],
         )
 
         menu3 = repo.create(
@@ -118,14 +116,11 @@ class TestMenuEndpointsSerialization:
             date=date.today() + timedelta(days=2),
             first_course="Pasta carbonara",
             second_course="Ensalada césar",
-            allergens=["gluten", "lactose", "egg"]
+            allergens=["gluten", "lactose", "egg"],
         )
 
         # THIS IS THE CRITICAL TEST - Getting multiple menus
-        response = client.get(
-            f"/menus/student/{sample_student.id}",
-            headers=headers
-        )
+        response = client.get(f"/menus/student/{sample_student.id}", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -154,7 +149,7 @@ class TestMenuEndpointsSerialization:
             date=date.today(),
             first_course="Test First",
             second_course="Test Second",
-            allergens=["test"]
+            allergens=["test"],
         )
 
         # This is what happens in the endpoint - THIS SHOULD NOT CAUSE RecursionError
@@ -172,6 +167,7 @@ class TestMenuEndpointsSerialization:
         today = date.today()
 
         from src.infrastructure.repositories.menu_repository import MenuRepository
+
         repo = MenuRepository(db_session)
 
         # Create menus across different dates
@@ -181,7 +177,7 @@ class TestMenuEndpointsSerialization:
                 date=today + timedelta(days=i),
                 first_course=f"Course {i}",
                 second_course=f"Second {i}",
-                allergens=[]
+                allergens=[],
             )
 
         # Get with date range
@@ -189,8 +185,7 @@ class TestMenuEndpointsSerialization:
         end_date = (today + timedelta(days=3)).isoformat()
 
         response = client.get(
-            f"/menus/student/{sample_student.id}?start_date={start_date}&end_date={end_date}",
-            headers=headers
+            f"/menus/student/{sample_student.id}?start_date={start_date}&end_date={end_date}", headers=headers
         )
 
         assert response.status_code == 200
@@ -208,6 +203,7 @@ class TestMenuEndpointsSerialization:
         headers, user = auth_headers
 
         from src.infrastructure.repositories.menu_repository import MenuRepository
+
         repo = MenuRepository(db_session)
 
         menu = repo.create(
@@ -215,7 +211,7 @@ class TestMenuEndpointsSerialization:
             date=date.today(),
             first_course="Single Menu Test",
             second_course="Test Second",
-            allergens=["gluten"]
+            allergens=["gluten"],
         )
 
         response = client.get(f"/menus/{menu.id}", headers=headers)
@@ -232,6 +228,7 @@ class TestMenuEndpointsSerialization:
         headers, user = auth_headers
 
         from src.infrastructure.repositories.menu_repository import MenuRepository
+
         repo = MenuRepository(db_session)
 
         menu = repo.create(
@@ -239,19 +236,12 @@ class TestMenuEndpointsSerialization:
             date=date.today(),
             first_course="Original",
             second_course="Original Second",
-            allergens=[]
+            allergens=[],
         )
 
-        update_payload = {
-            "first_course": "Updated First Course",
-            "allergens": ["updated", "allergen"]
-        }
+        update_payload = {"first_course": "Updated First Course", "allergens": ["updated", "allergen"]}
 
-        response = client.put(
-            f"/menus/{menu.id}",
-            json=update_payload,
-            headers=headers
-        )
+        response = client.put(f"/menus/{menu.id}", json=update_payload, headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -270,7 +260,7 @@ class TestMenuEndpointsSerialization:
             "date": menu_date,
             "first_course": "Upsert First",
             "second_course": "Upsert Second",
-            "allergens": []
+            "allergens": [],
         }
 
         # First upsert (create)
@@ -293,24 +283,15 @@ class TestMenuEndpointsSerialization:
         headers, user = auth_headers
 
         # Create multiple students
-        student1 = StudentProfile(
-            user_id=user.id,
-            name="Student 1",
-            school="School 1",
-            grade="5th"
-        )
-        student2 = StudentProfile(
-            user_id=user.id,
-            name="Student 2",
-            school="School 2",
-            grade="6th"
-        )
+        student1 = StudentProfile(user_id=user.id, name="Student 1", school="School 1", grade="5th")
+        student2 = StudentProfile(user_id=user.id, name="Student 2", school="School 2", grade="6th")
         db_session.add_all([student1, student2])
         db_session.commit()
         db_session.refresh(student1)
         db_session.refresh(student2)
 
         from src.infrastructure.repositories.menu_repository import MenuRepository
+
         repo = MenuRepository(db_session)
 
         # Create menus for each student
@@ -321,7 +302,7 @@ class TestMenuEndpointsSerialization:
                     date=date.today() + timedelta(days=i),
                     first_course=f"Course {i}",
                     second_course=f"Second {i}",
-                    allergens=[]
+                    allergens=[],
                 )
 
         # Get menus for student1

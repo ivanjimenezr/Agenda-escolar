@@ -1,10 +1,12 @@
 """
 Unit tests for ExamUseCases
 """
-import pytest
+
 from datetime import date
+from unittest.mock import MagicMock, Mock
 from uuid import uuid4
-from unittest.mock import Mock, MagicMock
+
+import pytest
 
 from src.application.schemas.exam import ExamCreateRequest, ExamUpdateRequest
 from src.application.use_cases.exam_use_cases import ExamUseCases
@@ -45,7 +47,7 @@ class TestExamUseCases:
             subject="Matemáticas",
             date=date(2026, 3, 15),
             topic="Ecuaciones",
-            notes="Estudiar bien"
+            notes="Estudiar bien",
         )
         mock_exam_repo.create.return_value = mock_exam
 
@@ -55,7 +57,7 @@ class TestExamUseCases:
             subject="Matemáticas",
             date=date(2026, 3, 15),
             topic="Ecuaciones",
-            notes="Estudiar bien"
+            notes="Estudiar bien",
         )
 
         # Execute
@@ -69,7 +71,7 @@ class TestExamUseCases:
             subject="Matemáticas",
             date=date(2026, 3, 15),
             topic="Ecuaciones",
-            notes="Estudiar bien"
+            notes="Estudiar bien",
         )
 
     def test_create_exam_permission_denied(self, exam_use_cases, mock_student_repo):
@@ -80,12 +82,7 @@ class TestExamUseCases:
         # Setup mock - ownership verification fails
         mock_student_repo.verify_ownership.return_value = False
 
-        request = ExamCreateRequest(
-            student_id=student_id,
-            subject="Lengua",
-            date=date(2026, 3, 20),
-            topic="Literatura"
-        )
+        request = ExamCreateRequest(student_id=student_id, subject="Lengua", date=date(2026, 3, 20), topic="Literatura")
 
         # Execute and verify exception
         with pytest.raises(PermissionError, match="Access denied"):
@@ -101,12 +98,7 @@ class TestExamUseCases:
 
         # Setup mocks
         mock_exam = Exam(
-            id=exam_id,
-            student_id=student_id,
-            subject="Historia",
-            date=date(2026, 4, 1),
-            topic="Revolución",
-            notes=None
+            id=exam_id, student_id=student_id, subject="Historia", date=date(2026, 4, 1), topic="Revolución", notes=None
         )
         mock_exam_repo.get_by_id.return_value = mock_exam
         mock_student_repo.verify_ownership.return_value = True
@@ -141,12 +133,7 @@ class TestExamUseCases:
 
         # Setup mocks
         mock_exam = Exam(
-            id=exam_id,
-            student_id=student_id,
-            subject="Ciencias",
-            date=date(2026, 4, 5),
-            topic="Biología",
-            notes=None
+            id=exam_id, student_id=student_id, subject="Ciencias", date=date(2026, 4, 5), topic="Biología", notes=None
         )
         mock_exam_repo.get_by_id.return_value = mock_exam
         mock_student_repo.verify_ownership.return_value = False
@@ -164,12 +151,7 @@ class TestExamUseCases:
         mock_student_repo.verify_ownership.return_value = True
         mock_exams = [
             Exam(
-                id=uuid4(),
-                student_id=student_id,
-                subject="Math",
-                date=date(2026, 3, 10),
-                topic="Topic 1",
-                notes=None
+                id=uuid4(), student_id=student_id, subject="Math", date=date(2026, 3, 10), topic="Topic 1", notes=None
             ),
             Exam(
                 id=uuid4(),
@@ -177,8 +159,8 @@ class TestExamUseCases:
                 subject="Science",
                 date=date(2026, 3, 15),
                 topic="Topic 2",
-                notes=None
-            )
+                notes=None,
+            ),
         ]
         mock_exam_repo.get_by_student_id.return_value = mock_exams
 
@@ -188,11 +170,7 @@ class TestExamUseCases:
         # Verify
         assert result == mock_exams
         mock_student_repo.verify_ownership.assert_called_once_with(student_id, user_id)
-        mock_exam_repo.get_by_student_id.assert_called_once_with(
-            student_id=student_id,
-            from_date=None,
-            to_date=None
-        )
+        mock_exam_repo.get_by_student_id.assert_called_once_with(student_id=student_id, from_date=None, to_date=None)
 
     def test_get_exams_by_student_with_date_filters(self, exam_use_cases, mock_exam_repo, mock_student_repo):
         """Test retrieving exams with date filters"""
@@ -206,15 +184,11 @@ class TestExamUseCases:
         mock_exam_repo.get_by_student_id.return_value = []
 
         # Execute
-        exam_use_cases.get_exams_by_student(
-            student_id, user_id, from_date=from_date, to_date=to_date
-        )
+        exam_use_cases.get_exams_by_student(student_id, user_id, from_date=from_date, to_date=to_date)
 
         # Verify
         mock_exam_repo.get_by_student_id.assert_called_once_with(
-            student_id=student_id,
-            from_date=from_date,
-            to_date=to_date
+            student_id=student_id, from_date=from_date, to_date=to_date
         )
 
     def test_get_exams_by_student_permission_denied(self, exam_use_cases, mock_student_repo):
@@ -239,12 +213,7 @@ class TestExamUseCases:
 
         # Setup mocks
         mock_exam = Exam(
-            id=exam_id,
-            student_id=student_id,
-            subject="Physics",
-            date=date(2026, 4, 10),
-            topic="Mechanics",
-            notes=None
+            id=exam_id, student_id=student_id, subject="Physics", date=date(2026, 4, 10), topic="Mechanics", notes=None
         )
         mock_exam_repo.get_by_id.return_value = mock_exam
         mock_student_repo.verify_ownership.return_value = True
@@ -255,15 +224,12 @@ class TestExamUseCases:
             subject="Advanced Physics",
             date=date(2026, 4, 15),
             topic="Quantum Mechanics",
-            notes="Review chapters 5-7"
+            notes="Review chapters 5-7",
         )
         mock_exam_repo.update.return_value = updated_exam
 
         request = ExamUpdateRequest(
-            subject="Advanced Physics",
-            date=date(2026, 4, 15),
-            topic="Quantum Mechanics",
-            notes="Review chapters 5-7"
+            subject="Advanced Physics", date=date(2026, 4, 15), topic="Quantum Mechanics", notes="Review chapters 5-7"
         )
 
         # Execute
@@ -278,7 +244,7 @@ class TestExamUseCases:
             subject="Advanced Physics",
             date=date(2026, 4, 15),
             topic="Quantum Mechanics",
-            notes="Review chapters 5-7"
+            notes="Review chapters 5-7",
         )
 
     def test_update_exam_not_found(self, exam_use_cases, mock_exam_repo):
@@ -308,7 +274,7 @@ class TestExamUseCases:
             subject="Chemistry",
             date=date(2026, 4, 20),
             topic="Reactions",
-            notes=None
+            notes=None,
         )
         mock_exam_repo.get_by_id.return_value = mock_exam
         mock_student_repo.verify_ownership.return_value = False
@@ -332,7 +298,7 @@ class TestExamUseCases:
             subject="Geography",
             date=date(2026, 5, 1),
             topic="Continents",
-            notes=None
+            notes=None,
         )
         mock_exam_repo.get_by_id.return_value = mock_exam
         mock_student_repo.verify_ownership.return_value = True
@@ -367,12 +333,7 @@ class TestExamUseCases:
 
         # Setup mocks
         mock_exam = Exam(
-            id=exam_id,
-            student_id=student_id,
-            subject="Art",
-            date=date(2026, 5, 5),
-            topic="Renaissance",
-            notes=None
+            id=exam_id, student_id=student_id, subject="Art", date=date(2026, 5, 5), topic="Renaissance", notes=None
         )
         mock_exam_repo.get_by_id.return_value = mock_exam
         mock_student_repo.verify_ownership.return_value = False

@@ -1,12 +1,14 @@
 """
 FastAPI main application entry point.
 """
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from src.infrastructure.config import settings
-from src.infrastructure.database import init_db, close_db
+from src.infrastructure.database import close_db, init_db
 
 
 @asynccontextmanager
@@ -78,7 +80,7 @@ async def ping():
 
 
 # Import and include routers
-from src.infrastructure.api.routes import auth, users, students, menus, active_modules, dinners, subjects, exams, events
+from src.infrastructure.api.routes import active_modules, auth, dinners, events, exams, menus, students, subjects, users
 
 app.include_router(auth.router)  # auth.py ya tiene el prefijo /api/v1/auth
 app.include_router(users.router, prefix="/api/v1")
@@ -93,6 +95,7 @@ app.include_router(events.router, prefix="/api/v1")
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "src.main:app",
         host="0.0.0.0",

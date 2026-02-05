@@ -8,10 +8,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from src.application.schemas.menu import (
-    MenuItemCreateRequest,
-    MenuItemUpdateRequest
-)
+from src.application.schemas.menu import MenuItemCreateRequest, MenuItemUpdateRequest
 from src.domain.models import MenuItem
 from src.infrastructure.repositories.menu_repository import MenuRepository
 from src.infrastructure.repositories.student_repository import StudentRepository
@@ -20,19 +17,11 @@ from src.infrastructure.repositories.student_repository import StudentRepository
 class MenuUseCases:
     """Use cases for menu item management"""
 
-    def __init__(
-        self,
-        menu_repo: MenuRepository,
-        student_repo: StudentRepository
-    ):
+    def __init__(self, menu_repo: MenuRepository, student_repo: StudentRepository):
         self.menu_repo = menu_repo
         self.student_repo = student_repo
 
-    def create_menu_item(
-        self,
-        user_id: UUID,
-        data: MenuItemCreateRequest
-    ) -> MenuItem:
+    def create_menu_item(self, user_id: UUID, data: MenuItemCreateRequest) -> MenuItem:
         """Create a new menu item for a student
 
         Args:
@@ -57,14 +46,10 @@ class MenuUseCases:
             second_course=data.second_course,
             side_dish=data.side_dish,
             dessert=data.dessert,
-            allergens=data.allergens
+            allergens=data.allergens,
         )
 
-    def get_menu_item_by_id(
-        self,
-        menu_id: UUID,
-        user_id: UUID
-    ) -> MenuItem:
+    def get_menu_item_by_id(self, menu_id: UUID, user_id: UUID) -> MenuItem:
         """Get a menu item by ID
 
         Args:
@@ -89,11 +74,7 @@ class MenuUseCases:
         return menu
 
     def get_menu_items_by_student(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None
+        self, student_id: UUID, user_id: UUID, start_date: Optional[date] = None, end_date: Optional[date] = None
     ) -> List[MenuItem]:
         """Get all menu items for a student
 
@@ -113,18 +94,9 @@ class MenuUseCases:
         if not self.student_repo.verify_ownership(student_id, user_id):
             raise PermissionError("Access denied")
 
-        return self.menu_repo.get_by_student_id(
-            student_id=student_id,
-            start_date=start_date,
-            end_date=end_date
-        )
+        return self.menu_repo.get_by_student_id(student_id=student_id, start_date=start_date, end_date=end_date)
 
-    def update_menu_item(
-        self,
-        menu_id: UUID,
-        user_id: UUID,
-        data: MenuItemUpdateRequest
-    ) -> MenuItem:
+    def update_menu_item(self, menu_id: UUID, user_id: UUID, data: MenuItemUpdateRequest) -> MenuItem:
         """Update a menu item
 
         Args:
@@ -147,14 +119,17 @@ class MenuUseCases:
         if not self.student_repo.verify_ownership(menu.student_id, user_id):
             raise PermissionError("Access denied")
 
+        # Get only fields that were explicitly set in the request
+        update_data_dict = data.model_dump(exclude_unset=True)
+
         updated = self.menu_repo.update(
             menu_id=menu_id,
-            date=data.date,
-            first_course=data.first_course,
-            second_course=data.second_course,
-            side_dish=data.side_dish,
-            dessert=data.dessert,
-            allergens=data.allergens
+            date=update_data_dict.get("date") if "date" in update_data_dict else ...,
+            first_course=update_data_dict.get("first_course") if "first_course" in update_data_dict else ...,
+            second_course=update_data_dict.get("second_course") if "second_course" in update_data_dict else ...,
+            side_dish=update_data_dict.get("side_dish") if "side_dish" in update_data_dict else ...,
+            dessert=update_data_dict.get("dessert") if "dessert" in update_data_dict else ...,
+            allergens=update_data_dict.get("allergens") if "allergens" in update_data_dict else ...,
         )
 
         if not updated:
@@ -162,11 +137,7 @@ class MenuUseCases:
 
         return updated
 
-    def delete_menu_item(
-        self,
-        menu_id: UUID,
-        user_id: UUID
-    ) -> bool:
+    def delete_menu_item(self, menu_id: UUID, user_id: UUID) -> bool:
         """Delete a menu item
 
         Args:
@@ -204,7 +175,7 @@ class MenuUseCases:
         second_course: str,
         side_dish: Optional[str] = None,
         dessert: Optional[str] = None,
-        allergens: Optional[List[str]] = None
+        allergens: Optional[List[str]] = None,
     ) -> MenuItem:
         """Create or update menu item for a specific date
 
@@ -235,5 +206,5 @@ class MenuUseCases:
             second_course=second_course,
             side_dish=side_dish,
             dessert=dessert,
-            allergens=allergens
+            allergens=allergens,
         )

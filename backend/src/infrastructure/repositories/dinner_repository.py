@@ -4,7 +4,7 @@ Dinner Repository
 Data access layer for Dinner entity
 """
 
-from datetime import datetime, date, timezone
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -19,20 +19,9 @@ class DinnerRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(
-        self,
-        student_id: UUID,
-        date: date,
-        meal: str,
-        ingredients: Optional[List[str]] = None
-    ) -> Dinner:
+    def create(self, student_id: UUID, date: date, meal: str, ingredients: Optional[List[str]] = None) -> Dinner:
         """Create a new dinner"""
-        dinner = Dinner(
-            student_id=student_id,
-            date=date,
-            meal=meal,
-            ingredients=ingredients or []
-        )
+        dinner = Dinner(student_id=student_id, date=date, meal=meal, ingredients=ingredients or [])
         self.db.add(dinner)
         self.db.commit()
         self.db.refresh(dinner)
@@ -40,49 +29,41 @@ class DinnerRepository:
 
     def get_by_id(self, dinner_id: UUID) -> Optional[Dinner]:
         """Get dinner by ID (excludes soft-deleted)"""
-        return self.db.query(Dinner).filter(
-            Dinner.id == dinner_id,
-            Dinner.deleted_at.is_(None)
-        ).first()
+        return self.db.query(Dinner).filter(Dinner.id == dinner_id, Dinner.deleted_at.is_(None)).first()
 
     def get_by_student_id(self, student_id: UUID) -> List[Dinner]:
         """Get all dinners for a student (excludes soft-deleted)"""
-        return self.db.query(Dinner).filter(
-            Dinner.student_id == student_id,
-            Dinner.deleted_at.is_(None)
-        ).order_by(Dinner.date.desc()).all()
+        return (
+            self.db.query(Dinner)
+            .filter(Dinner.student_id == student_id, Dinner.deleted_at.is_(None))
+            .order_by(Dinner.date.desc())
+            .all()
+        )
 
-    def get_by_student_and_date_range(
-        self,
-        student_id: UUID,
-        start_date: date,
-        end_date: date
-    ) -> List[Dinner]:
+    def get_by_student_and_date_range(self, student_id: UUID, start_date: date, end_date: date) -> List[Dinner]:
         """Get dinners for a student within a date range"""
-        return self.db.query(Dinner).filter(
-            Dinner.student_id == student_id,
-            Dinner.date >= start_date,
-            Dinner.date <= end_date,
-            Dinner.deleted_at.is_(None)
-        ).order_by(Dinner.date).all()
+        return (
+            self.db.query(Dinner)
+            .filter(
+                Dinner.student_id == student_id,
+                Dinner.date >= start_date,
+                Dinner.date <= end_date,
+                Dinner.deleted_at.is_(None),
+            )
+            .order_by(Dinner.date)
+            .all()
+        )
 
-    def get_by_student_and_date(
-        self,
-        student_id: UUID,
-        date: date
-    ) -> Optional[Dinner]:
+    def get_by_student_and_date(self, student_id: UUID, date: date) -> Optional[Dinner]:
         """Get dinner for a specific student and date"""
-        return self.db.query(Dinner).filter(
-            Dinner.student_id == student_id,
-            Dinner.date == date,
-            Dinner.deleted_at.is_(None)
-        ).first()
+        return (
+            self.db.query(Dinner)
+            .filter(Dinner.student_id == student_id, Dinner.date == date, Dinner.deleted_at.is_(None))
+            .first()
+        )
 
     def update(
-        self,
-        dinner_id: UUID,
-        meal: Optional[str] = None,
-        ingredients: Optional[List[str]] = None
+        self, dinner_id: UUID, meal: Optional[str] = None, ingredients: Optional[List[str]] = None
     ) -> Optional[Dinner]:
         """Update dinner"""
         dinner = self.get_by_id(dinner_id)
@@ -121,18 +102,11 @@ class DinnerRepository:
         return True
 
     def create_or_update(
-        self,
-        student_id: UUID,
-        date: date,
-        meal: str,
-        ingredients: Optional[List[str]] = None
+        self, student_id: UUID, date: date, meal: str, ingredients: Optional[List[str]] = None
     ) -> Dinner:
         """Create or update dinner for a specific date"""
         # Check for existing dinner (including soft-deleted ones)
-        existing = self.db.query(Dinner).filter(
-            Dinner.student_id == student_id,
-            Dinner.date == date
-        ).first()
+        existing = self.db.query(Dinner).filter(Dinner.student_id == student_id, Dinner.date == date).first()
 
         if existing:
             # Update existing (even if soft-deleted)
@@ -148,10 +122,7 @@ class DinnerRepository:
 
     def verify_ownership(self, dinner_id: UUID, student_id: UUID) -> bool:
         """Verify that a dinner belongs to a specific student"""
-        dinner = self.db.query(Dinner).filter(
-            Dinner.id == dinner_id,
-            Dinner.deleted_at.is_(None)
-        ).first()
+        dinner = self.db.query(Dinner).filter(Dinner.id == dinner_id, Dinner.deleted_at.is_(None)).first()
 
         if not dinner:
             return False

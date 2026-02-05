@@ -2,9 +2,10 @@
 Unit tests for StudentUseCases
 """
 
-import pytest
-from uuid import uuid4
 from unittest.mock import Mock
+from uuid import uuid4
+
+import pytest
 
 from src.application.schemas.student import StudentCreateRequest, StudentUpdateRequest
 from src.application.use_cases.student_use_cases import StudentUseCases
@@ -35,7 +36,7 @@ class TestStudentUseCases:
             grade="5th Grade",
             avatar_url="https://example.com/avatar.jpg",
             allergies=["gluten"],
-            excluded_foods=["fish"]
+            excluded_foods=["fish"],
         )
 
         mock_student = StudentProfile(
@@ -46,7 +47,7 @@ class TestStudentUseCases:
             grade="5th Grade",
             avatar_url="https://example.com/avatar.jpg",
             allergies=["gluten"],
-            excluded_foods=["fish"]
+            excluded_foods=["fish"],
         )
         mock_repository.create.return_value = mock_student
 
@@ -60,7 +61,7 @@ class TestStudentUseCases:
             grade="5th Grade",
             avatar_url="https://example.com/avatar.jpg",
             allergies=["gluten"],
-            excluded_foods=["fish"]
+            excluded_foods=["fish"],
         )
 
     def test_get_student_by_id_success(self, use_cases, mock_repository):
@@ -68,11 +69,7 @@ class TestStudentUseCases:
         student_id = uuid4()
         user_id = uuid4()
         mock_student = StudentProfile(
-            id=student_id,
-            user_id=user_id,
-            name="Test Student",
-            school="Test School",
-            grade="1st Grade"
+            id=student_id, user_id=user_id, name="Test Student", school="Test School", grade="1st Grade"
         )
 
         mock_repository.get_by_id.return_value = mock_student
@@ -103,7 +100,7 @@ class TestStudentUseCases:
             user_id=uuid4(),  # Different user
             name="Test Student",
             school="Test School",
-            grade="1st Grade"
+            grade="1st Grade",
         )
 
         mock_repository.get_by_id.return_value = mock_student
@@ -116,20 +113,8 @@ class TestStudentUseCases:
         """Test retrieving all students for a user"""
         user_id = uuid4()
         mock_students = [
-            StudentProfile(
-                id=uuid4(),
-                user_id=user_id,
-                name="Student 1",
-                school="School A",
-                grade="1st Grade"
-            ),
-            StudentProfile(
-                id=uuid4(),
-                user_id=user_id,
-                name="Student 2",
-                school="School B",
-                grade="2nd Grade"
-            )
+            StudentProfile(id=uuid4(), user_id=user_id, name="Student 1", school="School A", grade="1st Grade"),
+            StudentProfile(id=uuid4(), user_id=user_id, name="Student 2", school="School B", grade="2nd Grade"),
         ]
 
         mock_repository.get_by_user_id.return_value = mock_students
@@ -143,26 +128,19 @@ class TestStudentUseCases:
         """Test successful student update"""
         student_id = uuid4()
         user_id = uuid4()
-        request = StudentUpdateRequest(
-            name="Updated Name",
-            school="Updated School"
-        )
+        request = StudentUpdateRequest(name="Updated Name", school="Updated School")
 
         mock_student = StudentProfile(
-            id=student_id,
-            user_id=user_id,
-            name="Updated Name",
-            school="Updated School",
-            grade="5th Grade"
+            id=student_id, user_id=user_id, name="Updated Name", school="Updated School", grade="5th Grade"
         )
 
-        mock_repository.verify_ownership.return_value = True
+        mock_repository.get_by_id.return_value = mock_student
         mock_repository.update.return_value = mock_student
 
         result = use_cases.update_student(student_id, user_id, request)
 
         assert result == mock_student
-        mock_repository.verify_ownership.assert_called_once_with(student_id, user_id)
+        mock_repository.get_by_id.assert_called_once_with(student_id)
         mock_repository.update.assert_called_once_with(
             student_id=student_id,
             name="Updated Name",
@@ -170,7 +148,8 @@ class TestStudentUseCases:
             grade=None,
             avatar_url=None,
             allergies=None,
-            excluded_foods=None
+            excluded_foods=None,
+            _update_avatar=False,
         )
 
     def test_update_student_unauthorized(self, use_cases, mock_repository):
@@ -179,7 +158,11 @@ class TestStudentUseCases:
         user_id = uuid4()
         request = StudentUpdateRequest(name="New Name")
 
-        mock_repository.verify_ownership.return_value = False
+        # Mock student with different user_id
+        mock_student = StudentProfile(
+            id=student_id, user_id=uuid4(), name="Test", school="Test", grade="1st"
+        )
+        mock_repository.get_by_id.return_value = mock_student
 
         with pytest.raises(PermissionError, match="Access denied"):
             use_cases.update_student(student_id, user_id, request)
@@ -190,8 +173,7 @@ class TestStudentUseCases:
         user_id = uuid4()
         request = StudentUpdateRequest(name="New Name")
 
-        mock_repository.verify_ownership.return_value = True
-        mock_repository.update.return_value = None
+        mock_repository.get_by_id.return_value = None
 
         with pytest.raises(ValueError, match="Student not found"):
             use_cases.update_student(student_id, user_id, request)

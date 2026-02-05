@@ -2,8 +2,10 @@
 Unit tests for User Repository.
 Following TDD principles - write tests first, then implement.
 """
-import pytest
+
 from uuid import UUID
+
+import pytest
 from sqlalchemy.orm import Session
 
 from src.domain.models import User
@@ -43,7 +45,7 @@ class TestUserRepository:
         created_user = repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
 
         # Act
@@ -73,7 +75,7 @@ class TestUserRepository:
         created_user = repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
 
         # Act
@@ -102,7 +104,7 @@ class TestUserRepository:
         user = repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
         # Soft delete the user
         repo.delete(user.id)
@@ -120,7 +122,7 @@ class TestUserRepository:
         user = repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
         new_name = "Updated Name"
         new_email = "updated@example.com"
@@ -153,7 +155,7 @@ class TestUserRepository:
         user = repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
 
         # Act
@@ -184,7 +186,7 @@ class TestUserRepository:
         repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
 
         # Act
@@ -211,7 +213,7 @@ class TestUserRepository:
         user = repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
         repo.delete(user.id)
 
@@ -228,13 +230,9 @@ class TestUserRepository:
         repo.create(
             email=sample_user_data["email"],
             name=sample_user_data["name"],
-            password_hash=sample_user_data["password_hash"]
+            password_hash=sample_user_data["password_hash"],
         )
 
         # Act & Assert
         with pytest.raises(Exception):  # SQLAlchemy IntegrityError
-            repo.create(
-                email=sample_user_data["email"],  # Same email
-                name="Another User",
-                password_hash="anotherhash"
-            )
+            repo.create(email=sample_user_data["email"], name="Another User", password_hash="anotherhash")  # Same email

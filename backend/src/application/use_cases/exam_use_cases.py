@@ -8,10 +8,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from src.application.schemas.exam import (
-    ExamCreateRequest,
-    ExamUpdateRequest
-)
+from src.application.schemas.exam import ExamCreateRequest, ExamUpdateRequest
 from src.domain.models import Exam
 from src.infrastructure.repositories.exam_repository import ExamRepository
 from src.infrastructure.repositories.student_repository import StudentRepository
@@ -20,19 +17,11 @@ from src.infrastructure.repositories.student_repository import StudentRepository
 class ExamUseCases:
     """Use cases for exam management"""
 
-    def __init__(
-        self,
-        exam_repo: ExamRepository,
-        student_repo: StudentRepository
-    ):
+    def __init__(self, exam_repo: ExamRepository, student_repo: StudentRepository):
         self.exam_repo = exam_repo
         self.student_repo = student_repo
 
-    def create_exam(
-        self,
-        user_id: UUID,
-        data: ExamCreateRequest
-    ) -> Exam:
+    def create_exam(self, user_id: UUID, data: ExamCreateRequest) -> Exam:
         """Create a new exam for a student
 
         Args:
@@ -51,18 +40,10 @@ class ExamUseCases:
             raise PermissionError("Access denied: Student does not belong to user")
 
         return self.exam_repo.create(
-            student_id=data.student_id,
-            subject=data.subject,
-            date=data.date,
-            topic=data.topic,
-            notes=data.notes
+            student_id=data.student_id, subject=data.subject, date=data.date, topic=data.topic, notes=data.notes
         )
 
-    def get_exam_by_id(
-        self,
-        exam_id: UUID,
-        user_id: UUID
-    ) -> Exam:
+    def get_exam_by_id(self, exam_id: UUID, user_id: UUID) -> Exam:
         """Get an exam by ID
 
         Args:
@@ -87,11 +68,7 @@ class ExamUseCases:
         return exam
 
     def get_exams_by_student(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        from_date: Optional[date] = None,
-        to_date: Optional[date] = None
+        self, student_id: UUID, user_id: UUID, from_date: Optional[date] = None, to_date: Optional[date] = None
     ) -> List[Exam]:
         """Get all exams for a student
 
@@ -111,18 +88,9 @@ class ExamUseCases:
         if not self.student_repo.verify_ownership(student_id, user_id):
             raise PermissionError("Access denied")
 
-        return self.exam_repo.get_by_student_id(
-            student_id=student_id,
-            from_date=from_date,
-            to_date=to_date
-        )
+        return self.exam_repo.get_by_student_id(student_id=student_id, from_date=from_date, to_date=to_date)
 
-    def update_exam(
-        self,
-        exam_id: UUID,
-        user_id: UUID,
-        data: ExamUpdateRequest
-    ) -> Exam:
+    def update_exam(self, exam_id: UUID, user_id: UUID, data: ExamUpdateRequest) -> Exam:
         """Update an exam
 
         Args:
@@ -146,11 +114,7 @@ class ExamUseCases:
             raise PermissionError("Access denied")
 
         updated = self.exam_repo.update(
-            exam_id=exam_id,
-            subject=data.subject,
-            date=data.date,
-            topic=data.topic,
-            notes=data.notes
+            exam_id=exam_id, subject=data.subject, date=data.date, topic=data.topic, notes=data.notes
         )
 
         if not updated:
@@ -158,11 +122,7 @@ class ExamUseCases:
 
         return updated
 
-    def delete_exam(
-        self,
-        exam_id: UUID,
-        user_id: UUID
-    ) -> bool:
+    def delete_exam(self, exam_id: UUID, user_id: UUID) -> bool:
         """Delete an exam (hard delete)
 
         Args:

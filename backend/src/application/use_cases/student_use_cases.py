@@ -7,10 +7,7 @@ Business logic for student profile operations
 from typing import List
 from uuid import UUID
 
-from src.application.schemas.student import (
-    StudentCreateRequest,
-    StudentUpdateRequest
-)
+from src.application.schemas.student import StudentCreateRequest, StudentUpdateRequest
 from src.domain.models import StudentProfile
 from src.infrastructure.repositories.student_repository import StudentRepository
 
@@ -21,11 +18,7 @@ class StudentUseCases:
     def __init__(self, student_repo: StudentRepository):
         self.student_repo = student_repo
 
-    def create_student(
-        self,
-        user_id: UUID,
-        data: StudentCreateRequest
-    ) -> StudentProfile:
+    def create_student(self, user_id: UUID, data: StudentCreateRequest) -> StudentProfile:
         """Create a new student profile for a user
 
         Args:
@@ -45,14 +38,10 @@ class StudentUseCases:
             grade=data.grade,
             avatar_url=data.avatar_url,
             allergies=data.allergies,
-            excluded_foods=data.excluded_foods
+            excluded_foods=data.excluded_foods,
         )
 
-    def get_student_by_id(
-        self,
-        student_id: UUID,
-        user_id: UUID
-    ) -> StudentProfile:
+    def get_student_by_id(self, student_id: UUID, user_id: UUID) -> StudentProfile:
         """Get a student profile by ID
 
         Args:
@@ -87,12 +76,7 @@ class StudentUseCases:
         """
         return self.student_repo.get_by_user_id(user_id)
 
-    def update_student(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        data: StudentUpdateRequest
-    ) -> StudentProfile:
+    def update_student(self, student_id: UUID, user_id: UUID, data: StudentUpdateRequest) -> StudentProfile:
         """Update a student profile
 
         Args:
@@ -122,23 +106,19 @@ class StudentUseCases:
         # Pass all updates directly, letting repository handle None values
         updated = self.student_repo.update(
             student_id=student_id,
-            name=update_data_dict.get('name'),
-            school=update_data_dict.get('school'),
-            grade=update_data_dict.get('grade'),
-            avatar_url=update_data_dict.get('avatar_url') if 'avatar_url' not in update_data_dict else data.avatar_url,
-            allergies=update_data_dict.get('allergies'),
-            excluded_foods=update_data_dict.get('excluded_foods'),
+            name=update_data_dict.get("name"),
+            school=update_data_dict.get("school"),
+            grade=update_data_dict.get("grade"),
+            avatar_url=update_data_dict.get("avatar_url") if "avatar_url" not in update_data_dict else data.avatar_url,
+            allergies=update_data_dict.get("allergies"),
+            excluded_foods=update_data_dict.get("excluded_foods"),
             # Pass set_avatar_url flag to indicate explicit update
-            _update_avatar=('avatar_url' in update_data_dict)
+            _update_avatar=("avatar_url" in update_data_dict),
         )
 
         return updated
 
-    def delete_student(
-        self,
-        student_id: UUID,
-        user_id: UUID
-    ) -> bool:
+    def delete_student(self, student_id: UUID, user_id: UUID) -> bool:
         """Delete a student profile
 
         Args:

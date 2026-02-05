@@ -1,9 +1,11 @@
 """
 JWT token creation and validation utilities.
 """
+
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from uuid import UUID
+
 from jose import JWTError, jwt
 
 from src.infrastructure.config import settings

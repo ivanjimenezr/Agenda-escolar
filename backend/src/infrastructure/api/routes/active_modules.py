@@ -9,17 +9,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.application.schemas.active_modules import (
-    ActiveModulesUpdateRequest,
-    ActiveModulesResponse
-)
+from src.application.schemas.active_modules import ActiveModulesResponse, ActiveModulesUpdateRequest
 from src.application.use_cases.active_modules_use_cases import ActiveModulesUseCases
 from src.domain.models import User
 from src.infrastructure.api.dependencies.auth import get_current_user
 from src.infrastructure.api.dependencies.database import get_db
 from src.infrastructure.repositories.active_modules_repository import ActiveModulesRepository
 from src.infrastructure.repositories.student_repository import StudentRepository
-
 
 router = APIRouter(prefix="/students/{student_id}/active-modules", tags=["active-modules"])
 
@@ -31,15 +27,11 @@ def get_active_modules_use_cases(db: Session = Depends(get_db)) -> ActiveModules
     return ActiveModulesUseCases(active_modules_repo, student_repo)
 
 
-@router.get(
-    "",
-    response_model=ActiveModulesResponse,
-    summary="Get active modules configuration"
-)
+@router.get("", response_model=ActiveModulesResponse, summary="Get active modules configuration")
 def get_active_modules(
     student_id: UUID,
     current_user: User = Depends(get_current_user),
-    use_cases: ActiveModulesUseCases = Depends(get_active_modules_use_cases)
+    use_cases: ActiveModulesUseCases = Depends(get_active_modules_use_cases),
 ):
     """
     Get active modules configuration for a student.
@@ -50,27 +42,17 @@ def get_active_modules(
         active_modules = use_cases.get_active_modules(student_id, current_user.id)
         return ActiveModulesResponse.model_validate(active_modules)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
-@router.put(
-    "",
-    response_model=ActiveModulesResponse,
-    summary="Update active modules configuration"
-)
+@router.put("", response_model=ActiveModulesResponse, summary="Update active modules configuration")
 def update_active_modules(
     student_id: UUID,
     data: ActiveModulesUpdateRequest,
     current_user: User = Depends(get_current_user),
-    use_cases: ActiveModulesUseCases = Depends(get_active_modules_use_cases)
+    use_cases: ActiveModulesUseCases = Depends(get_active_modules_use_cases),
 ):
     """
     Update active modules configuration for a student.
@@ -89,12 +71,6 @@ def update_active_modules(
         updated = use_cases.update_active_modules(student_id, current_user.id, data)
         return ActiveModulesResponse.model_validate(updated)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))

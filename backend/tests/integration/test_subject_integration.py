@@ -1,12 +1,12 @@
 import uuid
 from datetime import time
 
+# Skip these integration tests if docker is not available
+import docker
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Skip these integration tests if docker is not available
-import docker
 
 def _docker_available() -> bool:
     try:
@@ -16,12 +16,13 @@ def _docker_available() -> bool:
     except Exception:
         return False
 
+
 from testcontainers.postgres import PostgresContainer
 
+from src.application.exceptions import ConflictError
+from src.domain.models import StudentProfile, SubjectType, User
 from src.infrastructure.database import Base
 from src.infrastructure.repositories.subject_repository import SubjectRepository
-from src.domain.models import User, StudentProfile, SubjectType
-from src.application.exceptions import ConflictError
 
 
 @pytest.mark.integration
@@ -55,7 +56,7 @@ def test_uppercase_days_normalized_and_conflict_detection():
             time=time(9, 0),
             teacher="Prof",
             color="#112233",
-            type=SubjectType.COLEGIO
+            type=SubjectType.COLEGIO,
         )
         assert subj is not None
 
@@ -68,7 +69,7 @@ def test_uppercase_days_normalized_and_conflict_detection():
                 time=time(9, 0),
                 teacher="Prof",
                 color="#112233",
-                type=SubjectType.COLEGIO
+                type=SubjectType.COLEGIO,
             )
 
         session.close()
@@ -106,7 +107,7 @@ def test_replace_conflicting_subjects_with_uppercase_days():
             time=time(10, 0),
             teacher="Coach",
             color="#445566",
-            type=SubjectType.EXTRAESCOLAR
+            type=SubjectType.EXTRAESCOLAR,
         )
         assert subj is not None
 
@@ -119,7 +120,7 @@ def test_replace_conflicting_subjects_with_uppercase_days():
             teacher="Coach",
             color="#445566",
             type=SubjectType.EXTRAESCOLAR,
-            replace=True
+            replace=True,
         )
 
         # The original should be marked deleted

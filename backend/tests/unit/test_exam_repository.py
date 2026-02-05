@@ -1,9 +1,11 @@
 """
 Unit tests for ExamRepository
 """
-import pytest
+
 from datetime import date, datetime
 from uuid import uuid4
+
+import pytest
 
 from src.domain.models import Exam, StudentProfile, User
 from src.infrastructure.repositories.exam_repository import ExamRepository
@@ -24,7 +26,7 @@ def sample_user(db_session):
         name="Exam Test User",
         password_hash="dummy_hash",
         is_active=True,
-        email_verified=True
+        email_verified=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -42,7 +44,7 @@ def sample_student(db_session, sample_user):
         school="Test School",
         grade="5º",
         allergies=[],
-        excluded_foods=[]
+        excluded_foods=[],
     )
     db_session.add(student)
     db_session.commit()
@@ -60,7 +62,7 @@ class TestExamRepository:
             subject="Matemáticas",
             date=date(2026, 3, 15),
             topic="Ecuaciones de segundo grado",
-            notes="Repasar ejercicios 1-10"
+            notes="Repasar ejercicios 1-10",
         )
 
         assert exam.id is not None
@@ -75,10 +77,7 @@ class TestExamRepository:
     def test_create_exam_without_notes(self, exam_repo, sample_student):
         """Test creating an exam without notes"""
         exam = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Lengua",
-            date=date(2026, 3, 20),
-            topic="Análisis sintáctico"
+            student_id=sample_student.id, subject="Lengua", date=date(2026, 3, 20), topic="Análisis sintáctico"
         )
 
         assert exam.id is not None
@@ -87,10 +86,7 @@ class TestExamRepository:
     def test_get_by_id(self, exam_repo, sample_student):
         """Test retrieving an exam by ID"""
         created = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Historia",
-            date=date(2026, 4, 1),
-            topic="Revolución francesa"
+            student_id=sample_student.id, subject="Historia", date=date(2026, 4, 1), topic="Revolución francesa"
         )
 
         retrieved = exam_repo.get_by_id(created.id)
@@ -109,22 +105,11 @@ class TestExamRepository:
         """Test retrieving all exams for a student"""
         # Create multiple exams
         exam1 = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Matemáticas",
-            date=date(2026, 3, 15),
-            topic="Tema 1"
+            student_id=sample_student.id, subject="Matemáticas", date=date(2026, 3, 15), topic="Tema 1"
         )
-        exam2 = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Lengua",
-            date=date(2026, 3, 10),
-            topic="Tema 2"
-        )
+        exam2 = exam_repo.create(student_id=sample_student.id, subject="Lengua", date=date(2026, 3, 10), topic="Tema 2")
         exam3 = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Historia",
-            date=date(2026, 3, 20),
-            topic="Tema 3"
+            student_id=sample_student.id, subject="Historia", date=date(2026, 3, 20), topic="Tema 3"
         )
 
         exams = exam_repo.get_by_student_id(sample_student.id)
@@ -138,57 +123,29 @@ class TestExamRepository:
     def test_get_by_student_id_with_date_filters(self, exam_repo, sample_student):
         """Test retrieving exams with date range filters"""
         # Create exams on different dates
-        exam_repo.create(
-            student_id=sample_student.id,
-            subject="Math",
-            date=date(2026, 3, 1),
-            topic="Topic 1"
-        )
-        exam_repo.create(
-            student_id=sample_student.id,
-            subject="Science",
-            date=date(2026, 3, 15),
-            topic="Topic 2"
-        )
-        exam_repo.create(
-            student_id=sample_student.id,
-            subject="History",
-            date=date(2026, 3, 30),
-            topic="Topic 3"
-        )
+        exam_repo.create(student_id=sample_student.id, subject="Math", date=date(2026, 3, 1), topic="Topic 1")
+        exam_repo.create(student_id=sample_student.id, subject="Science", date=date(2026, 3, 15), topic="Topic 2")
+        exam_repo.create(student_id=sample_student.id, subject="History", date=date(2026, 3, 30), topic="Topic 3")
 
         # Test from_date filter
-        exams = exam_repo.get_by_student_id(
-            sample_student.id,
-            from_date=date(2026, 3, 10)
-        )
+        exams = exam_repo.get_by_student_id(sample_student.id, from_date=date(2026, 3, 10))
         assert len(exams) == 2
         assert all(e.date >= date(2026, 3, 10) for e in exams)
 
         # Test to_date filter
-        exams = exam_repo.get_by_student_id(
-            sample_student.id,
-            to_date=date(2026, 3, 20)
-        )
+        exams = exam_repo.get_by_student_id(sample_student.id, to_date=date(2026, 3, 20))
         assert len(exams) == 2
         assert all(e.date <= date(2026, 3, 20) for e in exams)
 
         # Test both filters
-        exams = exam_repo.get_by_student_id(
-            sample_student.id,
-            from_date=date(2026, 3, 10),
-            to_date=date(2026, 3, 20)
-        )
+        exams = exam_repo.get_by_student_id(sample_student.id, from_date=date(2026, 3, 10), to_date=date(2026, 3, 20))
         assert len(exams) == 1
         assert exams[0].date == date(2026, 3, 15)
 
     def test_update_exam(self, exam_repo, sample_student):
         """Test updating an exam"""
         exam = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Biology",
-            date=date(2026, 4, 1),
-            topic="Cell structure"
+            student_id=sample_student.id, subject="Biology", date=date(2026, 4, 1), topic="Cell structure"
         )
 
         original_updated_at = exam.updated_at
@@ -199,7 +156,7 @@ class TestExamRepository:
             subject="Advanced Biology",
             date=date(2026, 4, 5),
             topic="Cell structure and mitosis",
-            notes="Study chapters 3-5"
+            notes="Study chapters 3-5",
         )
 
         assert updated is not None
@@ -212,17 +169,11 @@ class TestExamRepository:
     def test_update_partial(self, exam_repo, sample_student):
         """Test partial update of an exam"""
         exam = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Chemistry",
-            date=date(2026, 4, 10),
-            topic="Periodic table"
+            student_id=sample_student.id, subject="Chemistry", date=date(2026, 4, 10), topic="Periodic table"
         )
 
         # Only update the topic
-        updated = exam_repo.update(
-            exam_id=exam.id,
-            topic="Periodic table and chemical bonds"
-        )
+        updated = exam_repo.update(exam_id=exam.id, topic="Periodic table and chemical bonds")
 
         assert updated is not None
         assert updated.subject == "Chemistry"  # Unchanged
@@ -231,19 +182,13 @@ class TestExamRepository:
 
     def test_update_not_found(self, exam_repo):
         """Test updating a non-existent exam"""
-        result = exam_repo.update(
-            exam_id=uuid4(),
-            subject="New Subject"
-        )
+        result = exam_repo.update(exam_id=uuid4(), subject="New Subject")
         assert result is None
 
     def test_hard_delete(self, exam_repo, sample_student):
         """Test hard delete (permanent deletion)"""
         exam = exam_repo.create(
-            student_id=sample_student.id,
-            subject="Physics",
-            date=date(2026, 5, 1),
-            topic="Mechanics"
+            student_id=sample_student.id, subject="Physics", date=date(2026, 5, 1), topic="Mechanics"
         )
 
         exam_id = exam.id
@@ -271,7 +216,7 @@ class TestExamRepository:
             school="School 1",
             grade="4º",
             allergies=[],
-            excluded_foods=[]
+            excluded_foods=[],
         )
         student2 = StudentProfile(
             id=uuid4(),
@@ -280,24 +225,14 @@ class TestExamRepository:
             school="School 2",
             grade="6º",
             allergies=[],
-            excluded_foods=[]
+            excluded_foods=[],
         )
         db_session.add_all([student1, student2])
         db_session.commit()
 
         # Create exams for each student
-        exam_repo.create(
-            student_id=student1.id,
-            subject="Math",
-            date=date(2026, 3, 15),
-            topic="Topic 1"
-        )
-        exam_repo.create(
-            student_id=student2.id,
-            subject="Science",
-            date=date(2026, 3, 15),
-            topic="Topic 2"
-        )
+        exam_repo.create(student_id=student1.id, subject="Math", date=date(2026, 3, 15), topic="Topic 1")
+        exam_repo.create(student_id=student2.id, subject="Science", date=date(2026, 3, 15), topic="Topic 2")
 
         # Verify isolation
         student1_exams = exam_repo.get_by_student_id(student1.id)

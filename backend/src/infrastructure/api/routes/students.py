@@ -10,17 +10,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.application.schemas.student import (
-    StudentCreateRequest,
-    StudentUpdateRequest,
-    StudentResponse
-)
+from src.application.schemas.student import StudentCreateRequest, StudentResponse, StudentUpdateRequest
 from src.application.use_cases.student_use_cases import StudentUseCases
 from src.domain.models import User
 from src.infrastructure.api.dependencies.auth import get_current_user
 from src.infrastructure.api.dependencies.database import get_db
 from src.infrastructure.repositories.student_repository import StudentRepository
-
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -32,15 +27,12 @@ def get_student_use_cases(db: Session = Depends(get_db)) -> StudentUseCases:
 
 
 @router.post(
-    "",
-    response_model=StudentResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Create a new student profile"
+    "", response_model=StudentResponse, status_code=status.HTTP_201_CREATED, summary="Create a new student profile"
 )
 def create_student(
     data: StudentCreateRequest,
     current_user: User = Depends(get_current_user),
-    use_cases: StudentUseCases = Depends(get_student_use_cases)
+    use_cases: StudentUseCases = Depends(get_student_use_cases),
 ):
     """
     Create a new student profile for the authenticated user.
@@ -56,20 +48,12 @@ def create_student(
         student = use_cases.create_student(current_user.id, data)
         return StudentResponse.model_validate(student)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get(
-    "",
-    response_model=List[StudentResponse],
-    summary="Get all student profiles for current user"
-)
+@router.get("", response_model=List[StudentResponse], summary="Get all student profiles for current user")
 def get_my_students(
-    current_user: User = Depends(get_current_user),
-    use_cases: StudentUseCases = Depends(get_student_use_cases)
+    current_user: User = Depends(get_current_user), use_cases: StudentUseCases = Depends(get_student_use_cases)
 ):
     """
     Get all student profiles belonging to the authenticated user.
@@ -78,15 +62,11 @@ def get_my_students(
     return [StudentResponse.model_validate(s) for s in students]
 
 
-@router.get(
-    "/{student_id}",
-    response_model=StudentResponse,
-    summary="Get a specific student profile"
-)
+@router.get("/{student_id}", response_model=StudentResponse, summary="Get a specific student profile")
 def get_student(
     student_id: UUID,
     current_user: User = Depends(get_current_user),
-    use_cases: StudentUseCases = Depends(get_student_use_cases)
+    use_cases: StudentUseCases = Depends(get_student_use_cases),
 ):
     """
     Get a specific student profile by ID.
@@ -97,27 +77,17 @@ def get_student(
         student = use_cases.get_student_by_id(student_id, current_user.id)
         return StudentResponse.model_validate(student)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
-@router.put(
-    "/{student_id}",
-    response_model=StudentResponse,
-    summary="Update a student profile"
-)
+@router.put("/{student_id}", response_model=StudentResponse, summary="Update a student profile")
 def update_student(
     student_id: UUID,
     data: StudentUpdateRequest,
     current_user: User = Depends(get_current_user),
-    use_cases: StudentUseCases = Depends(get_student_use_cases)
+    use_cases: StudentUseCases = Depends(get_student_use_cases),
 ):
     """
     Update a student profile.
@@ -129,26 +99,16 @@ def update_student(
         student = use_cases.update_student(student_id, current_user.id, data)
         return StudentResponse.model_validate(student)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
-@router.delete(
-    "/{student_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a student profile"
-)
+@router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a student profile")
 def delete_student(
     student_id: UUID,
     current_user: User = Depends(get_current_user),
-    use_cases: StudentUseCases = Depends(get_student_use_cases)
+    use_cases: StudentUseCases = Depends(get_student_use_cases),
 ):
     """
     Delete a student profile (soft delete).
@@ -159,12 +119,6 @@ def delete_student(
         use_cases.delete_student(student_id, current_user.id)
         return None
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))

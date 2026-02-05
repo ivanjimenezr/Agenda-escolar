@@ -4,12 +4,12 @@ Exam Repository
 Data access layer for Exam entity
 """
 
-from datetime import datetime, date, timezone
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from src.domain.models import Exam
 
@@ -20,14 +20,7 @@ class ExamRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(
-        self,
-        student_id: UUID,
-        subject: str,
-        date: date,
-        topic: str,
-        notes: Optional[str] = None
-    ) -> Exam:
+    def create(self, student_id: UUID, subject: str, date: date, topic: str, notes: Optional[str] = None) -> Exam:
         """Create a new exam
 
         Args:
@@ -43,13 +36,7 @@ class ExamRepository:
         Raises:
             ValueError: If database error occurs
         """
-        exam = Exam(
-            student_id=student_id,
-            subject=subject,
-            date=date,
-            topic=topic,
-            notes=notes
-        )
+        exam = Exam(student_id=student_id, subject=subject, date=date, topic=topic, notes=notes)
 
         self.db.add(exam)
         try:
@@ -62,15 +49,10 @@ class ExamRepository:
 
     def get_by_id(self, exam_id: UUID) -> Optional[Exam]:
         """Get exam by ID"""
-        return self.db.query(Exam).filter(
-            Exam.id == exam_id
-        ).first()
+        return self.db.query(Exam).filter(Exam.id == exam_id).first()
 
     def get_by_student_id(
-        self,
-        student_id: UUID,
-        from_date: Optional[date] = None,
-        to_date: Optional[date] = None
+        self, student_id: UUID, from_date: Optional[date] = None, to_date: Optional[date] = None
     ) -> List[Exam]:
         """Get all exams for a student
 
@@ -82,9 +64,7 @@ class ExamRepository:
         Returns:
             List of exams ordered by date ascending
         """
-        query = self.db.query(Exam).filter(
-            Exam.student_id == student_id
-        )
+        query = self.db.query(Exam).filter(Exam.student_id == student_id)
 
         if from_date:
             query = query.filter(Exam.date >= from_date)
@@ -99,7 +79,7 @@ class ExamRepository:
         subject: Optional[str] = None,
         date: Optional[date] = None,
         topic: Optional[str] = None,
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
     ) -> Optional[Exam]:
         """Update exam
 

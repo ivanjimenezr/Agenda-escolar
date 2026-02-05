@@ -4,12 +4,12 @@ Event Repository
 Data access layer for SchoolEvent entity
 """
 
-from datetime import datetime, date, timezone
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from src.domain.models import SchoolEvent
 
@@ -20,13 +20,7 @@ class EventRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(
-        self,
-        user_id: UUID,
-        date: date,
-        name: str,
-        event_type: str
-    ) -> SchoolEvent:
+    def create(self, user_id: UUID, date: date, name: str, event_type: str) -> SchoolEvent:
         """Create a new school event
 
         Args:
@@ -41,12 +35,7 @@ class EventRepository:
         Raises:
             ValueError: If database error occurs
         """
-        event = SchoolEvent(
-            user_id=user_id,
-            date=date,
-            name=name,
-            type=event_type
-        )
+        event = SchoolEvent(user_id=user_id, date=date, name=name, type=event_type)
 
         self.db.add(event)
         try:
@@ -59,15 +48,10 @@ class EventRepository:
 
     def get_by_id(self, event_id: UUID) -> Optional[SchoolEvent]:
         """Get event by ID"""
-        return self.db.query(SchoolEvent).filter(
-            SchoolEvent.id == event_id
-        ).first()
+        return self.db.query(SchoolEvent).filter(SchoolEvent.id == event_id).first()
 
     def get_by_user_id(
-        self,
-        user_id: UUID,
-        from_date: Optional[date] = None,
-        to_date: Optional[date] = None
+        self, user_id: UUID, from_date: Optional[date] = None, to_date: Optional[date] = None
     ) -> List[SchoolEvent]:
         """Get all events for a user
 
@@ -79,9 +63,7 @@ class EventRepository:
         Returns:
             List of events ordered by date ascending
         """
-        query = self.db.query(SchoolEvent).filter(
-            SchoolEvent.user_id == user_id
-        )
+        query = self.db.query(SchoolEvent).filter(SchoolEvent.user_id == user_id)
 
         if from_date:
             query = query.filter(SchoolEvent.date >= from_date)
@@ -91,11 +73,7 @@ class EventRepository:
         return query.order_by(SchoolEvent.date.asc()).all()
 
     def update(
-        self,
-        event_id: UUID,
-        date: Optional[date] = None,
-        name: Optional[str] = None,
-        event_type: Optional[str] = None
+        self, event_id: UUID, date: Optional[date] = None, name: Optional[str] = None, event_type: Optional[str] = None
     ) -> Optional[SchoolEvent]:
         """Update event
 

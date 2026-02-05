@@ -1,6 +1,7 @@
 """
 Password hashing and verification utilities using bcrypt.
 """
+
 from passlib.context import CryptContext
 
 # Create password context with bcrypt

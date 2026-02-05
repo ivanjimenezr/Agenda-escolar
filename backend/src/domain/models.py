@@ -2,39 +2,32 @@
 SQLAlchemy ORM Models for Agenda Escolar Pro.
 All models follow the database schema design.
 """
-from datetime import datetime, time, date
+
+import enum
+import uuid
+from datetime import date, datetime, time
 from typing import List
-from sqlalchemy import (
-    Column,
-    String,
-    Boolean,
-    DateTime,
-    Date,
-    Time,
-    ForeignKey,
-    Text,
-    CheckConstraint,
-    UniqueConstraint,
-    Enum as SQLEnum,
-)
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+
+from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, String, Text, Time, UniqueConstraint
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy import JSON
-import uuid
-import enum
 
-from src.infrastructure.database import Base
 from src.infrastructure.config import settings
+from src.infrastructure.database import Base
 
 # Detect whether configured DB URL points to SQLite. This is used only for
 # some module-level decisions (like default values and table constraints).
 _using_sqlite = settings.database_url.startswith("sqlite")
 
+from sqlalchemy import String
+
 # ArrayType: a dialect-aware column type that uses native Postgres ARRAY
 # when the dialect is postgresql, and JSON for other dialects (e.g., SQLite in tests).
-from sqlalchemy.types import TypeDecorator, CHAR
-from sqlalchemy import String
+from sqlalchemy.types import CHAR, TypeDecorator
+
 
 class GUID(TypeDecorator):
     """Platform-independent GUID type.
@@ -42,6 +35,7 @@ class GUID(TypeDecorator):
     Uses PostgreSQL's UUID type when available, otherwise stores UUIDs as
     36-char strings on other dialects (SQLite for tests).
     """
+
     impl = CHAR
     cache_ok = True
 
@@ -86,14 +80,17 @@ class ArrayType(TypeDecorator):
 
 # ================ ENUMS ================
 
+
 class SubjectType(str, enum.Enum):
     """Subject type enumeration."""
+
     COLEGIO = "colegio"
     EXTRAESCOLAR = "extraescolar"
 
 
 class Weekday(str, enum.Enum):
     """Weekday enumeration in Spanish."""
+
     LUNES = "Lunes"
     MARTES = "Martes"
     MIERCOLES = "Miércoles"
@@ -105,6 +102,7 @@ class Weekday(str, enum.Enum):
 
 class EventType(str, enum.Enum):
     """School event type enumeration."""
+
     FESTIVO = "Festivo"
     LECTIVO = "Lectivo"
     VACACIONES = "Vacaciones"
@@ -112,14 +110,17 @@ class EventType(str, enum.Enum):
 
 class ThemeType(str, enum.Enum):
     """UI theme type enumeration."""
+
     LIGHT = "light"
     DARK = "dark"
 
 
 # ================ MODELS ================
 
+
 class User(Base):
     """User model - represents a parent/guardian account."""
+
     __tablename__ = "users"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -135,10 +136,14 @@ class User(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    student_profiles = relationship("StudentProfile", back_populates="user", cascade="all, delete-orphan", lazy='noload')
-    school_events = relationship("SchoolEvent", back_populates="user", cascade="all, delete-orphan", lazy='noload')
-    centers = relationship("Center", back_populates="user", cascade="all, delete-orphan", lazy='noload')
-    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy='noload')
+    student_profiles = relationship(
+        "StudentProfile", back_populates="user", cascade="all, delete-orphan", lazy="noload"
+    )
+    school_events = relationship("SchoolEvent", back_populates="user", cascade="all, delete-orphan", lazy="noload")
+    centers = relationship("Center", back_populates="user", cascade="all, delete-orphan", lazy="noload")
+    preferences = relationship(
+        "UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="noload"
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', name='{self.name}')>"
@@ -146,6 +151,7 @@ class User(Base):
 
 class StudentProfile(Base):
     """Student profile model - represents a child/student."""
+
     __tablename__ = "student_profiles"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -163,12 +169,14 @@ class StudentProfile(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="student_profiles", lazy='noload')
-    active_modules = relationship("ActiveModule", back_populates="student", uselist=False, cascade="all, delete-orphan", lazy='noload')
-    subjects = relationship("Subject", back_populates="student", cascade="all, delete-orphan", lazy='noload')
-    exams = relationship("Exam", back_populates="student", cascade="all, delete-orphan", lazy='noload')
-    menu_items = relationship("MenuItem", back_populates="student", cascade="all, delete-orphan", lazy='noload')
-    dinners = relationship("Dinner", back_populates="student", cascade="all, delete-orphan", lazy='noload')
+    user = relationship("User", back_populates="student_profiles", lazy="noload")
+    active_modules = relationship(
+        "ActiveModule", back_populates="student", uselist=False, cascade="all, delete-orphan", lazy="noload"
+    )
+    subjects = relationship("Subject", back_populates="student", cascade="all, delete-orphan", lazy="noload")
+    exams = relationship("Exam", back_populates="student", cascade="all, delete-orphan", lazy="noload")
+    menu_items = relationship("MenuItem", back_populates="student", cascade="all, delete-orphan", lazy="noload")
+    dinners = relationship("Dinner", back_populates="student", cascade="all, delete-orphan", lazy="noload")
 
     def __repr__(self):
         return f"<StudentProfile(id={self.id}, name='{self.name}', grade='{self.grade}')>"
@@ -179,12 +187,16 @@ class StudentProfile(Base):
 # during SQLAlchemy mapper initialization and prevents InvalidRequestError.
 Student = StudentProfile
 
+
 class ActiveModule(Base):
     """Active modules configuration per student."""
+
     __tablename__ = "active_modules"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    student_id = Column(GUID(), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    student_id = Column(
+        GUID(), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
 
     # Module flags
     subjects = Column(Boolean, default=True, nullable=False)
@@ -199,7 +211,7 @@ class ActiveModule(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="active_modules", lazy='noload')
+    student = relationship("StudentProfile", back_populates="active_modules", lazy="noload")
 
     def __repr__(self):
         return f"<ActiveModule(student_id={self.student_id})>"
@@ -207,6 +219,7 @@ class ActiveModule(Base):
 
 class Subject(Base):
     """Subject model - represents classes and extracurricular activities."""
+
     __tablename__ = "subjects"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -230,7 +243,7 @@ class Subject(Base):
     __table_args__ = ()
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="subjects", lazy='noload')
+    student = relationship("StudentProfile", back_populates="subjects", lazy="noload")
 
     def __repr__(self):
         return f"<Subject(id={self.id}, name='{self.name}', type={self.type})>"
@@ -238,6 +251,7 @@ class Subject(Base):
 
 class Exam(Base):
     """Exam model - represents upcoming tests and exams."""
+
     __tablename__ = "exams"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -253,7 +267,7 @@ class Exam(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="exams", lazy='noload')
+    student = relationship("StudentProfile", back_populates="exams", lazy="noload")
 
     def __repr__(self):
         return f"<Exam(id={self.id}, subject='{self.subject}', date={self.date})>"
@@ -261,6 +275,7 @@ class Exam(Base):
 
 class MenuItem(Base):
     """Menu item model - represents school lunch menu."""
+
     __tablename__ = "menu_items"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -278,12 +293,10 @@ class MenuItem(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Constraints
-    __table_args__ = (
-        UniqueConstraint("student_id", "date", name="unique_menu_per_student_per_date"),
-    )
+    __table_args__ = (UniqueConstraint("student_id", "date", name="unique_menu_per_student_per_date"),)
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="menu_items", lazy='noload')
+    student = relationship("StudentProfile", back_populates="menu_items", lazy="noload")
 
     def __repr__(self):
         return f"<MenuItem(id={self.id}, date={self.date}, first_course='{self.first_course}')>"
@@ -291,6 +304,7 @@ class MenuItem(Base):
 
 class Dinner(Base):
     """Dinner model - represents AI-suggested dinners."""
+
     __tablename__ = "dinners"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -305,12 +319,10 @@ class Dinner(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Constraints
-    __table_args__ = (
-        UniqueConstraint("student_id", "date", name="unique_dinner_per_student_date"),
-    )
+    __table_args__ = (UniqueConstraint("student_id", "date", name="unique_dinner_per_student_date"),)
 
     # Relationships
-    student = relationship("StudentProfile", back_populates="dinners", lazy='noload')
+    student = relationship("StudentProfile", back_populates="dinners", lazy="noload")
 
     def __repr__(self):
         return f"<Dinner(id={self.id}, date={self.date}, meal='{self.meal}')>"
@@ -318,6 +330,7 @@ class Dinner(Base):
 
 class SchoolEvent(Base):
     """School event model - represents calendar events."""
+
     __tablename__ = "school_events"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -332,7 +345,7 @@ class SchoolEvent(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="school_events", lazy='noload')
+    user = relationship("User", back_populates="school_events", lazy="noload")
 
     def __repr__(self):
         return f"<SchoolEvent(id={self.id}, name='{self.name}', date={self.date}, type={self.type})>"
@@ -340,6 +353,7 @@ class SchoolEvent(Base):
 
 class Center(Base):
     """Center model - represents educational centers/institutions."""
+
     __tablename__ = "centers"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -352,8 +366,8 @@ class Center(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="centers", lazy='noload')
-    contacts = relationship("Contact", back_populates="center", cascade="all, delete-orphan", lazy='noload')
+    user = relationship("User", back_populates="centers", lazy="noload")
+    contacts = relationship("Contact", back_populates="center", cascade="all, delete-orphan", lazy="noload")
 
     def __repr__(self):
         return f"<Center(id={self.id}, name='{self.name}')>"
@@ -361,6 +375,7 @@ class Center(Base):
 
 class Contact(Base):
     """Contact model - represents directory contacts."""
+
     __tablename__ = "contacts"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -375,7 +390,7 @@ class Contact(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    center = relationship("Center", back_populates="contacts", lazy='noload')
+    center = relationship("Center", back_populates="contacts", lazy="noload")
 
     def __repr__(self):
         return f"<Contact(id={self.id}, name='{self.name}', phone='{self.phone}')>"
@@ -383,6 +398,7 @@ class Contact(Base):
 
 class UserPreference(Base):
     """User preferences model - UI preferences and settings."""
+
     __tablename__ = "user_preferences"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -396,7 +412,7 @@ class UserPreference(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
-    user = relationship("User", back_populates="preferences", lazy='noload')
+    user = relationship("User", back_populates="preferences", lazy="noload")
 
     def __repr__(self):
         return f"<UserPreference(user_id={self.user_id}, theme={self.theme})>"

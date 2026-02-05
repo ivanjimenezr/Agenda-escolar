@@ -1,15 +1,23 @@
 """
 Pytest configuration and fixtures for testing.
 """
+
+import os
+
+# CRITICAL: Set environment variables FIRST, before any other imports
+os.environ["SECRET_KEY"] = "test-secret-key-for-pytest-runs-only-12345678"
+os.environ["GEMINI_API_KEY"] = "test-gemini-key"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
+from typing import Generator
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from typing import Generator
 
-from src.infrastructure.database import Base
 from src.domain import models  # Import all models to register them
-
+from src.infrastructure.database import Base
 
 # Create an in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -50,15 +58,17 @@ def sample_user_data():
         "email": "test@example.com",
         "name": "Test User",
         "password": "SecurePass123!",
-        "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS.i7oWu2"  # bcrypt hash of "SecurePass123!"
+        "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS.i7oWu2",  # bcrypt hash of "SecurePass123!"
     }
 
 
 # TestClient fixture used by API route unit tests. It overrides the real DB
 # dependency to use the in-memory testing session created in this file.
 from fastapi.testclient import TestClient
-from src.main import app
+
 from src.infrastructure.api.dependencies.database import get_db as real_get_db
+from src.main import app
+
 
 @pytest.fixture(scope="function")
 def client(db_session):

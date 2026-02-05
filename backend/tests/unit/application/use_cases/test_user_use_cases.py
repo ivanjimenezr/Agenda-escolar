@@ -2,12 +2,13 @@
 Unit tests for User Use Cases.
 Following TDD principles - write tests first, then implement.
 """
+
 import pytest
 from sqlalchemy.orm import Session
 
+from src.application.schemas.user import UserLoginRequest, UserRegisterRequest
 from src.application.use_cases.user_use_cases import UserUseCases
 from src.infrastructure.repositories.user_repository import UserRepository
-from src.application.schemas.user import UserRegisterRequest, UserLoginRequest
 
 
 class TestUserUseCases:
@@ -18,11 +19,7 @@ class TestUserUseCases:
         # Arrange
         repo = UserRepository(db_session)
         use_cases = UserUseCases(repo)
-        register_data = UserRegisterRequest(
-            email="newuser@example.com",
-            password="SecurePass123!",
-            name="New User"
-        )
+        register_data = UserRegisterRequest(email="newuser@example.com", password="SecurePass123!", name="New User")
 
         # Act
         user = use_cases.register_user(register_data)
@@ -45,17 +42,13 @@ class TestUserUseCases:
 
         # Create first user
         first_user = UserRegisterRequest(
-            email=sample_user_data["email"],
-            password=sample_user_data["password"],
-            name=sample_user_data["name"]
+            email=sample_user_data["email"], password=sample_user_data["password"], name=sample_user_data["name"]
         )
         use_cases.register_user(first_user)
 
         # Try to create duplicate
         duplicate_user = UserRegisterRequest(
-            email=sample_user_data["email"],  # Same email
-            password="AnotherPass123!",
-            name="Another User"
+            email=sample_user_data["email"], password="AnotherPass123!", name="Another User"  # Same email
         )
 
         # Act & Assert
@@ -70,17 +63,12 @@ class TestUserUseCases:
 
         # Register user first
         register_data = UserRegisterRequest(
-            email=sample_user_data["email"],
-            password=sample_user_data["password"],
-            name=sample_user_data["name"]
+            email=sample_user_data["email"], password=sample_user_data["password"], name=sample_user_data["name"]
         )
         use_cases.register_user(register_data)
 
         # Login
-        login_data = UserLoginRequest(
-            email=sample_user_data["email"],
-            password=sample_user_data["password"]
-        )
+        login_data = UserLoginRequest(email=sample_user_data["email"], password=sample_user_data["password"])
 
         # Act
         result = use_cases.login_user(login_data)
@@ -101,17 +89,12 @@ class TestUserUseCases:
 
         # Register user
         register_data = UserRegisterRequest(
-            email=sample_user_data["email"],
-            password=sample_user_data["password"],
-            name=sample_user_data["name"]
+            email=sample_user_data["email"], password=sample_user_data["password"], name=sample_user_data["name"]
         )
         use_cases.register_user(register_data)
 
         # Try login with wrong password
-        login_data = UserLoginRequest(
-            email=sample_user_data["email"],
-            password="WrongPassword123!"
-        )
+        login_data = UserLoginRequest(email=sample_user_data["email"], password="WrongPassword123!")
 
         # Act & Assert
         with pytest.raises(ValueError, match="Invalid email or password"):
@@ -123,10 +106,7 @@ class TestUserUseCases:
         repo = UserRepository(db_session)
         use_cases = UserUseCases(repo)
 
-        login_data = UserLoginRequest(
-            email="nonexistent@example.com",
-            password="SomePassword123!"
-        )
+        login_data = UserLoginRequest(email="nonexistent@example.com", password="SomePassword123!")
 
         # Act & Assert
         with pytest.raises(ValueError, match="Invalid email or password"):
@@ -140,9 +120,7 @@ class TestUserUseCases:
 
         # Register user
         register_data = UserRegisterRequest(
-            email=sample_user_data["email"],
-            password=sample_user_data["password"],
-            name=sample_user_data["name"]
+            email=sample_user_data["email"], password=sample_user_data["password"], name=sample_user_data["name"]
         )
         user = use_cases.register_user(register_data)
 
@@ -150,10 +128,7 @@ class TestUserUseCases:
         repo.update(user.id, is_active=False)
 
         # Try to login
-        login_data = UserLoginRequest(
-            email=sample_user_data["email"],
-            password=sample_user_data["password"]
-        )
+        login_data = UserLoginRequest(email=sample_user_data["email"], password=sample_user_data["password"])
 
         # Act & Assert
         with pytest.raises(ValueError, match="Account is inactive"):
@@ -167,9 +142,7 @@ class TestUserUseCases:
 
         # Register user
         register_data = UserRegisterRequest(
-            email=sample_user_data["email"],
-            password=sample_user_data["password"],
-            name=sample_user_data["name"]
+            email=sample_user_data["email"], password=sample_user_data["password"], name=sample_user_data["name"]
         )
         created_user = use_cases.register_user(register_data)
 
@@ -187,6 +160,7 @@ class TestUserUseCases:
         repo = UserRepository(db_session)
         use_cases = UserUseCases(repo)
         from uuid import UUID
+
         fake_uuid = UUID("00000000-0000-0000-0000-000000000000")
 
         # Act & Assert

@@ -27,7 +27,7 @@ class StudentRepository:
         grade: str,
         avatar_url: Optional[str] = None,
         allergies: Optional[List[str]] = None,
-        excluded_foods: Optional[List[str]] = None
+        excluded_foods: Optional[List[str]] = None,
     ) -> StudentProfile:
         """Create a new student profile"""
         student = StudentProfile(
@@ -37,7 +37,7 @@ class StudentRepository:
             grade=grade,
             avatar_url=avatar_url,
             allergies=allergies or [],
-            excluded_foods=excluded_foods or []
+            excluded_foods=excluded_foods or [],
         )
         self.db.add(student)
         self.db.commit()
@@ -46,17 +46,20 @@ class StudentRepository:
 
     def get_by_id(self, student_id: UUID) -> Optional[StudentProfile]:
         """Get student profile by ID (excludes soft-deleted)"""
-        return self.db.query(StudentProfile).filter(
-            StudentProfile.id == student_id,
-            StudentProfile.deleted_at.is_(None)
-        ).first()
+        return (
+            self.db.query(StudentProfile)
+            .filter(StudentProfile.id == student_id, StudentProfile.deleted_at.is_(None))
+            .first()
+        )
 
     def get_by_user_id(self, user_id: UUID) -> List[StudentProfile]:
         """Get all student profiles for a user (excludes soft-deleted)"""
-        return self.db.query(StudentProfile).filter(
-            StudentProfile.user_id == user_id,
-            StudentProfile.deleted_at.is_(None)
-        ).order_by(StudentProfile.created_at).all()
+        return (
+            self.db.query(StudentProfile)
+            .filter(StudentProfile.user_id == user_id, StudentProfile.deleted_at.is_(None))
+            .order_by(StudentProfile.created_at)
+            .all()
+        )
 
     def update(
         self,
@@ -68,7 +71,7 @@ class StudentRepository:
         allergies: Optional[List[str]] = None,
         excluded_foods: Optional[List[str]] = None,
         _update_avatar: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Optional[StudentProfile]:
         """Update student profile
 
@@ -111,10 +114,11 @@ class StudentRepository:
 
     def verify_ownership(self, student_id: UUID, user_id: UUID) -> bool:
         """Verify that a student belongs to a specific user"""
-        student = self.db.query(StudentProfile).filter(
-            StudentProfile.id == student_id,
-            StudentProfile.deleted_at.is_(None)
-        ).first()
+        student = (
+            self.db.query(StudentProfile)
+            .filter(StudentProfile.id == student_id, StudentProfile.deleted_at.is_(None))
+            .first()
+        )
 
         if not student:
             return False

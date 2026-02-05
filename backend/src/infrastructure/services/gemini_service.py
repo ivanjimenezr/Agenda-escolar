@@ -4,10 +4,11 @@ Gemini AI Service
 Service for integrating with Google's Gemini AI for dinner suggestions
 """
 
-from datetime import date, timedelta
-from typing import List, Dict, Any, Optional
-import google.generativeai as genai
 import json
+from datetime import date, timedelta
+from typing import Any, Dict, List, Optional
+
+import google.generativeai as genai
 
 from src.infrastructure.config import settings
 
@@ -18,13 +19,9 @@ class GeminiService:
     def __init__(self):
         """Initialize Gemini AI client"""
         genai.configure(api_key=settings.gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-3-flash-preview')
+        self.model = genai.GenerativeModel("gemini-3-flash-preview")
 
-    def _build_restrictions_text(
-        self,
-        allergies: List[str],
-        excluded_foods: List[str]
-    ) -> str:
+    def _build_restrictions_text(self, allergies: List[str], excluded_foods: List[str]) -> str:
         """Build restrictions text for prompts"""
         restrictions = []
 
@@ -37,9 +34,7 @@ class GeminiService:
 
         if excluded_foods:
             excluded_formatted = [f.lower() for f in excluded_foods]
-            restrictions.append(
-                f"❌ NO incluir estos ingredientes: {', '.join(excluded_formatted)}."
-            )
+            restrictions.append(f"❌ NO incluir estos ingredientes: {', '.join(excluded_formatted)}.")
 
         return " ".join(restrictions) if restrictions else ""
 
@@ -49,7 +44,7 @@ class GeminiService:
         school_menu: Optional[Dict[str, Any]],
         week_menus: List[Dict[str, Any]],
         allergies: List[str],
-        excluded_foods: List[str]
+        excluded_foods: List[str],
     ) -> Dict[str, Any]:
         """
         Suggest a dinner for a specific day
@@ -72,10 +67,10 @@ class GeminiService:
             week_dishes = []
             for menu in week_menus:
                 dishes = []
-                if menu.get('first_course'):
-                    dishes.append(menu['first_course'])
-                if menu.get('second_course'):
-                    dishes.append(menu['second_course'])
+                if menu.get("first_course"):
+                    dishes.append(menu["first_course"])
+                if menu.get("second_course"):
+                    dishes.append(menu["second_course"])
                 if dishes:
                     week_dishes.append(f"{menu['date']}: {', '.join(dishes)}")
 
@@ -85,13 +80,13 @@ class GeminiService:
         # Build day context
         if school_menu:
             day_menu = []
-            if school_menu.get('first_course'):
+            if school_menu.get("first_course"):
                 day_menu.append(f"Primer plato: {school_menu['first_course']}")
-            if school_menu.get('second_course'):
+            if school_menu.get("second_course"):
                 day_menu.append(f"Segundo plato: {school_menu['second_course']}")
-            if school_menu.get('side_dish'):
+            if school_menu.get("side_dish"):
                 day_menu.append(f"Guarnición: {school_menu['side_dish']}")
-            if school_menu.get('dessert'):
+            if school_menu.get("dessert"):
                 day_menu.append(f"Postre: {school_menu['dessert']}")
 
             day_context = f"🍽️ MENÚ ESCOLAR DEL DÍA ({target_date}):\n" + "\n".join(day_menu)
@@ -134,20 +129,17 @@ IMPORTANTE: No incluyas explicaciones adicionales, solo el JSON."""
             text = response.text.strip()
 
             # Remove markdown code blocks if present
-            if text.startswith('```json'):
+            if text.startswith("```json"):
                 text = text[7:]
-            if text.startswith('```'):
+            if text.startswith("```"):
                 text = text[3:]
-            if text.endswith('```'):
+            if text.endswith("```"):
                 text = text[:-3]
             text = text.strip()
 
             result = json.loads(text)
 
-            return {
-                'meal': result.get('meal', ''),
-                'ingredients': result.get('ingredients', [])
-            }
+            return {"meal": result.get("meal", ""), "ingredients": result.get("ingredients", [])}
 
         except Exception as e:
             raise Exception(f"Error generating dinner suggestion: {str(e)}")
@@ -158,7 +150,7 @@ IMPORTANTE: No incluyas explicaciones adicionales, solo el JSON."""
         days: int,
         school_menus: List[Dict[str, Any]],
         allergies: List[str],
-        excluded_foods: List[str]
+        excluded_foods: List[str],
     ) -> List[Dict[str, Any]]:
         """
         Suggest dinners for multiple days
@@ -176,30 +168,26 @@ IMPORTANTE: No incluyas explicaciones adicionales, solo el JSON."""
         restrictions = self._build_restrictions_text(allergies, excluded_foods)
 
         # Build menus context
-        menus_by_date = {menu['date']: menu for menu in school_menus}
+        menus_by_date = {menu["date"]: menu for menu in school_menus}
 
         # Build week planning context
         days_info = []
         for i in range(days):
             current_date = start_date + timedelta(days=i)
-            date_str = current_date.strftime('%Y-%m-%d')
-            day_name = current_date.strftime('%A')  # Monday, Tuesday, etc.
+            date_str = current_date.strftime("%Y-%m-%d")
+            day_name = current_date.strftime("%A")  # Monday, Tuesday, etc.
 
             if date_str in menus_by_date:
                 menu = menus_by_date[date_str]
                 dishes = []
-                if menu.get('first_course'):
-                    dishes.append(menu['first_course'])
-                if menu.get('second_course'):
-                    dishes.append(menu['second_course'])
+                if menu.get("first_course"):
+                    dishes.append(menu["first_course"])
+                if menu.get("second_course"):
+                    dishes.append(menu["second_course"])
 
-                days_info.append(
-                    f"📅 {date_str} ({day_name}): MENÚ ESCOLAR - {', '.join(dishes)}"
-                )
+                days_info.append(f"📅 {date_str} ({day_name}): MENÚ ESCOLAR - {', '.join(dishes)}")
             else:
-                days_info.append(
-                    f"📅 {date_str} ({day_name}): SIN MENÚ ESCOLAR (fin de semana/festivo)"
-                )
+                days_info.append(f"📅 {date_str} ({day_name}): SIN MENÚ ESCOLAR (fin de semana/festivo)")
 
         days_context = "\n".join(days_info)
 
@@ -246,11 +234,11 @@ IMPORTANTE: Debe haber exactamente {days} cenas en el array, una por cada día. 
             text = response.text.strip()
 
             # Remove markdown code blocks if present
-            if text.startswith('```json'):
+            if text.startswith("```json"):
                 text = text[7:]
-            if text.startswith('```'):
+            if text.startswith("```"):
                 text = text[3:]
-            if text.endswith('```'):
+            if text.endswith("```"):
                 text = text[:-3]
             text = text.strip()
 
@@ -261,11 +249,7 @@ IMPORTANTE: Debe haber exactamente {days} cenas en el array, una por cada día. 
         except Exception as e:
             raise Exception(f"Error generating weekly dinner plan: {str(e)}")
 
-    async def generate_shopping_list(
-        self,
-        dinners: List[Dict[str, Any]],
-        num_people: int = 4
-    ) -> List[Dict[str, Any]]:
+    async def generate_shopping_list(self, dinners: List[Dict[str, Any]], num_people: int = 4) -> List[Dict[str, Any]]:
         """
         Generate a categorized shopping list from dinner plans
 
@@ -279,10 +263,9 @@ IMPORTANTE: Debe haber exactamente {days} cenas en el array, una por cada día. 
         if not dinners:
             return []
 
-        meals_text = "\n".join([
-            f"- {dinner['meal']}: {', '.join(dinner.get('ingredients', []))}"
-            for dinner in dinners
-        ])
+        meals_text = "\n".join(
+            [f"- {dinner['meal']}: {', '.join(dinner.get('ingredients', []))}" for dinner in dinners]
+        )
 
         prompt = f"""Eres un asistente de compras experto especializado en planificación de cenas ligeras.
 
@@ -340,11 +323,11 @@ IMPORTANTE: Solo el JSON, sin explicaciones adicionales. Las cantidades deben se
             text = response.text.strip()
 
             # Remove markdown code blocks if present
-            if text.startswith('```json'):
+            if text.startswith("```json"):
                 text = text[7:]
-            if text.startswith('```'):
+            if text.startswith("```"):
                 text = text[3:]
-            if text.endswith('```'):
+            if text.endswith("```"):
                 text = text[:-3]
             text = text.strip()
 

@@ -33,7 +33,10 @@ jobs:
       - name: Quality Checks
         working-directory: ./frontend
         run: |
-          npm run lint
+          echo "🔍 Running ESLint..."
+          npm run lint -- --max-warnings 200
+
+          echo "🔍 Running TypeScript type checking..."
           npx tsc --noEmit
 
       - name: Run Tests

@@ -1,33 +1,44 @@
 """
 Database connection configuration for PostgreSQL.
 """
+
+from typing import Generator
+
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import Pool
-from typing import Generator
 
 from .config import settings
 
 # Create SQLAlchemy engine
-# Using connection pooling with optimized settings
-# Add connect_args to force IPv4 connection (Render doesn't support IPv6)
-engine = create_engine(
-    settings.database_url,
-    pool_size=settings.db_pool_size,
-    max_overflow=settings.db_max_overflow,
-    pool_timeout=settings.db_pool_timeout,
-    pool_recycle=3600,  # Recycle connections after 1 hour
-    pool_pre_ping=True,  # Verify connections before using them
-    echo=settings.debug,  # SQL query logging in debug mode
-    connect_args={
-        "options": "-c statement_timeout=30000",  # 30 second timeout
-        "keepalives": 1,
-        "keepalives_idle": 30,
-        "keepalives_interval": 10,
-        "keepalives_count": 5,
-    }
-)
+# Using connection pooling with optimized settings for PostgreSQL
+# SQLite configuration for tests (doesn't support PostgreSQL-specific options)
+if "sqlite" in settings.database_url.lower():
+    # SQLite configuration (for tests)
+    engine = create_engine(
+        settings.database_url,
+        echo=settings.debug,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    # PostgreSQL configuration (for production - Supabase)
+    engine = create_engine(
+        settings.database_url,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_timeout=settings.db_pool_timeout,
+        pool_recycle=3600,  # Recycle connections after 1 hour
+        pool_pre_ping=True,  # Verify connections before using them
+        echo=settings.debug,  # SQL query logging in debug mode
+        connect_args={
+            "options": "-c statement_timeout=30000",  # 30 second timeout
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5,
+        },
+    )
 
 
 # Configure connection pool to handle network issues gracefully
@@ -51,11 +62,7 @@ def set_connection_parameters(dbapi_conn, connection_record):
 
 
 # Create SessionLocal class for database sessions
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base class for declarative models
 Base = declarative_base()

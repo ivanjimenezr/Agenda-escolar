@@ -1,9 +1,11 @@
 """
 Unit tests for EventRepository
 """
-import pytest
+
 from datetime import date
 from uuid import uuid4
+
+import pytest
 
 from src.domain.models import SchoolEvent, User
 from src.infrastructure.repositories.event_repository import EventRepository
@@ -24,7 +26,7 @@ def sample_user(db_session):
         name="Event Test User",
         password_hash="dummy_hash",
         is_active=True,
-        email_verified=True
+        email_verified=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -37,12 +39,7 @@ class TestEventRepository:
 
     def test_create_event(self, event_repo, sample_user):
         """Test creating a new event"""
-        event = event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 12, 25),
-            name="Navidad",
-            event_type="Festivo"
-        )
+        event = event_repo.create(user_id=sample_user.id, date=date(2026, 12, 25), name="Navidad", event_type="Festivo")
 
         assert event.id is not None
         assert event.user_id == sample_user.id
@@ -55,10 +52,7 @@ class TestEventRepository:
     def test_create_event_lectivo(self, event_repo, sample_user):
         """Test creating a lectivo event"""
         event = event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 9, 1),
-            name="Inicio de curso",
-            event_type="Lectivo"
+            user_id=sample_user.id, date=date(2026, 9, 1), name="Inicio de curso", event_type="Lectivo"
         )
 
         assert event.id is not None
@@ -67,10 +61,7 @@ class TestEventRepository:
     def test_get_by_id(self, event_repo, sample_user):
         """Test retrieving an event by ID"""
         created = event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 1, 1),
-            name="Año Nuevo",
-            event_type="Festivo"
+            user_id=sample_user.id, date=date(2026, 1, 1), name="Año Nuevo", event_type="Festivo"
         )
 
         retrieved = event_repo.get_by_id(created.id)
@@ -87,23 +78,10 @@ class TestEventRepository:
     def test_get_by_user_id(self, event_repo, sample_user):
         """Test retrieving all events for a user"""
         # Create multiple events
+        event_repo.create(user_id=sample_user.id, date=date(2026, 12, 25), name="Navidad", event_type="Festivo")
+        event_repo.create(user_id=sample_user.id, date=date(2026, 1, 1), name="Año Nuevo", event_type="Festivo")
         event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 12, 25),
-            name="Navidad",
-            event_type="Festivo"
-        )
-        event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 1, 1),
-            name="Año Nuevo",
-            event_type="Festivo"
-        )
-        event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 7, 1),
-            name="Vacaciones de verano",
-            event_type="Vacaciones"
+            user_id=sample_user.id, date=date(2026, 7, 1), name="Vacaciones de verano", event_type="Vacaciones"
         )
 
         events = event_repo.get_by_user_id(sample_user.id)
@@ -117,67 +95,36 @@ class TestEventRepository:
     def test_get_by_user_id_with_date_filters(self, event_repo, sample_user):
         """Test retrieving events with date range filters"""
         # Create events on different dates
-        event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 1, 1),
-            name="Event 1",
-            event_type="Festivo"
-        )
-        event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 6, 15),
-            name="Event 2",
-            event_type="Lectivo"
-        )
-        event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 12, 31),
-            name="Event 3",
-            event_type="Festivo"
-        )
+        event_repo.create(user_id=sample_user.id, date=date(2026, 1, 1), name="Event 1", event_type="Festivo")
+        event_repo.create(user_id=sample_user.id, date=date(2026, 6, 15), name="Event 2", event_type="Lectivo")
+        event_repo.create(user_id=sample_user.id, date=date(2026, 12, 31), name="Event 3", event_type="Festivo")
 
         # Test from_date filter
-        events = event_repo.get_by_user_id(
-            sample_user.id,
-            from_date=date(2026, 6, 1)
-        )
+        events = event_repo.get_by_user_id(sample_user.id, from_date=date(2026, 6, 1))
         assert len(events) == 2
         assert all(e.date >= date(2026, 6, 1) for e in events)
 
         # Test to_date filter
-        events = event_repo.get_by_user_id(
-            sample_user.id,
-            to_date=date(2026, 6, 30)
-        )
+        events = event_repo.get_by_user_id(sample_user.id, to_date=date(2026, 6, 30))
         assert len(events) == 2
         assert all(e.date <= date(2026, 6, 30) for e in events)
 
         # Test both filters
-        events = event_repo.get_by_user_id(
-            sample_user.id,
-            from_date=date(2026, 6, 1),
-            to_date=date(2026, 6, 30)
-        )
+        events = event_repo.get_by_user_id(sample_user.id, from_date=date(2026, 6, 1), to_date=date(2026, 6, 30))
         assert len(events) == 1
         assert events[0].date == date(2026, 6, 15)
 
     def test_update_event(self, event_repo, sample_user):
         """Test updating an event"""
         event = event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 10, 12),
-            name="Día de la Hispanidad",
-            event_type="Festivo"
+            user_id=sample_user.id, date=date(2026, 10, 12), name="Día de la Hispanidad", event_type="Festivo"
         )
 
         original_updated_at = event.updated_at
 
         # Update the event
         updated = event_repo.update(
-            event_id=event.id,
-            date=date(2026, 10, 12),
-            name="Fiesta Nacional de España",
-            event_type="Festivo"
+            event_id=event.id, date=date(2026, 10, 12), name="Fiesta Nacional de España", event_type="Festivo"
         )
 
         assert updated is not None
@@ -186,18 +133,10 @@ class TestEventRepository:
 
     def test_update_partial(self, event_repo, sample_user):
         """Test partial update of an event"""
-        event = event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 3, 19),
-            name="San José",
-            event_type="Festivo"
-        )
+        event = event_repo.create(user_id=sample_user.id, date=date(2026, 3, 19), name="San José", event_type="Festivo")
 
         # Only update the name
-        updated = event_repo.update(
-            event_id=event.id,
-            name="San José (Fallas)"
-        )
+        updated = event_repo.update(event_id=event.id, name="San José (Fallas)")
 
         assert updated is not None
         assert updated.date == date(2026, 3, 19)  # Unchanged
@@ -206,19 +145,13 @@ class TestEventRepository:
 
     def test_update_not_found(self, event_repo):
         """Test updating a non-existent event"""
-        result = event_repo.update(
-            event_id=uuid4(),
-            name="New Name"
-        )
+        result = event_repo.update(event_id=uuid4(), name="New Name")
         assert result is None
 
     def test_hard_delete(self, event_repo, sample_user):
         """Test hard delete (permanent deletion)"""
         event = event_repo.create(
-            user_id=sample_user.id,
-            date=date(2026, 4, 1),
-            name="Día de los Inocentes",
-            event_type="Festivo"
+            user_id=sample_user.id, date=date(2026, 4, 1), name="Día de los Inocentes", event_type="Festivo"
         )
 
         event_id = event.id
@@ -245,7 +178,7 @@ class TestEventRepository:
             name="User 1",
             password_hash="hash1",
             is_active=True,
-            email_verified=True
+            email_verified=True,
         )
         user2 = User(
             id=uuid4(),
@@ -253,24 +186,14 @@ class TestEventRepository:
             name="User 2",
             password_hash="hash2",
             is_active=True,
-            email_verified=True
+            email_verified=True,
         )
         db_session.add_all([user1, user2])
         db_session.commit()
 
         # Create events for each user
-        event_repo.create(
-            user_id=user1.id,
-            date=date(2026, 1, 1),
-            name="User 1 Event",
-            event_type="Festivo"
-        )
-        event_repo.create(
-            user_id=user2.id,
-            date=date(2026, 1, 1),
-            name="User 2 Event",
-            event_type="Festivo"
-        )
+        event_repo.create(user_id=user1.id, date=date(2026, 1, 1), name="User 1 Event", event_type="Festivo")
+        event_repo.create(user_id=user2.id, date=date(2026, 1, 1), name="User 2 Event", event_type="Festivo")
 
         # Verify isolation
         user1_events = event_repo.get_by_user_id(user1.id)

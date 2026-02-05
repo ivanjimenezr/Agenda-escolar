@@ -2,9 +2,10 @@
 Unit tests for MenuRepository
 """
 
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
+
+import pytest
 from sqlalchemy.orm import Session
 
 from src.domain.models import MenuItem, StudentProfile, User
@@ -14,11 +15,7 @@ from src.infrastructure.repositories.menu_repository import MenuRepository
 @pytest.fixture
 def sample_user(db_session: Session):
     """Create a sample user for testing"""
-    user = User(
-        email="test@example.com",
-        name="Test User",
-        password_hash="hashed_password"
-    )
+    user = User(email="test@example.com", name="Test User", password_hash="hashed_password")
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
@@ -28,12 +25,7 @@ def sample_user(db_session: Session):
 @pytest.fixture
 def sample_student(db_session: Session, sample_user: User):
     """Create a sample student for testing"""
-    student = StudentProfile(
-        user_id=sample_user.id,
-        name="Test Student",
-        school="Test School",
-        grade="5th Grade"
-    )
+    student = StudentProfile(user_id=sample_user.id, name="Test Student", school="Test School", grade="5th Grade")
     db_session.add(student)
     db_session.commit()
     db_session.refresh(student)
@@ -55,7 +47,7 @@ class TestMenuRepository:
             second_course="Pollo asado",
             side_dish="Ensalada",
             dessert="Fruta",
-            allergens=["gluten"]
+            allergens=["gluten"],
         )
 
         assert menu.id is not None
@@ -73,10 +65,7 @@ class TestMenuRepository:
         repo = MenuRepository(db_session)
 
         menu = repo.create(
-            student_id=sample_student.id,
-            date=date.today(),
-            first_course="Pasta",
-            second_course="Pescado"
+            student_id=sample_student.id, date=date.today(), first_course="Pasta", second_course="Pescado"
         )
 
         retrieved = repo.get_by_id(menu.id)
@@ -97,17 +86,12 @@ class TestMenuRepository:
         """Test retrieving all menu items for a student"""
         repo = MenuRepository(db_session)
 
-        menu1 = repo.create(
-            student_id=sample_student.id,
-            date=date.today(),
-            first_course="Sopa",
-            second_course="Carne"
-        )
+        menu1 = repo.create(student_id=sample_student.id, date=date.today(), first_course="Sopa", second_course="Carne")
         menu2 = repo.create(
             student_id=sample_student.id,
             date=date.today() + timedelta(days=1),
             first_course="Arroz",
-            second_course="Pollo"
+            second_course="Pollo",
         )
 
         menus = repo.get_by_student_id(sample_student.id)
@@ -125,25 +109,18 @@ class TestMenuRepository:
             student_id=sample_student.id,
             date=today - timedelta(days=2),
             first_course="Past menu",
-            second_course="Carne"
+            second_course="Carne",
         )
-        menu2 = repo.create(
-            student_id=sample_student.id,
-            date=today,
-            first_course="Today menu",
-            second_course="Pollo"
-        )
+        menu2 = repo.create(student_id=sample_student.id, date=today, first_course="Today menu", second_course="Pollo")
         menu3 = repo.create(
             student_id=sample_student.id,
             date=today + timedelta(days=2),
             first_course="Future menu",
-            second_course="Pescado"
+            second_course="Pescado",
         )
 
         menus = repo.get_by_student_id(
-            sample_student.id,
-            start_date=today - timedelta(days=1),
-            end_date=today + timedelta(days=1)
+            sample_student.id, start_date=today - timedelta(days=1), end_date=today + timedelta(days=1)
         )
 
         assert len(menus) == 1
@@ -154,12 +131,7 @@ class TestMenuRepository:
         repo = MenuRepository(db_session)
         menu_date = date.today()
 
-        menu = repo.create(
-            student_id=sample_student.id,
-            date=menu_date,
-            first_course="Lentejas",
-            second_course="Pollo"
-        )
+        menu = repo.create(student_id=sample_student.id, date=menu_date, first_course="Lentejas", second_course="Pollo")
 
         retrieved = repo.get_by_date(sample_student.id, menu_date)
 
@@ -184,14 +156,11 @@ class TestMenuRepository:
             date=date.today(),
             first_course="Original First",
             second_course="Original Second",
-            dessert="Original Dessert"
+            dessert="Original Dessert",
         )
 
         updated = repo.update(
-            menu_id=menu.id,
-            first_course="Updated First",
-            second_course="Updated Second",
-            allergens=["lactose"]
+            menu_id=menu.id, first_course="Updated First", second_course="Updated Second", allergens=["lactose"]
         )
 
         assert updated.first_course == "Updated First"
@@ -208,7 +177,7 @@ class TestMenuRepository:
             date=date.today(),
             first_course="Lentejas",
             second_course="Pollo",
-            dessert="Fruta"
+            dessert="Fruta",
         )
 
         updated = repo.update(menu_id=menu.id, dessert="Yogur")
@@ -222,10 +191,7 @@ class TestMenuRepository:
         repo = MenuRepository(db_session)
 
         menu = repo.create(
-            student_id=sample_student.id,
-            date=date.today(),
-            first_course="To Delete",
-            second_course="Item"
+            student_id=sample_student.id, date=date.today(), first_course="To Delete", second_course="Item"
         )
 
         result = repo.delete(menu.id)
@@ -237,9 +203,7 @@ class TestMenuRepository:
         assert retrieved is None
 
         # But should exist in DB with deleted_at set
-        deleted_menu = db_session.query(MenuItem).filter(
-            MenuItem.id == menu.id
-        ).first()
+        deleted_menu = db_session.query(MenuItem).filter(MenuItem.id == menu.id).first()
         assert deleted_menu is not None
         assert deleted_menu.deleted_at is not None
 
@@ -256,16 +220,13 @@ class TestMenuRepository:
         repo = MenuRepository(db_session)
 
         menu1 = repo.create(
-            student_id=sample_student.id,
-            date=date.today(),
-            first_course="Active",
-            second_course="Item"
+            student_id=sample_student.id, date=date.today(), first_course="Active", second_course="Item"
         )
         menu2 = repo.create(
             student_id=sample_student.id,
             date=date.today() + timedelta(days=1),
             first_course="Deleted",
-            second_course="Item"
+            second_course="Item",
         )
 
         repo.delete(menu2.id)
@@ -281,10 +242,7 @@ class TestMenuRepository:
         menu_date = date.today()
 
         menu = repo.upsert(
-            student_id=sample_student.id,
-            date=menu_date,
-            first_course="New First",
-            second_course="New Second"
+            student_id=sample_student.id, date=menu_date, first_course="New First", second_course="New Second"
         )
 
         assert menu.id is not None
@@ -298,18 +256,12 @@ class TestMenuRepository:
 
         # Create initial menu
         original = repo.create(
-            student_id=sample_student.id,
-            date=menu_date,
-            first_course="Original First",
-            second_course="Original Second"
+            student_id=sample_student.id, date=menu_date, first_course="Original First", second_course="Original Second"
         )
 
         # Upsert with same date should update
         updated = repo.upsert(
-            student_id=sample_student.id,
-            date=menu_date,
-            first_course="Updated First",
-            second_course="Updated Second"
+            student_id=sample_student.id, date=menu_date, first_course="Updated First", second_course="Updated Second"
         )
 
         assert updated.id == original.id  # Same menu item

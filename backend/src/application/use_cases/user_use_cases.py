@@ -1,20 +1,21 @@
 """
 User Use Cases - Business logic for user operations.
 """
-from typing import Dict, Any
+
+from typing import Any, Dict
 from uuid import UUID
 
+from src.application.schemas.user import (
+    PasswordChangeRequest,
+    UserLoginRequest,
+    UserRegisterRequest,
+    UserResponse,
+    UserUpdateRequest,
+)
 from src.domain.models import User
 from src.infrastructure.repositories.user_repository import UserRepository
-from src.infrastructure.security.password import hash_password, verify_password
 from src.infrastructure.security.jwt import create_access_token
-from src.application.schemas.user import (
-    UserRegisterRequest,
-    UserLoginRequest,
-    UserUpdateRequest,
-    PasswordChangeRequest,
-    UserResponse,
-)
+from src.infrastructure.security.password import hash_password, verify_password
 
 
 class UserUseCases:
@@ -50,11 +51,7 @@ class UserUseCases:
         password_hash = hash_password(data.password)
 
         # Create user
-        user = self.user_repo.create(
-            email=data.email,
-            name=data.name,
-            password_hash=password_hash
-        )
+        user = self.user_repo.create(email=data.email, name=data.name, password_hash=password_hash)
 
         return user
 
@@ -88,10 +85,7 @@ class UserUseCases:
         # Generate JWT token
         access_token = create_access_token(data={"sub": str(user.id)})
 
-        return {
-            "user": user,
-            "access_token": access_token
-        }
+        return {"user": user, "access_token": access_token}
 
     def get_user_by_id(self, user_id: UUID) -> User:
         """
@@ -148,12 +142,12 @@ class UserUseCases:
         # Build update kwargs for other fields
         update_kwargs = {}
         if data.name is not None:
-            update_kwargs['name'] = data.name
+            update_kwargs["name"] = data.name
         if data.email is not None:
             # Check if email is available
             if data.email != user.email and self.user_repo.exists_by_email(data.email):
                 raise ValueError("Email already registered")
-            update_kwargs['email'] = data.email
+            update_kwargs["email"] = data.email
 
         # Update user if there are changes
         if update_kwargs:

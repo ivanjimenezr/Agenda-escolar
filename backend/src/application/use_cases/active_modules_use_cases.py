@@ -15,19 +15,11 @@ from src.infrastructure.repositories.student_repository import StudentRepository
 class ActiveModulesUseCases:
     """Use cases for active modules management"""
 
-    def __init__(
-        self,
-        active_modules_repo: ActiveModulesRepository,
-        student_repo: StudentRepository
-    ):
+    def __init__(self, active_modules_repo: ActiveModulesRepository, student_repo: StudentRepository):
         self.active_modules_repo = active_modules_repo
         self.student_repo = student_repo
 
-    def get_active_modules(
-        self,
-        student_id: UUID,
-        user_id: UUID
-    ) -> ActiveModule:
+    def get_active_modules(self, student_id: UUID, user_id: UUID) -> ActiveModule:
         """Get active modules configuration for a student
 
         Args:
@@ -52,12 +44,7 @@ class ActiveModulesUseCases:
         # Get or create active modules configuration
         return self.active_modules_repo.get_or_create(student_id)
 
-    def update_active_modules(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        data: ActiveModulesUpdateRequest
-    ) -> ActiveModule:
+    def update_active_modules(self, student_id: UUID, user_id: UUID, data: ActiveModulesUpdateRequest) -> ActiveModule:
         """Update active modules configuration for a student
 
         Args:
@@ -88,7 +75,7 @@ class ActiveModulesUseCases:
             menu=data.menu,
             events=data.events,
             dinner=data.dinner,
-            contacts=data.contacts
+            contacts=data.contacts,
         )
 
         if not updated:

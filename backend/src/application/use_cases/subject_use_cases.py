@@ -7,32 +7,20 @@ Business logic for subject operations
 from typing import List
 from uuid import UUID
 
-from src.application.schemas.subject import (
-    SubjectCreateRequest,
-    SubjectUpdateRequest
-)
+from src.application.schemas.subject import SubjectCreateRequest, SubjectUpdateRequest
 from src.domain.models import Subject
-from src.infrastructure.repositories.subject_repository import SubjectRepository
 from src.infrastructure.repositories.student_repository import StudentRepository
+from src.infrastructure.repositories.subject_repository import SubjectRepository
 
 
 class SubjectUseCases:
     """Use cases for subject management"""
 
-    def __init__(
-        self,
-        subject_repo: SubjectRepository,
-        student_repo: StudentRepository
-    ):
+    def __init__(self, subject_repo: SubjectRepository, student_repo: StudentRepository):
         self.subject_repo = subject_repo
         self.student_repo = student_repo
 
-    def create_subject(
-        self,
-        user_id: UUID,
-        data: SubjectCreateRequest,
-        replace: bool = False
-    ) -> Subject:
+    def create_subject(self, user_id: UUID, data: SubjectCreateRequest, replace: bool = False) -> Subject:
         """Create a new subject for a student
 
         Args:
@@ -59,14 +47,10 @@ class SubjectUseCases:
             teacher=data.teacher,
             color=data.color,
             type=data.type,
-            replace=replace
+            replace=replace,
         )
 
-    def get_subject_by_id(
-        self,
-        subject_id: UUID,
-        user_id: UUID
-    ) -> Subject:
+    def get_subject_by_id(self, subject_id: UUID, user_id: UUID) -> Subject:
         """Get a subject by ID
 
         Args:
@@ -90,11 +74,7 @@ class SubjectUseCases:
 
         return subject
 
-    def get_subjects_by_student(
-        self,
-        student_id: UUID,
-        user_id: UUID
-    ) -> List[Subject]:
+    def get_subjects_by_student(self, student_id: UUID, user_id: UUID) -> List[Subject]:
         """Get all subjects for a student
 
         Args:
@@ -113,12 +93,7 @@ class SubjectUseCases:
 
         return self.subject_repo.get_by_student_id(student_id=student_id)
 
-    def update_subject(
-        self,
-        subject_id: UUID,
-        user_id: UUID,
-        data: SubjectUpdateRequest
-    ) -> Subject:
+    def update_subject(self, subject_id: UUID, user_id: UUID, data: SubjectUpdateRequest) -> Subject:
         """Update a subject
 
         Args:
@@ -141,14 +116,17 @@ class SubjectUseCases:
         if not self.student_repo.verify_ownership(subject.student_id, user_id):
             raise PermissionError("Access denied")
 
+        # Get only fields that were explicitly set in the request
+        update_data_dict = data.model_dump(exclude_unset=True)
+
         updated = self.subject_repo.update(
             subject_id=subject_id,
-            name=data.name,
-            days=data.days,
-            time=data.time,
-            teacher=data.teacher,
-            color=data.color,
-            type=data.type
+            name=update_data_dict.get("name") if "name" in update_data_dict else ...,
+            days=update_data_dict.get("days") if "days" in update_data_dict else ...,
+            time=update_data_dict.get("time") if "time" in update_data_dict else ...,
+            teacher=update_data_dict.get("teacher") if "teacher" in update_data_dict else ...,
+            color=update_data_dict.get("color") if "color" in update_data_dict else ...,
+            type=update_data_dict.get("type") if "type" in update_data_dict else ...,
         )
 
         if not updated:
@@ -156,11 +134,7 @@ class SubjectUseCases:
 
         return updated
 
-    def delete_subject(
-        self,
-        subject_id: UUID,
-        user_id: UUID
-    ) -> bool:
+    def delete_subject(self, subject_id: UUID, user_id: UUID) -> bool:
         """Delete a subject
 
         Args:

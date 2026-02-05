@@ -5,14 +5,14 @@ Business logic for dinner operations including AI-powered suggestions
 """
 
 from datetime import date, timedelta
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 from uuid import UUID
 
 from src.application.schemas.dinner import (
-    DinnerGenerateRequest,
     DinnerCreateRequest,
+    DinnerGenerateRequest,
     DinnerUpdateRequest,
-    ShoppingListRequest
+    ShoppingListRequest,
 )
 from src.domain.models import Dinner
 from src.infrastructure.repositories.dinner_repository import DinnerRepository
@@ -29,7 +29,7 @@ class DinnerUseCases:
         dinner_repo: DinnerRepository,
         menu_repo: MenuRepository,
         student_repo: StudentRepository,
-        gemini_service: GeminiService
+        gemini_service: GeminiService,
     ):
         self.dinner_repo = dinner_repo
         self.menu_repo = menu_repo
@@ -45,11 +45,7 @@ class DinnerUseCases:
         if not student:
             raise ValueError("Student not found")
 
-    def _get_week_menus(
-        self,
-        student_id: UUID,
-        target_date: date
-    ) -> List[Dict[str, Any]]:
+    def _get_week_menus(self, student_id: UUID, target_date: date) -> List[Dict[str, Any]]:
         """Get school menus for the current week (Monday to Friday)"""
         # Find the Monday of the week containing target_date
         days_since_monday = target_date.weekday()  # 0 = Monday, 6 = Sunday
@@ -57,29 +53,22 @@ class DinnerUseCases:
         friday = monday + timedelta(days=4)
 
         # Get menus for the week
-        menus = self.menu_repo.get_by_student_id(
-            student_id=student_id,
-            start_date=monday,
-            end_date=friday
-        )
+        menus = self.menu_repo.get_by_student_id(student_id=student_id, start_date=monday, end_date=friday)
 
         # Convert to dict format for AI service
         return [
             {
-                'date': menu.date.strftime('%Y-%m-%d'),
-                'first_course': menu.first_course,
-                'second_course': menu.second_course,
-                'side_dish': menu.side_dish,
-                'dessert': menu.dessert
+                "date": menu.date.strftime("%Y-%m-%d"),
+                "first_course": menu.first_course,
+                "second_course": menu.second_course,
+                "side_dish": menu.side_dish,
+                "dessert": menu.dessert,
             }
             for menu in menus
         ]
 
     async def generate_dinner_suggestions(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        data: DinnerGenerateRequest
+        self, student_id: UUID, user_id: UUID, data: DinnerGenerateRequest
     ) -> List[Dinner]:
         """
         Generate dinner suggestions using AI
@@ -118,11 +107,11 @@ class DinnerUseCases:
             menu_dict = None
             if school_menu_for_day:
                 menu_dict = {
-                    'date': school_menu_for_day.date.strftime('%Y-%m-%d'),
-                    'first_course': school_menu_for_day.first_course,
-                    'second_course': school_menu_for_day.second_course,
-                    'side_dish': school_menu_for_day.side_dish,
-                    'dessert': school_menu_for_day.dessert
+                    "date": school_menu_for_day.date.strftime("%Y-%m-%d"),
+                    "first_course": school_menu_for_day.first_course,
+                    "second_course": school_menu_for_day.second_course,
+                    "side_dish": school_menu_for_day.side_dish,
+                    "dessert": school_menu_for_day.dessert,
                 }
 
             # Call AI service
@@ -131,15 +120,15 @@ class DinnerUseCases:
                 school_menu=menu_dict,
                 week_menus=week_menus,
                 allergies=allergies,
-                excluded_foods=excluded_foods
+                excluded_foods=excluded_foods,
             )
 
             # Create or update dinner
             dinner = self.dinner_repo.create_or_update(
                 student_id=student_id,
                 date=target_date,
-                meal=suggestion['meal'],
-                ingredients=suggestion.get('ingredients', [])
+                meal=suggestion["meal"],
+                ingredients=suggestion.get("ingredients", []),
             )
             dinners.append(dinner)
 
@@ -151,19 +140,17 @@ class DinnerUseCases:
             # Get all menus for the period
             end_date = start_date + timedelta(days=days - 1)
             school_menus = self.menu_repo.get_by_student_id(
-                student_id=student_id,
-                start_date=start_date,
-                end_date=end_date
+                student_id=student_id, start_date=start_date, end_date=end_date
             )
 
             # Convert to list of dicts
             menus_list = [
                 {
-                    'date': menu.date.strftime('%Y-%m-%d'),
-                    'first_course': menu.first_course,
-                    'second_course': menu.second_course,
-                    'side_dish': menu.side_dish,
-                    'dessert': menu.dessert
+                    "date": menu.date.strftime("%Y-%m-%d"),
+                    "first_course": menu.first_course,
+                    "second_course": menu.second_course,
+                    "side_dish": menu.side_dish,
+                    "dessert": menu.dessert,
                 }
                 for menu in school_menus
             ]
@@ -174,28 +161,23 @@ class DinnerUseCases:
                 days=days,
                 school_menus=menus_list,
                 allergies=allergies,
-                excluded_foods=excluded_foods
+                excluded_foods=excluded_foods,
             )
 
             # Create or update dinners
             for suggestion in suggestions:
-                dinner_date = date.fromisoformat(suggestion['date'])
+                dinner_date = date.fromisoformat(suggestion["date"])
                 dinner = self.dinner_repo.create_or_update(
                     student_id=student_id,
                     date=dinner_date,
-                    meal=suggestion['meal'],
-                    ingredients=suggestion.get('ingredients', [])
+                    meal=suggestion["meal"],
+                    ingredients=suggestion.get("ingredients", []),
                 )
                 dinners.append(dinner)
 
         return dinners
 
-    def create_dinner(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        data: DinnerCreateRequest
-    ) -> Dinner:
+    def create_dinner(self, student_id: UUID, user_id: UUID, data: DinnerCreateRequest) -> Dinner:
         """
         Create a dinner manually
 
@@ -214,18 +196,11 @@ class DinnerUseCases:
         self._verify_student_ownership(student_id, user_id)
 
         return self.dinner_repo.create(
-            student_id=student_id,
-            date=data.date,
-            meal=data.meal,
-            ingredients=data.ingredients
+            student_id=student_id, date=data.date, meal=data.meal, ingredients=data.ingredients
         )
 
     def get_dinners_for_student(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        start_date: date = None,
-        end_date: date = None
+        self, student_id: UUID, user_id: UUID, start_date: date = None, end_date: date = None
     ) -> List[Dinner]:
         """
         Get dinners for a student
@@ -247,20 +222,12 @@ class DinnerUseCases:
 
         if start_date and end_date:
             return self.dinner_repo.get_by_student_and_date_range(
-                student_id=student_id,
-                start_date=start_date,
-                end_date=end_date
+                student_id=student_id, start_date=start_date, end_date=end_date
             )
         else:
             return self.dinner_repo.get_by_student_id(student_id)
 
-    def update_dinner(
-        self,
-        dinner_id: UUID,
-        student_id: UUID,
-        user_id: UUID,
-        data: DinnerUpdateRequest
-    ) -> Dinner:
+    def update_dinner(self, dinner_id: UUID, student_id: UUID, user_id: UUID, data: DinnerUpdateRequest) -> Dinner:
         """
         Update a dinner
 
@@ -283,23 +250,14 @@ class DinnerUseCases:
         if not self.dinner_repo.verify_ownership(dinner_id, student_id):
             raise PermissionError("Access denied to this dinner")
 
-        updated = self.dinner_repo.update(
-            dinner_id=dinner_id,
-            meal=data.meal,
-            ingredients=data.ingredients
-        )
+        updated = self.dinner_repo.update(dinner_id=dinner_id, meal=data.meal, ingredients=data.ingredients)
 
         if not updated:
             raise ValueError("Dinner not found")
 
         return updated
 
-    def delete_dinner(
-        self,
-        dinner_id: UUID,
-        student_id: UUID,
-        user_id: UUID
-    ) -> bool:
+    def delete_dinner(self, dinner_id: UUID, student_id: UUID, user_id: UUID) -> bool:
         """
         Delete a dinner
 
@@ -329,10 +287,7 @@ class DinnerUseCases:
         return True
 
     async def generate_shopping_list(
-        self,
-        student_id: UUID,
-        user_id: UUID,
-        request: ShoppingListRequest
+        self, student_id: UUID, user_id: UUID, request: ShoppingListRequest
     ) -> List[Dict[str, Any]]:
         """
         Generate shopping list from dinner plans
@@ -356,25 +311,19 @@ class DinnerUseCases:
 
         if request.scope == "today":
             dinners = self.dinner_repo.get_by_student_and_date_range(
-                student_id=student_id,
-                start_date=today,
-                end_date=today
+                student_id=student_id, start_date=today, end_date=today
             )
         elif request.scope == "week":
             end_date = today + timedelta(days=6)
             dinners = self.dinner_repo.get_by_student_and_date_range(
-                student_id=student_id,
-                start_date=today,
-                end_date=end_date
+                student_id=student_id, start_date=today, end_date=end_date
             )
         elif request.scope == "custom":
             if not request.start_date or not request.end_date:
                 raise ValueError("start_date and end_date required for custom scope")
 
             dinners = self.dinner_repo.get_by_student_and_date_range(
-                student_id=student_id,
-                start_date=request.start_date,
-                end_date=request.end_date
+                student_id=student_id, start_date=request.start_date, end_date=request.end_date
             )
         else:
             raise ValueError("Invalid scope")
@@ -383,18 +332,9 @@ class DinnerUseCases:
             raise ValueError("No dinners found for the specified period")
 
         # Convert dinners to format for AI
-        dinners_data = [
-            {
-                'meal': dinner.meal,
-                'ingredients': dinner.ingredients
-            }
-            for dinner in dinners
-        ]
+        dinners_data = [{"meal": dinner.meal, "ingredients": dinner.ingredients} for dinner in dinners]
 
         # Call AI service with number of people
-        shopping_list = await self.gemini_service.generate_shopping_list(
-            dinners_data,
-            num_people=request.num_people
-        )
+        shopping_list = await self.gemini_service.generate_shopping_list(dinners_data, num_people=request.num_people)
 
         return shopping_list

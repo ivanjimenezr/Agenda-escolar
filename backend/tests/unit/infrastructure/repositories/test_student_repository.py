@@ -2,8 +2,9 @@
 Unit tests for StudentRepository
 """
 
-import pytest
 from uuid import uuid4
+
+import pytest
 from sqlalchemy.orm import Session
 
 from src.domain.models import StudentProfile, User
@@ -13,11 +14,7 @@ from src.infrastructure.repositories.student_repository import StudentRepository
 @pytest.fixture
 def sample_user(db_session: Session):
     """Create a sample user for testing"""
-    user = User(
-        email="test@example.com",
-        name="Test User",
-        password_hash="hashed_password"
-    )
+    user = User(email="test@example.com", name="Test User", password_hash="hashed_password")
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
@@ -38,7 +35,7 @@ class TestStudentRepository:
             grade="5th Grade",
             avatar_url="https://example.com/avatar.jpg",
             allergies=["gluten"],
-            excluded_foods=["fish"]
+            excluded_foods=["fish"],
         )
 
         assert student.id is not None
@@ -56,12 +53,7 @@ class TestStudentRepository:
         """Test retrieving an existing student by ID"""
         repo = StudentRepository(db_session)
 
-        student = repo.create(
-            user_id=sample_user.id,
-            name="Jane Smith",
-            school="Test School",
-            grade="3rd Grade"
-        )
+        student = repo.create(user_id=sample_user.id, name="Jane Smith", school="Test School", grade="3rd Grade")
 
         retrieved = repo.get_by_id(student.id)
 
@@ -81,18 +73,8 @@ class TestStudentRepository:
         """Test retrieving all students for a user"""
         repo = StudentRepository(db_session)
 
-        student1 = repo.create(
-            user_id=sample_user.id,
-            name="Child 1",
-            school="School A",
-            grade="1st Grade"
-        )
-        student2 = repo.create(
-            user_id=sample_user.id,
-            name="Child 2",
-            school="School B",
-            grade="2nd Grade"
-        )
+        student1 = repo.create(user_id=sample_user.id, name="Child 1", school="School A", grade="1st Grade")
+        student2 = repo.create(user_id=sample_user.id, name="Child 2", school="School B", grade="2nd Grade")
 
         students = repo.get_by_user_id(sample_user.id)
 
@@ -112,12 +94,7 @@ class TestStudentRepository:
         """Test updating a student profile"""
         repo = StudentRepository(db_session)
 
-        student = repo.create(
-            user_id=sample_user.id,
-            name="Original Name",
-            school="Original School",
-            grade="1st Grade"
-        )
+        student = repo.create(user_id=sample_user.id, name="Original Name", school="Original School", grade="1st Grade")
 
         updated = repo.update(
             student_id=student.id,
@@ -125,7 +102,7 @@ class TestStudentRepository:
             school="Updated School",
             grade="2nd Grade",
             allergies=["lactose"],
-            excluded_foods=["nuts"]
+            excluded_foods=["nuts"],
         )
 
         assert updated.name == "Updated Name"
@@ -139,11 +116,7 @@ class TestStudentRepository:
         repo = StudentRepository(db_session)
 
         student = repo.create(
-            user_id=sample_user.id,
-            name="John Doe",
-            school="School A",
-            grade="1st Grade",
-            allergies=["gluten"]
+            user_id=sample_user.id, name="John Doe", school="School A", grade="1st Grade", allergies=["gluten"]
         )
 
         updated = repo.update(student_id=student.id, name="Jane Doe")
@@ -157,12 +130,7 @@ class TestStudentRepository:
         """Test soft deleting a student"""
         repo = StudentRepository(db_session)
 
-        student = repo.create(
-            user_id=sample_user.id,
-            name="To Delete",
-            school="Test School",
-            grade="1st Grade"
-        )
+        student = repo.create(user_id=sample_user.id, name="To Delete", school="Test School", grade="1st Grade")
 
         result = repo.delete(student.id)
 
@@ -173,9 +141,7 @@ class TestStudentRepository:
         assert retrieved is None
 
         # But should exist in DB with deleted_at set
-        deleted_student = db_session.query(StudentProfile).filter(
-            StudentProfile.id == student.id
-        ).first()
+        deleted_student = db_session.query(StudentProfile).filter(StudentProfile.id == student.id).first()
         assert deleted_student is not None
         assert deleted_student.deleted_at is not None
 
@@ -191,12 +157,7 @@ class TestStudentRepository:
         """Test verifying student ownership returns True for owner"""
         repo = StudentRepository(db_session)
 
-        student = repo.create(
-            user_id=sample_user.id,
-            name="Test Student",
-            school="Test School",
-            grade="1st Grade"
-        )
+        student = repo.create(user_id=sample_user.id, name="Test Student", school="Test School", grade="1st Grade")
 
         result = repo.verify_ownership(student.id, sample_user.id)
 
@@ -206,12 +167,7 @@ class TestStudentRepository:
         """Test verifying student ownership returns False for non-owner"""
         repo = StudentRepository(db_session)
 
-        student = repo.create(
-            user_id=sample_user.id,
-            name="Test Student",
-            school="Test School",
-            grade="1st Grade"
-        )
+        student = repo.create(user_id=sample_user.id, name="Test Student", school="Test School", grade="1st Grade")
 
         other_user_id = uuid4()
         result = repo.verify_ownership(student.id, other_user_id)
@@ -230,12 +186,7 @@ class TestStudentRepository:
         """Test that get_by_id doesn't return soft-deleted students"""
         repo = StudentRepository(db_session)
 
-        student = repo.create(
-            user_id=sample_user.id,
-            name="Test Student",
-            school="Test School",
-            grade="1st Grade"
-        )
+        student = repo.create(user_id=sample_user.id, name="Test Student", school="Test School", grade="1st Grade")
 
         repo.delete(student.id)
 
@@ -246,18 +197,8 @@ class TestStudentRepository:
         """Test that get_by_user_id doesn't return soft-deleted students"""
         repo = StudentRepository(db_session)
 
-        student1 = repo.create(
-            user_id=sample_user.id,
-            name="Active Student",
-            school="Test School",
-            grade="1st Grade"
-        )
-        student2 = repo.create(
-            user_id=sample_user.id,
-            name="Deleted Student",
-            school="Test School",
-            grade="2nd Grade"
-        )
+        student1 = repo.create(user_id=sample_user.id, name="Active Student", school="Test School", grade="1st Grade")
+        student2 = repo.create(user_id=sample_user.id, name="Deleted Student", school="Test School", grade="2nd Grade")
 
         repo.delete(student2.id)
 

@@ -1,11 +1,13 @@
 """
 User Repository - Data access layer for User entity.
 """
+
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
+
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from src.domain.models import User
 
@@ -37,13 +39,7 @@ class UserRepository:
         Raises:
             IntegrityError: If email already exists
         """
-        user = User(
-            email=email,
-            name=name,
-            password_hash=password_hash,
-            is_active=True,
-            email_verified=False
-        )
+        user = User(email=email, name=name, password_hash=password_hash, is_active=True, email_verified=False)
 
         self.db.add(user)
         self.db.commit()
@@ -68,17 +64,15 @@ class UserRepository:
         # fall back to a string-based lookup using CAST to avoid DB-specific
         # UUID casting issues observed in unit tests (where the compiled SQL
         # included a Postgres-only ::UUID cast against a SQLite DB).
-        from sqlalchemy import cast
-        from sqlalchemy import String as SAString
         import uuid as _uuid
+
+        from sqlalchemy import String as SAString
+        from sqlalchemy import cast
 
         # Fast path: if user_id is a UUID instance, try direct comparison first
         try:
             if isinstance(user_id, _uuid.UUID):
-                user = self.db.query(User).filter(
-                    User.id == user_id,
-                    User.deleted_at.is_(None)
-                ).first()
+                user = self.db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
                 if user:
                     return user
         except Exception:
@@ -92,10 +86,7 @@ class UserRepository:
         except Exception:
             lookup_str = str(user_id)
 
-        return self.db.query(User).filter(
-            cast(User.id, SAString(36)) == lookup_str,
-            User.deleted_at.is_(None)
-        ).first()
+        return self.db.query(User).filter(cast(User.id, SAString(36)) == lookup_str, User.deleted_at.is_(None)).first()
 
     def get_by_email(self, email: str) -> Optional[User]:
         """
@@ -107,10 +98,7 @@ class UserRepository:
         Returns:
             Optional[User]: User instance or None if not found
         """
-        return self.db.query(User).filter(
-            User.email == email,
-            User.deleted_at.is_(None)
-        ).first()
+        return self.db.query(User).filter(User.email == email, User.deleted_at.is_(None)).first()
 
     def update(self, user_id: UUID, **kwargs) -> Optional[User]:
         """
@@ -172,7 +160,4 @@ class UserRepository:
         Returns:
             bool: True if exists, False otherwise
         """
-        return self.db.query(User).filter(
-            User.email == email,
-            User.deleted_at.is_(None)
-        ).count() > 0
+        return self.db.query(User).filter(User.email == email, User.deleted_at.is_(None)).count() > 0

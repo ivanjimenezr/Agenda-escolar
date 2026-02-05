@@ -10,11 +10,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ==================== REQUEST SCHEMAS ====================
+
 
 class StudentCreateRequest(BaseModel):
     """Schema for creating a new student profile"""
+
     name: str = Field(..., min_length=1, max_length=255)
     school: str = Field(..., min_length=1, max_length=255)
     grade: str = Field(..., min_length=1, max_length=100)
@@ -25,6 +26,7 @@ class StudentCreateRequest(BaseModel):
 
 class StudentUpdateRequest(BaseModel):
     """Schema for updating an existing student profile"""
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     school: Optional[str] = Field(None, min_length=1, max_length=255)
     grade: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -35,8 +37,10 @@ class StudentUpdateRequest(BaseModel):
 
 # ==================== RESPONSE SCHEMAS ====================
 
+
 class StudentResponse(BaseModel):
     """Schema for student profile response"""
+
     id: UUID
     user_id: UUID
     name: str
@@ -48,4 +52,4 @@ class StudentResponse(BaseModel):
     created_at: dt.datetime
     updated_at: dt.datetime
 
-    model_config = ConfigDict(from_attributes=True, extra='ignore')
+    model_config = ConfigDict(from_attributes=True, extra="ignore")

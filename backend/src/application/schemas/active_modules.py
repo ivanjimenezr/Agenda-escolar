@@ -9,11 +9,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-
 # ==================== REQUEST SCHEMAS ====================
+
 
 class ActiveModulesUpdateRequest(BaseModel):
     """Schema for updating active modules configuration"""
+
     subjects: Optional[bool] = None
     exams: Optional[bool] = None
     menu: Optional[bool] = None
@@ -24,8 +25,10 @@ class ActiveModulesUpdateRequest(BaseModel):
 
 # ==================== RESPONSE SCHEMAS ====================
 
+
 class ActiveModulesResponse(BaseModel):
     """Schema for active modules response"""
+
     id: UUID
     student_id: UUID
     subjects: bool
@@ -35,4 +38,4 @@ class ActiveModulesResponse(BaseModel):
     dinner: bool
     contacts: bool
 
-    model_config = ConfigDict(from_attributes=True, extra='ignore')
+    model_config = ConfigDict(from_attributes=True, extra="ignore")

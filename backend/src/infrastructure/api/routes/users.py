@@ -1,23 +1,21 @@
 """
 User API endpoints.
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.infrastructure.database import get_db
-from src.infrastructure.api.dependencies.auth import get_current_user
-from src.domain.models import User
 from src.application.schemas.user import UserResponse, UserUpdateRequest
+from src.domain.models import User
+from src.infrastructure.api.dependencies.auth import get_current_user
+from src.infrastructure.database import get_db
 from src.infrastructure.security.password import hash_password, verify_password
-
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-):
+def get_current_user_info(current_user: User = Depends(get_current_user)):
     """
     Get current authenticated user information.
 
@@ -32,9 +30,7 @@ def get_current_user_info(
 
 @router.put("/me", response_model=UserResponse)
 def update_current_user(
-    user_update: UserUpdateRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    user_update: UserUpdateRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Update current authenticated user information.
@@ -54,24 +50,15 @@ def update_current_user(
     # Update email if provided
     if user_update.email is not None:
         # Check if email is already taken by another user
-        existing_user = db.query(User).filter(
-            User.email == user_update.email,
-            User.id != current_user.id
-        ).first()
+        existing_user = db.query(User).filter(User.email == user_update.email, User.id != current_user.id).first()
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
         current_user.email = user_update.email
 
     # Update password if provided
     if user_update.current_password and user_update.new_password:
         if not verify_password(user_update.current_password, current_user.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Current password is incorrect"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
         current_user.password_hash = hash_password(user_update.new_password)
 
     db.commit()
@@ -81,10 +68,7 @@ def update_current_user(
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-def delete_current_user(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
+def delete_current_user(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Delete current authenticated user account.
     This will also soft-delete all associated student profiles due to cascade.
@@ -95,6 +79,7 @@ def delete_current_user(
     """
     # Soft delete the user
     from datetime import datetime, timezone
+
     current_user.deleted_at = datetime.now(timezone.utc)
     db.commit()
 

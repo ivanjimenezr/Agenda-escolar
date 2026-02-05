@@ -10,11 +10,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ==================== REQUEST SCHEMAS ====================
+
 
 class MenuItemCreateRequest(BaseModel):
     """Schema for creating a new menu item"""
+
     student_id: UUID
     date: dt.date
     first_course: str = Field(..., min_length=1, max_length=255)
@@ -26,6 +27,7 @@ class MenuItemCreateRequest(BaseModel):
 
 class MenuItemUpdateRequest(BaseModel):
     """Schema for updating an existing menu item"""
+
     date: Optional[dt.date] = None
     first_course: Optional[str] = Field(None, min_length=1, max_length=255)
     second_course: Optional[str] = Field(None, min_length=1, max_length=255)
@@ -36,8 +38,10 @@ class MenuItemUpdateRequest(BaseModel):
 
 # ==================== RESPONSE SCHEMAS ====================
 
+
 class MenuItemResponse(BaseModel):
     """Schema for menu item response"""
+
     id: UUID
     student_id: UUID
     date: dt.date
@@ -49,4 +53,4 @@ class MenuItemResponse(BaseModel):
     created_at: dt.datetime
     updated_at: dt.datetime
 
-    model_config = ConfigDict(from_attributes=True, extra='ignore')
+    model_config = ConfigDict(from_attributes=True, extra="ignore")

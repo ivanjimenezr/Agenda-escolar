@@ -21,20 +21,12 @@ class ActiveModulesRepository:
 
     def get_by_student_id(self, student_id: UUID) -> Optional[ActiveModule]:
         """Get active modules configuration for a student"""
-        return self.db.query(ActiveModule).filter(
-            ActiveModule.student_id == student_id
-        ).first()
+        return self.db.query(ActiveModule).filter(ActiveModule.student_id == student_id).first()
 
     def create(self, student_id: UUID) -> ActiveModule:
         """Create default active modules configuration for a student"""
         active_modules = ActiveModule(
-            student_id=student_id,
-            subjects=True,
-            exams=True,
-            menu=True,
-            events=True,
-            dinner=True,
-            contacts=True
+            student_id=student_id, subjects=True, exams=True, menu=True, events=True, dinner=True, contacts=True
         )
         self.db.add(active_modules)
         self.db.commit()
@@ -49,7 +41,7 @@ class ActiveModulesRepository:
         menu: Optional[bool] = None,
         events: Optional[bool] = None,
         dinner: Optional[bool] = None,
-        contacts: Optional[bool] = None
+        contacts: Optional[bool] = None,
     ) -> Optional[ActiveModule]:
         """Update active modules configuration"""
         active_modules = self.get_by_student_id(student_id)

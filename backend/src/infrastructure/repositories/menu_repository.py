@@ -8,8 +8,8 @@ from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from src.domain.models import MenuItem
 
@@ -28,7 +28,7 @@ class MenuRepository:
         second_course: str,
         side_dish: Optional[str] = None,
         dessert: Optional[str] = None,
-        allergens: Optional[List[str]] = None
+        allergens: Optional[List[str]] = None,
     ) -> MenuItem:
         """Create a new menu item
 
@@ -42,7 +42,7 @@ class MenuRepository:
             second_course=second_course,
             side_dish=side_dish,
             dessert=dessert,
-            allergens=allergens or []
+            allergens=allergens or [],
         )
         self.db.add(menu)
         try:
@@ -52,23 +52,17 @@ class MenuRepository:
         except IntegrityError as e:
             self.db.rollback()
             # Check if it's a duplicate menu constraint
-            if 'unique_menu_per_student_per_date' in str(e.orig):
+            if "unique_menu_per_student_per_date" in str(e.orig):
                 raise ValueError(f"A menu already exists for student on date {date}. Use update or upsert instead.")
             # Re-raise other integrity errors
             raise
 
     def get_by_id(self, menu_id: UUID) -> Optional[MenuItem]:
         """Get menu item by ID (excludes soft-deleted)"""
-        return self.db.query(MenuItem).filter(
-            MenuItem.id == menu_id,
-            MenuItem.deleted_at.is_(None)
-        ).first()
+        return self.db.query(MenuItem).filter(MenuItem.id == menu_id, MenuItem.deleted_at.is_(None)).first()
 
     def get_by_student_id(
-        self,
-        student_id: UUID,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None
+        self, student_id: UUID, start_date: Optional[date] = None, end_date: Optional[date] = None
     ) -> List[MenuItem]:
         """Get all menu items for a student (excludes soft-deleted)
 
@@ -80,10 +74,7 @@ class MenuRepository:
         Returns:
             List of menu items ordered by date
         """
-        query = self.db.query(MenuItem).filter(
-            MenuItem.student_id == student_id,
-            MenuItem.deleted_at.is_(None)
-        )
+        query = self.db.query(MenuItem).filter(MenuItem.student_id == student_id, MenuItem.deleted_at.is_(None))
 
         if start_date:
             query = query.filter(MenuItem.date >= start_date)
@@ -94,38 +85,41 @@ class MenuRepository:
 
     def get_by_date(self, student_id: UUID, menu_date: date) -> Optional[MenuItem]:
         """Get menu item by student and date"""
-        return self.db.query(MenuItem).filter(
-            MenuItem.student_id == student_id,
-            MenuItem.date == menu_date,
-            MenuItem.deleted_at.is_(None)
-        ).first()
+        return (
+            self.db.query(MenuItem)
+            .filter(MenuItem.student_id == student_id, MenuItem.date == menu_date, MenuItem.deleted_at.is_(None))
+            .first()
+        )
 
     def update(
         self,
         menu_id: UUID,
-        date: Optional[date] = None,
-        first_course: Optional[str] = None,
-        second_course: Optional[str] = None,
-        side_dish: Optional[str] = None,
-        dessert: Optional[str] = None,
-        allergens: Optional[List[str]] = None
+        date: Optional[date] = ...,
+        first_course: Optional[str] = ...,
+        second_course: Optional[str] = ...,
+        side_dish: Optional[str] = ...,
+        dessert: Optional[str] = ...,
+        allergens: Optional[List[str]] = ...,
     ) -> Optional[MenuItem]:
-        """Update menu item"""
+        """Update menu item
+
+        Use Ellipsis (...) as default to distinguish between "not provided" and "set to None"
+        """
         menu = self.get_by_id(menu_id)
         if not menu:
             return None
 
-        if date is not None:
+        if date is not ...:
             menu.date = date
-        if first_course is not None:
+        if first_course is not ...:
             menu.first_course = first_course
-        if second_course is not None:
+        if second_course is not ...:
             menu.second_course = second_course
-        if side_dish is not None:
+        if side_dish is not ...:
             menu.side_dish = side_dish
-        if dessert is not None:
+        if dessert is not ...:
             menu.dessert = dessert
-        if allergens is not None:
+        if allergens is not ...:
             menu.allergens = allergens
 
         menu.updated_at = datetime.now(timezone.utc)
@@ -152,7 +146,7 @@ class MenuRepository:
         second_course: str,
         side_dish: Optional[str] = None,
         dessert: Optional[str] = None,
-        allergens: Optional[List[str]] = None
+        allergens: Optional[List[str]] = None,
     ) -> MenuItem:
         """Create or update menu item for a specific date
 
@@ -168,7 +162,7 @@ class MenuRepository:
                 second_course=second_course,
                 side_dish=side_dish,
                 dessert=dessert,
-                allergens=allergens
+                allergens=allergens,
             )
         else:
             return self.create(
@@ -178,5 +172,5 @@ class MenuRepository:
                 second_course=second_course,
                 side_dish=side_dish,
                 dessert=dessert,
-                allergens=allergens
+                allergens=allergens,
             )

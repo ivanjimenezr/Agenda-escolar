@@ -1,12 +1,13 @@
 """
 Integration tests for Exam endpoints
 """
+
+# Skip tests when Docker/postgres isn't available
+import docker
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-# Skip tests when Docker/postgres isn't available
-import docker
 
 def _docker_available() -> bool:
     try:
@@ -16,15 +17,19 @@ def _docker_available() -> bool:
     except Exception:
         return False
 
-pytestmark = pytest.mark.skipif(not _docker_available(), reason="Docker not available, skipping DB-backed integration tests")
 
-from src.main import app
+pytestmark = pytest.mark.skipif(
+    not _docker_available(), reason="Docker not available, skipping DB-backed integration tests"
+)
+
 from src.infrastructure.database import get_db
+from src.main import app
 
 
 @pytest.fixture
 def client(db_session: Session):
     """Create test client with database override."""
+
     def override_get_db():
         try:
             yield db_session
@@ -43,26 +48,15 @@ class TestExamEndpoints:
     def register_and_login(self, client: TestClient, email: str = "exam@example.com"):
         """Helper to register and login a user"""
         # Register
-        client.post("/api/v1/auth/register", json={
-            "email": email,
-            "password": "SecurePass123!",
-            "name": "Exam Tester"
-        })
+        client.post("/api/v1/auth/register", json={"email": email, "password": "SecurePass123!", "name": "Exam Tester"})
         # Login
-        res = client.post("/api/v1/auth/login", json={
-            "email": email,
-            "password": "SecurePass123!"
-        })
+        res = client.post("/api/v1/auth/login", json={"email": email, "password": "SecurePass123!"})
         token = res.json()["access_token"]
         return token
 
     def create_student(self, client: TestClient, token: str):
         """Helper to create a student"""
-        payload = {
-            "name": "Test Student",
-            "school": "Colegio Test",
-            "grade": "5º"
-        }
+        payload = {"name": "Test Student", "school": "Colegio Test", "grade": "5º"}
         res = client.post("/api/v1/students", json=payload, headers={"Authorization": f"Bearer {token}"})
         assert res.status_code == 201
         return res.json()["id"]
@@ -76,13 +70,11 @@ class TestExamEndpoints:
             "subject": "Matemáticas",
             "date": "2026-03-15",
             "topic": "Ecuaciones de segundo grado",
-            "notes": "Repasar ejercicios 1-10"
+            "notes": "Repasar ejercicios 1-10",
         }
 
         res = client.post(
-            f"/api/v1/students/{student_id}/exams",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            f"/api/v1/students/{student_id}/exams", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         assert res.status_code == 201
@@ -101,16 +93,10 @@ class TestExamEndpoints:
         token = self.register_and_login(client, email="exam2@example.com")
         student_id = self.create_student(client, token)
 
-        payload = {
-            "subject": "Lengua",
-            "date": "2026-03-20",
-            "topic": "Análisis sintáctico"
-        }
+        payload = {"subject": "Lengua", "date": "2026-03-20", "topic": "Análisis sintáctico"}
 
         res = client.post(
-            f"/api/v1/students/{student_id}/exams",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            f"/api/v1/students/{student_id}/exams", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         assert res.status_code == 201
@@ -119,11 +105,7 @@ class TestExamEndpoints:
 
     def test_create_exam_unauthorized(self, client: TestClient):
         """Test creating exam without authentication"""
-        payload = {
-            "subject": "Historia",
-            "date": "2026-04-01",
-            "topic": "Revolución francesa"
-        }
+        payload = {"subject": "Historia", "date": "2026-04-01", "topic": "Revolución francesa"}
 
         res = client.post("/api/v1/students/00000000-0000-0000-0000-000000000000/exams", json=payload)
         assert res.status_code == 401
@@ -137,16 +119,10 @@ class TestExamEndpoints:
         # User 2 tries to create an exam for user 1's student
         token2 = self.register_and_login(client, email="user2@example.com")
 
-        payload = {
-            "subject": "Ciencias",
-            "date": "2026-04-05",
-            "topic": "Fotosíntesis"
-        }
+        payload = {"subject": "Ciencias", "date": "2026-04-05", "topic": "Fotosíntesis"}
 
         res = client.post(
-            f"/api/v1/students/{student_id}/exams",
-            json=payload,
-            headers={"Authorization": f"Bearer {token2}"}
+            f"/api/v1/students/{student_id}/exams", json=payload, headers={"Authorization": f"Bearer {token2}"}
         )
 
         assert res.status_code == 403
@@ -160,21 +136,14 @@ class TestExamEndpoints:
         exams = [
             {"subject": "Math", "date": "2026-03-10", "topic": "Algebra"},
             {"subject": "Science", "date": "2026-03-15", "topic": "Chemistry"},
-            {"subject": "History", "date": "2026-03-20", "topic": "World War II"}
+            {"subject": "History", "date": "2026-03-20", "topic": "World War II"},
         ]
 
         for exam in exams:
-            client.post(
-                f"/api/v1/students/{student_id}/exams",
-                json=exam,
-                headers={"Authorization": f"Bearer {token}"}
-            )
+            client.post(f"/api/v1/students/{student_id}/exams", json=exam, headers={"Authorization": f"Bearer {token}"})
 
         # Get all exams
-        res = client.get(
-            f"/api/v1/students/{student_id}/exams",
-            headers={"Authorization": f"Bearer {token}"}
-        )
+        res = client.get(f"/api/v1/students/{student_id}/exams", headers={"Authorization": f"Bearer {token}"})
 
         assert res.status_code == 200
         data = res.json()
@@ -193,20 +162,15 @@ class TestExamEndpoints:
         exams = [
             {"subject": "Math", "date": "2026-03-01", "topic": "Topic 1"},
             {"subject": "Science", "date": "2026-03-15", "topic": "Topic 2"},
-            {"subject": "History", "date": "2026-03-30", "topic": "Topic 3"}
+            {"subject": "History", "date": "2026-03-30", "topic": "Topic 3"},
         ]
 
         for exam in exams:
-            client.post(
-                f"/api/v1/students/{student_id}/exams",
-                json=exam,
-                headers={"Authorization": f"Bearer {token}"}
-            )
+            client.post(f"/api/v1/students/{student_id}/exams", json=exam, headers={"Authorization": f"Bearer {token}"})
 
         # Test from_date filter
         res = client.get(
-            f"/api/v1/students/{student_id}/exams?from_date=2026-03-10",
-            headers={"Authorization": f"Bearer {token}"}
+            f"/api/v1/students/{student_id}/exams?from_date=2026-03-10", headers={"Authorization": f"Bearer {token}"}
         )
         assert res.status_code == 200
         data = res.json()
@@ -215,8 +179,7 @@ class TestExamEndpoints:
 
         # Test to_date filter
         res = client.get(
-            f"/api/v1/students/{student_id}/exams?to_date=2026-03-20",
-            headers={"Authorization": f"Bearer {token}"}
+            f"/api/v1/students/{student_id}/exams?to_date=2026-03-20", headers={"Authorization": f"Bearer {token}"}
         )
         assert res.status_code == 200
         data = res.json()
@@ -226,7 +189,7 @@ class TestExamEndpoints:
         # Test both filters
         res = client.get(
             f"/api/v1/students/{student_id}/exams?from_date=2026-03-10&to_date=2026-03-20",
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert res.status_code == 200
         data = res.json()
@@ -242,15 +205,12 @@ class TestExamEndpoints:
         create_res = client.post(
             f"/api/v1/students/{student_id}/exams",
             json={"subject": "Biology", "date": "2026-04-01", "topic": "Cell structure"},
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
         exam_id = create_res.json()["id"]
 
         # Get the exam
-        res = client.get(
-            f"/api/v1/students/{student_id}/exams/{exam_id}",
-            headers={"Authorization": f"Bearer {token}"}
-        )
+        res = client.get(f"/api/v1/students/{student_id}/exams/{exam_id}", headers={"Authorization": f"Bearer {token}"})
 
         assert res.status_code == 200
         data = res.json()
@@ -264,7 +224,7 @@ class TestExamEndpoints:
 
         res = client.get(
             f"/api/v1/students/{student_id}/exams/00000000-0000-0000-0000-000000000000",
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         assert res.status_code == 404
@@ -278,7 +238,7 @@ class TestExamEndpoints:
         create_res = client.post(
             f"/api/v1/students/{student_id}/exams",
             json={"subject": "Physics", "date": "2026-04-10", "topic": "Mechanics"},
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
         exam_id = create_res.json()["id"]
 
@@ -287,13 +247,13 @@ class TestExamEndpoints:
             "subject": "Advanced Physics",
             "date": "2026-04-15",
             "topic": "Quantum Mechanics",
-            "notes": "Study chapters 5-7"
+            "notes": "Study chapters 5-7",
         }
 
         res = client.put(
             f"/api/v1/students/{student_id}/exams/{exam_id}",
             json=update_payload,
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         assert res.status_code == 200
@@ -312,7 +272,7 @@ class TestExamEndpoints:
         create_res = client.post(
             f"/api/v1/students/{student_id}/exams",
             json={"subject": "Chemistry", "date": "2026-04-20", "topic": "Periodic table"},
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
         exam_id = create_res.json()["id"]
 
@@ -322,7 +282,7 @@ class TestExamEndpoints:
         res = client.put(
             f"/api/v1/students/{student_id}/exams/{exam_id}",
             json=update_payload,
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         assert res.status_code == 200
@@ -340,22 +300,20 @@ class TestExamEndpoints:
         create_res = client.post(
             f"/api/v1/students/{student_id}/exams",
             json={"subject": "Geography", "date": "2026-05-01", "topic": "Continents"},
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
         exam_id = create_res.json()["id"]
 
         # Delete the exam
         res = client.delete(
-            f"/api/v1/students/{student_id}/exams/{exam_id}",
-            headers={"Authorization": f"Bearer {token}"}
+            f"/api/v1/students/{student_id}/exams/{exam_id}", headers={"Authorization": f"Bearer {token}"}
         )
 
         assert res.status_code == 204
 
         # Verify it's deleted (should return 404)
         get_res = client.get(
-            f"/api/v1/students/{student_id}/exams/{exam_id}",
-            headers={"Authorization": f"Bearer {token}"}
+            f"/api/v1/students/{student_id}/exams/{exam_id}", headers={"Authorization": f"Bearer {token}"}
         )
         assert get_res.status_code == 404
 
@@ -366,7 +324,7 @@ class TestExamEndpoints:
 
         res = client.delete(
             f"/api/v1/students/{student_id}/exams/00000000-0000-0000-0000-000000000000",
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         assert res.status_code == 404
@@ -377,11 +335,7 @@ class TestExamEndpoints:
 
         # Create two students
         student1_id = self.create_student(client, token)
-        student2_payload = {
-            "name": "Second Student",
-            "school": "Another School",
-            "grade": "6º"
-        }
+        student2_payload = {"name": "Second Student", "school": "Another School", "grade": "6º"}
         res = client.post("/api/v1/students", json=student2_payload, headers={"Authorization": f"Bearer {token}"})
         student2_id = res.json()["id"]
 
@@ -389,14 +343,14 @@ class TestExamEndpoints:
         client.post(
             f"/api/v1/students/{student1_id}/exams",
             json={"subject": "Math", "date": "2026-03-15", "topic": "Topic 1"},
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         # Create exam for student 2
         client.post(
             f"/api/v1/students/{student2_id}/exams",
             json={"subject": "Science", "date": "2026-03-15", "topic": "Topic 2"},
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         # Get exams for each student

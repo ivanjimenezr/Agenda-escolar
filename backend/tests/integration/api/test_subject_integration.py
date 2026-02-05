@@ -5,26 +5,25 @@ These tests specifically test Pydantic serialization of SQLAlchemy models
 and subject CRUD operations to catch issues before deployment.
 """
 
+from datetime import date, time, timedelta
+
 import pytest
-from datetime import time, timedelta, date
 from fastapi.testclient import TestClient
 
-from src.main import app
-from src.domain.models import User, StudentProfile, Subject
 from src.application.schemas.subject import SubjectResponse
+from src.domain.models import StudentProfile, Subject, User
+from src.main import app
 
 
 @pytest.fixture
 def auth_headers(client: TestClient, db_session):
     """Create a user and return authentication headers"""
-    from src.infrastructure.security.password import hash_password
     from src.infrastructure.security.jwt import create_access_token
+    from src.infrastructure.security.password import hash_password
 
     # Create user
     user = User(
-        email="testsubject@example.com",
-        name="Test Subject User",
-        password_hash=hash_password("testpassword123")
+        email="testsubject@example.com", name="Test Subject User", password_hash=hash_password("testpassword123")
     )
     db_session.add(user)
     db_session.commit()
@@ -47,7 +46,7 @@ def sample_student(db_session, auth_headers):
         school="Test School",
         grade="5th Grade",
         allergies=[],
-        excluded_foods=[]
+        excluded_foods=[],
     )
     db_session.add(student)
     db_session.commit()
@@ -69,14 +68,10 @@ class TestSubjectEndpointsSerialization:
             "time": "09:00:00",
             "teacher": "Prof. García",
             "color": "#FF5733",
-            "type": "colegio"
+            "type": "colegio",
         }
 
-        response = client.post(
-            f"/students/{sample_student.id}/subjects",
-            json=payload,
-            headers=headers
-        )
+        response = client.post(f"/students/{sample_student.id}/subjects", json=payload, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -99,6 +94,7 @@ class TestSubjectEndpointsSerialization:
 
         # Create multiple subjects
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         subject1 = repo.create(
@@ -108,7 +104,7 @@ class TestSubjectEndpointsSerialization:
             time=time(9, 0),
             teacher="Prof. García",
             color="#FF5733",
-            type="colegio"
+            type="colegio",
         )
 
         subject2 = repo.create(
@@ -118,7 +114,7 @@ class TestSubjectEndpointsSerialization:
             time=time(10, 30),
             teacher="Prof. Martínez",
             color="#33FF57",
-            type="colegio"
+            type="colegio",
         )
 
         subject3 = repo.create(
@@ -128,14 +124,11 @@ class TestSubjectEndpointsSerialization:
             time=time(16, 0),
             teacher="Entrenador López",
             color="#3357FF",
-            type="extraescolar"
+            type="extraescolar",
         )
 
         # THIS IS THE CRITICAL TEST - Getting multiple subjects
-        response = client.get(
-            f"/students/{sample_student.id}/subjects",
-            headers=headers
-        )
+        response = client.get(f"/students/{sample_student.id}/subjects", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -169,7 +162,7 @@ class TestSubjectEndpointsSerialization:
             time=time(9, 0),
             teacher="Test Teacher",
             color="#FFFFFF",
-            type="colegio"
+            type="colegio",
         )
 
         # This is what happens in the endpoint - THIS SHOULD NOT CAUSE RecursionError
@@ -188,6 +181,7 @@ class TestSubjectEndpointsSerialization:
         headers, user = auth_headers
 
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         subject = repo.create(
@@ -197,19 +191,13 @@ class TestSubjectEndpointsSerialization:
             time=time(9, 0),
             teacher="Original Teacher",
             color="#FF0000",
-            type="colegio"
+            type="colegio",
         )
 
-        update_payload = {
-            "name": "Updated Name",
-            "teacher": "Updated Teacher",
-            "color": "#00FF00"
-        }
+        update_payload = {"name": "Updated Name", "teacher": "Updated Teacher", "color": "#00FF00"}
 
         response = client.put(
-            f"/students/{sample_student.id}/subjects/{subject.id}",
-            json=update_payload,
-            headers=headers
+            f"/students/{sample_student.id}/subjects/{subject.id}", json=update_payload, headers=headers
         )
 
         assert response.status_code == 200
@@ -228,6 +216,7 @@ class TestSubjectEndpointsSerialization:
         headers, user = auth_headers
 
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         subject = repo.create(
@@ -237,18 +226,14 @@ class TestSubjectEndpointsSerialization:
             time=time(9, 0),
             teacher="Test Teacher",
             color="#FF0000",
-            type="colegio"
+            type="colegio",
         )
 
         # Update with time as string
-        update_payload = {
-            "time": "14:30:00"
-        }
+        update_payload = {"time": "14:30:00"}
 
         response = client.put(
-            f"/students/{sample_student.id}/subjects/{subject.id}",
-            json=update_payload,
-            headers=headers
+            f"/students/{sample_student.id}/subjects/{subject.id}", json=update_payload, headers=headers
         )
 
         assert response.status_code == 200
@@ -258,7 +243,9 @@ class TestSubjectEndpointsSerialization:
         assert "14:30" in data["time"]
         assert "student" not in data
 
-    def test_create_multiple_subjects_different_times(self, client: TestClient, auth_headers, sample_student, db_session):
+    def test_create_multiple_subjects_different_times(
+        self, client: TestClient, auth_headers, sample_student, db_session
+    ):
         """Test creating multiple subjects at different times"""
         headers, user = auth_headers
 
@@ -269,7 +256,7 @@ class TestSubjectEndpointsSerialization:
                 "time": "09:00:00",
                 "teacher": "Prof. A",
                 "color": "#FF0000",
-                "type": "colegio"
+                "type": "colegio",
             },
             {
                 "name": "Lengua",
@@ -277,7 +264,7 @@ class TestSubjectEndpointsSerialization:
                 "time": "10:00:00",
                 "teacher": "Prof. B",
                 "color": "#00FF00",
-                "type": "colegio"
+                "type": "colegio",
             },
             {
                 "name": "Inglés",
@@ -285,27 +272,20 @@ class TestSubjectEndpointsSerialization:
                 "time": "09:00:00",
                 "teacher": "Prof. C",
                 "color": "#0000FF",
-                "type": "colegio"
-            }
+                "type": "colegio",
+            },
         ]
 
         created_ids = []
         for subject_data in subjects_data:
-            response = client.post(
-                f"/students/{sample_student.id}/subjects",
-                json=subject_data,
-                headers=headers
-            )
+            response = client.post(f"/students/{sample_student.id}/subjects", json=subject_data, headers=headers)
             assert response.status_code == 201
             data = response.json()
             created_ids.append(data["id"])
             assert "student" not in data
 
         # Get all subjects
-        response = client.get(
-            f"/students/{sample_student.id}/subjects",
-            headers=headers
-        )
+        response = client.get(f"/students/{sample_student.id}/subjects", headers=headers)
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 3
@@ -319,6 +299,7 @@ class TestSubjectEndpointsSerialization:
         headers, user = auth_headers
 
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         subject = repo.create(
@@ -328,13 +309,10 @@ class TestSubjectEndpointsSerialization:
             time=time(11, 0),
             teacher="Test Teacher",
             color="#ABCDEF",
-            type="extraescolar"
+            type="extraescolar",
         )
 
-        response = client.get(
-            f"/students/{sample_student.id}/subjects/{subject.id}",
-            headers=headers
-        )
+        response = client.get(f"/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -348,6 +326,7 @@ class TestSubjectEndpointsSerialization:
         headers, user = auth_headers
 
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         subject = repo.create(
@@ -357,29 +336,26 @@ class TestSubjectEndpointsSerialization:
             time=time(12, 0),
             teacher="Test Teacher",
             color="#123456",
-            type="colegio"
+            type="colegio",
         )
 
         # Delete
-        response = client.delete(
-            f"/students/{sample_student.id}/subjects/{subject.id}",
-            headers=headers
-        )
+        response = client.delete(f"/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
 
         assert response.status_code == 204
 
         # Verify it's deleted
-        response = client.get(
-            f"/students/{sample_student.id}/subjects/{subject.id}",
-            headers=headers
-        )
+        response = client.get(f"/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
         assert response.status_code == 404
 
-    def test_create_subject_with_conflict_without_replace(self, client: TestClient, auth_headers, sample_student, db_session):
+    def test_create_subject_with_conflict_without_replace(
+        self, client: TestClient, auth_headers, sample_student, db_session
+    ):
         """Test creating conflicting subject without replace flag"""
         headers, user = auth_headers
 
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         # Create first subject
@@ -390,7 +366,7 @@ class TestSubjectEndpointsSerialization:
             time=time(9, 0),
             teacher="Teacher A",
             color="#FF0000",
-            type="colegio"
+            type="colegio",
         )
 
         # Try to create conflicting subject (same day and time)
@@ -400,14 +376,10 @@ class TestSubjectEndpointsSerialization:
             "time": "09:00:00",
             "teacher": "Teacher B",
             "color": "#00FF00",
-            "type": "colegio"
+            "type": "colegio",
         }
 
-        response = client.post(
-            f"/students/{sample_student.id}/subjects",
-            json=payload,
-            headers=headers
-        )
+        response = client.post(f"/students/{sample_student.id}/subjects", json=payload, headers=headers)
 
         # Should return conflict error
         assert response.status_code == 409
@@ -419,6 +391,7 @@ class TestSubjectEndpointsSerialization:
         headers, user = auth_headers
 
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         # Create first subject
@@ -429,7 +402,7 @@ class TestSubjectEndpointsSerialization:
             time=time(10, 0),
             teacher="Old Teacher",
             color="#FF0000",
-            type="colegio"
+            type="colegio",
         )
 
         # Create with replace=True
@@ -439,14 +412,10 @@ class TestSubjectEndpointsSerialization:
             "time": "10:00:00",
             "teacher": "New Teacher",
             "color": "#00FF00",
-            "type": "colegio"
+            "type": "colegio",
         }
 
-        response = client.post(
-            f"/students/{sample_student.id}/subjects?replace=true",
-            json=payload,
-            headers=headers
-        )
+        response = client.post(f"/students/{sample_student.id}/subjects?replace=true", json=payload, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -454,10 +423,7 @@ class TestSubjectEndpointsSerialization:
         assert "student" not in data
 
         # Old subject should be soft-deleted
-        all_subjects = client.get(
-            f"/students/{sample_student.id}/subjects",
-            headers=headers
-        )
+        all_subjects = client.get(f"/students/{sample_student.id}/subjects", headers=headers)
         subjects_list = all_subjects.json()
         # Should only have the new one
         assert len(subjects_list) == 1
@@ -473,14 +439,10 @@ class TestSubjectEndpointsSerialization:
             "time": "15:00:00",
             "teacher": "Test",
             "color": "#AABBCC",
-            "type": "COLEGIO"  # Uppercase
+            "type": "COLEGIO",  # Uppercase
         }
 
-        response = client.post(
-            f"/students/{sample_student.id}/subjects",
-            json=payload,
-            headers=headers
-        )
+        response = client.post(f"/students/{sample_student.id}/subjects", json=payload, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -492,24 +454,15 @@ class TestSubjectEndpointsSerialization:
         headers, user = auth_headers
 
         # Create multiple students
-        student1 = StudentProfile(
-            user_id=user.id,
-            name="Student 1",
-            school="School 1",
-            grade="5th"
-        )
-        student2 = StudentProfile(
-            user_id=user.id,
-            name="Student 2",
-            school="School 2",
-            grade="6th"
-        )
+        student1 = StudentProfile(user_id=user.id, name="Student 1", school="School 1", grade="5th")
+        student2 = StudentProfile(user_id=user.id, name="Student 2", school="School 2", grade="6th")
         db_session.add_all([student1, student2])
         db_session.commit()
         db_session.refresh(student1)
         db_session.refresh(student2)
 
         from src.infrastructure.repositories.subject_repository import SubjectRepository
+
         repo = SubjectRepository(db_session)
 
         # Create subjects for each student
@@ -522,7 +475,7 @@ class TestSubjectEndpointsSerialization:
                     time=time(9 + i, 0),
                     teacher=f"Teacher {i}",
                     color="#FF0000",
-                    type="colegio"
+                    type="colegio",
                 )
 
         # Get subjects for student1
