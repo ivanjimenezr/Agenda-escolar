@@ -66,7 +66,7 @@ describe('userService', () => {
     it('should throw error when request fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValueOnce(new ApiError(401, 'Unauthorized', { detail: 'Unauthorized' }));
 
-      await expect(getCurrentUser()).rejects.toThrow('Unauthorized');
+      await expect(getCurrentUser()).rejects.toThrow('Session expired');
     });
   });
 
