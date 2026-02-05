@@ -66,6 +66,7 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
   const [editingEvent, setEditingEvent] = useState<SchoolEvent | null>(null);
   const [dayOffset, setDayOffset] = useState(0);
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   const moveCard = (index: number, direction: 'up' | 'down') => {
       const newOrder = [...cardOrder];
@@ -383,18 +384,84 @@ const HomePage: React.FC<HomePageProps> = ({ profile, profiles, activeProfileId,
               </button>
               {isEventsExpanded && (
                   <div className="bg-amber-50 dark:bg-gray-800 border-x border-b border-amber-200 dark:border-gray-700 rounded-b-2xl p-3 space-y-2 animate-in slide-in-from-top-1">
-                      {upcomingEvents.map(ev => (
-                          <div key={ev.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-amber-100 dark:border-gray-700">
-                              <div className="flex-grow">
-                                  <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-tight">{new Date(ev.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</p>
-                                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ev.name}</p>
+                      {upcomingEvents.map(ev => {
+                          const isExpanded = expandedEventId === ev.id;
+                          return (
+                              <div key={ev.id} className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 shadow-sm overflow-hidden">
+                                  <div
+                                      className="p-3 flex justify-between items-center cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                                      onClick={() => setExpandedEventId(isExpanded ? null : ev.id)}
+                                  >
+                                      <div className="flex-1 mr-2">
+                                          <p className="font-bold text-amber-950 dark:text-amber-100 text-sm">{ev.name}</p>
+                                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide">{ev.type}</p>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                          <div className="text-right flex-shrink-0">
+                                              <p className="text-base font-bold leading-none text-amber-900 dark:text-amber-200">{new Date(ev.date).getDate()}</p>
+                                              <p className="text-[9px] text-amber-500/70 dark:text-amber-400/70 font-bold uppercase">{new Date(ev.date).toLocaleDateString('es-ES', { month: 'short' })}</p>
+                                          </div>
+                                          {isExpanded ? (
+                                              <ChevronUpIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                          ) : (
+                                              <ChevronDownIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                          )}
+                                      </div>
+                                  </div>
+                                  {isExpanded && (
+                                      <div className="px-3 pb-3 pt-2 border-t border-amber-200 dark:border-amber-900/50 bg-amber-100/50 dark:bg-amber-900/20">
+                                          <div className="space-y-2">
+                                              <div>
+                                                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mb-1">Nombre</p>
+                                                  <p className="text-sm text-amber-950 dark:text-amber-100 font-semibold">{ev.name}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mb-1">Tipo</p>
+                                                  <p className="text-sm text-amber-950 dark:text-amber-100">{ev.type}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mb-1">Fecha</p>
+                                                  <p className="text-sm text-amber-950 dark:text-amber-100">
+                                                      {new Date(ev.date).toLocaleDateString('es-ES', {
+                                                          weekday: 'long',
+                                                          year: 'numeric',
+                                                          month: 'long',
+                                                          day: 'numeric'
+                                                      })}
+                                                  </p>
+                                              </div>
+                                              {ev.time && (
+                                                  <div>
+                                                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mb-1">Hora</p>
+                                                      <p className="text-sm text-amber-950 dark:text-amber-100">{ev.time}</p>
+                                                  </div>
+                                              )}
+                                              {ev.description && (
+                                                  <div>
+                                                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mb-1">Descripción</p>
+                                                      <p className="text-sm text-amber-950 dark:text-amber-100 whitespace-pre-wrap">{ev.description}</p>
+                                                  </div>
+                                              )}
+                                              <div className="flex space-x-2 pt-2 border-t border-amber-200 dark:border-amber-900/50">
+                                                  <button
+                                                      onClick={(e) => { e.stopPropagation(); setEditingEvent(ev); }}
+                                                      className="flex-1 p-2 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                                  >
+                                                      Editar
+                                                  </button>
+                                                  <button
+                                                      onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }}
+                                                      className="flex-1 p-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                                  >
+                                                      Eliminar
+                                                  </button>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  )}
                               </div>
-                              <div className="flex items-center space-x-1">
-                                  <button onClick={() => setEditingEvent(ev)} className="p-2 text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg"><PencilIcon className="w-3 h-3" /></button>
-                                  <button onClick={() => deleteEvent(ev.id)} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg"><TrashIcon className="w-3 h-3" /></button>
-                              </div>
-                          </div>
-                      ))}
+                          );
+                      })}
                   </div>
               )}
           </div>
