@@ -270,11 +270,22 @@ const ManagePage: React.FC<ManagePageProps> = ({
     } else if (activeTab === 'events') {
       try {
         console.log('[ManagePage] Processing event save...');
+        console.log('[ManagePage] Raw event data:', data);
+
+        // Normalize event type to ensure correct capitalization
+        const normalizeEventType = (type: string): 'Festivo' | 'Lectivo' | 'Vacaciones' => {
+          const normalized = type.toLowerCase();
+          if (normalized === 'festivo') return 'Festivo';
+          if (normalized === 'lectivo') return 'Lectivo';
+          if (normalized === 'vacaciones') return 'Vacaciones';
+          return 'Lectivo'; // Default fallback
+        };
+
         const payload = {
           date: data.date,
           time: data.time || undefined,  // Send undefined instead of empty string
           name: data.name,
-          type: data.type,
+          type: normalizeEventType(data.type),
           description: data.description || undefined
         };
         console.log('[ManagePage] Event payload:', payload);

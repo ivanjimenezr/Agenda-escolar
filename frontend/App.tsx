@@ -215,12 +215,24 @@ const App: React.FC = () => {
       console.log('[App] Loading events for user');
       const eventsData = await getEvents();
       console.log('[App] Received events from API:', eventsData);
-      // Transform backend format (user_id) to frontend format
+
+      // Normalize event type to ensure correct capitalization
+      const normalizeEventType = (type: string): 'Festivo' | 'Lectivo' | 'Vacaciones' => {
+        const normalized = type.toLowerCase();
+        if (normalized === 'festivo') return 'Festivo';
+        if (normalized === 'lectivo') return 'Lectivo';
+        if (normalized === 'vacaciones') return 'Vacaciones';
+        return 'Lectivo'; // Default fallback
+      };
+
+      // Transform backend format to frontend format
       const transformedEvents: SchoolEvent[] = eventsData.map(e => ({
         id: e.id,
         date: e.date,
+        time: e.time,
         name: e.name,
-        type: e.type as 'Festivo' | 'Lectivo' | 'Vacaciones'
+        type: normalizeEventType(e.type),
+        description: e.description
       }));
       console.log('[App] Transformed events:', transformedEvents);
       setEvents(transformedEvents);
