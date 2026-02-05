@@ -46,8 +46,12 @@ class Settings(BaseSettings):
         # In production, log the configured origins for debugging
         if self.is_production:
             print(f"[Config] Production CORS origins: {origins}")
+            # If no origins configured in production, allow all temporarily
+            if not origins:
+                print("[Config] WARNING: No CORS_ORIGINS configured, allowing all origins")
+                return ["*"]
 
-        return origins if origins else ["*"]
+        return origins if origins else ["http://localhost:5173", "http://localhost:3000"]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore")
 
