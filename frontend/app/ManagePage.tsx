@@ -182,7 +182,7 @@ const ManagePage: React.FC<ManagePageProps> = ({
         // Debug: raw form data from modal
         console.debug('[ManagePage] raw menu form data:', data);
 
-        const payload = editingItem
+        const payload: any = editingItem
           ? transformMenuForUpdate(data)
           : transformMenuForCreate(data, activeProfileId);
 
@@ -310,14 +310,17 @@ const ManagePage: React.FC<ManagePageProps> = ({
       }
     } else {
       // Other types still use local state
-      const setData = dataMap[activeTab].setData as any;
+      const tabData = dataMap[activeTab] as any;
+      const setData = tabData?.setData;
+      if (!setData) return;
+
       if (editingItem) {
         setData((prev: any[]) => prev.map((i: any) => i.id === editingItem.id ? { ...i, ...data } : i));
       } else {
         setData((prev: any[]) => [...prev, {
           ...data,
           id: Date.now().toString(),
-          studentId: (activeTab === 'subjects' || activeTab === 'exams') ? activeProfileId : undefined
+          studentId: ((activeTab as string) === 'subjects' || (activeTab as string) === 'exams') ? activeProfileId : undefined
         }]);
       }
       setIsModalOpen(false);
@@ -376,7 +379,7 @@ const ManagePage: React.FC<ManagePageProps> = ({
                         // Debug: raw form data from modal
                         console.debug('[ManagePage] raw menu form data:', result);
 
-                        const payload = editingItem
+                        const payload: any = editingItem
                             ? transformMenuForUpdate(result)
                             : transformMenuForCreate(result, activeProfileId);
 
@@ -481,7 +484,7 @@ const ManagePage: React.FC<ManagePageProps> = ({
                         setData((prev: any[]) => [...prev, {
                             ...result,
                             id: Date.now().toString(),
-                            studentId: (activeTab === 'exams') ? activeProfileId : undefined // exams still need studentId for local state creation
+                            studentId: ((activeTab as string) === 'exams') ? activeProfileId : undefined // exams still need studentId for local state creation
                         }]);
                     }
                     setIsModalOpen(false);

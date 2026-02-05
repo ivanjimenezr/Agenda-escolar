@@ -195,7 +195,7 @@ const App: React.FC = () => {
       const exams = await getExamsByStudent(studentId);
       console.log('[App] Received exams from API:', exams);
       // Transform backend format (student_id) to frontend format (studentId)
-      const transformedExams: Exam[] = exams.map(e => ({
+      const transformedExams: Exam[] = exams.map((e: any) => ({
         id: e.id,
         studentId: e.student_id || e.studentId,
         subject: e.subject,
