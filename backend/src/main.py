@@ -42,13 +42,19 @@ app = FastAPI(
 )
 
 # Configure CORS
+# Note: Make sure to set CORS_ORIGINS environment variable in production
+# with your frontend domain (e.g., "https://yourapp.vercel.app")
+cors_origins = settings.cors_origins_list
+print(f"🌐 CORS origins configured: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+    expose_headers=["Content-Type", "Authorization"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 

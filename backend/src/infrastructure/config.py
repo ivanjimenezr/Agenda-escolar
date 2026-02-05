@@ -32,12 +32,22 @@ class Settings(BaseSettings):
     api_version: str = "v1"
 
     # CORS (for frontend communication)
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,https://*.vercel.app"
+    # Add your production frontend URL here (e.g., https://yourapp.vercel.app)
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173"
 
     @property
     def cors_origins_list(self) -> list[str]:
-        """Parse CORS origins from comma-separated string."""
-        return [origin.strip() for origin in self.cors_origins.split(",")]
+        """
+        Parse CORS origins from comma-separated string.
+        Returns list of allowed origins for CORS.
+        """
+        origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+        # In production, log the configured origins for debugging
+        if self.is_production:
+            print(f"[Config] Production CORS origins: {origins}")
+
+        return origins if origins else ["*"]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore")
 
