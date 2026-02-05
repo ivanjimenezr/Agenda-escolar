@@ -42,6 +42,7 @@ export const getEvents = async (
   fromDate?: string,
   toDate?: string
 ): Promise<SchoolEvent[]> => {
+  console.log('[eventService] getEvents called with:', { fromDate, toDate });
   let url = '/api/v1/events';
   const params = new URLSearchParams();
 
@@ -52,7 +53,10 @@ export const getEvents = async (
     url += `?${params.toString()}`;
   }
 
-  return apiClient.get<SchoolEvent[]>(url);
+  console.log('[eventService] Fetching events from:', url);
+  const result = await apiClient.get<SchoolEvent[]>(url);
+  console.log('[eventService] getEvents result:', result);
+  return result;
 };
 
 /**
