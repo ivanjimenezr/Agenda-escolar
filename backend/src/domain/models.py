@@ -338,7 +338,8 @@ class SchoolEvent(Base):
     date = Column(Date, nullable=False)
     time = Column(Time, nullable=True)  # Optional time for the event
     name = Column(String(255), nullable=False)
-    type = Column(SQLEnum(EventType, name="event_type", create_type=True), nullable=False)
+    # Changed from SQLEnum to String to avoid enum name vs value confusion
+    type = Column(String(50), nullable=False)
     description = Column(Text, nullable=True)  # Optional event description
 
     # Timestamps
