@@ -91,16 +91,17 @@ jobs:
 
       # PASO CLAVE: Solo si los tests pasan y estamos en main, avisamos a Render
       - name: Trigger Render Deploy
-        if: github.ref == 'refs/heads/main' && success() && secrets.RENDER_DEPLOY_HOOK_URL != ''
+        if: github.ref == 'refs/heads/main' && success()
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          echo "🚀 Desplegando en Render..."
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
-
-      - name: Skip Render Deploy (No Hook URL)
-        if: github.ref == 'refs/heads/main' && success() && secrets.RENDER_DEPLOY_HOOK_URL == ''
-        run: |
-          echo "⚠️ RENDER_DEPLOY_HOOK_URL no está configurado. Saltando deploy automático."
-          echo "Para configurarlo: Settings → Secrets → Actions → New secret"
+          if [ -n "$RENDER_HOOK" ]; then
+            echo "🚀 Desplegando en Render..."
+            curl -X POST "$RENDER_HOOK"
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_URL no está configurado. Saltando deploy automático."
+            echo "Para configurarlo: Settings → Secrets → Actions → New secret"
+          fi
 
       - name: Build summary
         if: always()
