@@ -501,6 +501,16 @@ Responde en JSON con el campo "meal".
 
 ---
 
+## Presentacion
+
+Las slides de defensa del TFM estan disponibles en la raiz del repositorio:
+
+📄 [`Agenda Escolar Pro - Defensa TFM.pptx`](./Agenda%20Escolar%20Pro%20-%20Defensa%20TFM.pptx)
+
+Presentacion creada con [Kimi](https://www.kimi.com/), plataforma de creacion de presentaciones asistida por IA.
+
+---
+
 ## Licencia
 
 Proyecto academico - Trabajo de Fin de Master, BIG School (2025-2026).
