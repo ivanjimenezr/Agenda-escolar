@@ -28,4 +28,10 @@ export default tseslint.config(
       'no-case-declarations': 'warn',
     },
   },
+  {
+    files: ['tests/**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 )
