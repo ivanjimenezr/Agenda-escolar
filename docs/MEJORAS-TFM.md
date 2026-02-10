@@ -41,7 +41,7 @@ Según `docs/Documentacion-TFM.md`:
 | Bases de datos | PostgreSQL + SQLAlchemy ORM + Alembic (7 migraciones) |
 | IA Generativa | Integración Gemini con 3 funcionalidades AI reales |
 | Prompting | Prompts estructurados con restricciones alimentarias, schemas de respuesta JSON |
-| Testing | Vitest (frontend) + pytest (backend), tests unitarios + integración |
+| Testing | Vitest (frontend, 170 tests, services/utils 100%) + pytest (backend), tests unitarios + integración |
 | CI/CD | GitHub Actions (2 pipelines), deploy automático a Vercel y Render |
 | Cloud computing | Vercel + Render + Supabase (3 servicios cloud distintos) |
 | Seguridad (JWT) | Autenticación JWT + bcrypt + Bearer tokens |
@@ -58,7 +58,7 @@ Según `docs/Documentacion-TFM.md`:
 
 | Tema | Estado actual | Mejora propuesta | Prioridad |
 |------|--------------|------------------|-----------|
-| Test coverage | Tests existen pero no se reporta % | Badge de coverage en README + umbral mínimo (80%) en CI | Alta |
+| Test coverage | ✅ 170 tests, 12 archivos. Services/utils al 100%. Umbrales en CI (stmts 18%, branches 80%, funcs 65%). Cobertura reportada en README | Badge de coverage en README (pendiente integrar con CI artifact) | Media |
 | Pre-commit hooks | No configurados | Husky (frontend) + pre-commit (backend) para lint/format automático | Alta |
 | Observabilidad (Sentry) | No implementado | Integrar Sentry en frontend y/o backend | Media |
 | E2E Testing | No existe | 1-2 tests E2E con Playwright | Media |
@@ -95,10 +95,11 @@ Según `docs/Documentacion-TFM.md`:
   - Dejar solo orígenes específicos (localhost + dominio producción)
   - Archivo: `backend/src/infrastructure/config.py`
 
-- [ ] **Añadir badge de coverage al README**
-  - Configurar reporte de coverage en CI
-  - Establecer umbral mínimo (80%) en GitHub Actions
-  - Añadir badge visual al README.md
+- [x] **Subir cobertura de tests frontend y documentar en README** ✅
+  - 170 tests (12 archivos): services y utils al 100%
+  - Umbrales mínimos configurados en `vitest.config.ts` (stmts 18%, branches 80%, funcs 65%, lines 18%)
+  - Tabla de cobertura añadida al README.md en sección Testing
+  - Pendiente: badge visual integrado con CI artifact
 
 - [ ] **Configurar pre-commit hooks**
   - Frontend: Husky + lint-staged (ESLint + TypeScript check)

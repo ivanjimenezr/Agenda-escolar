@@ -361,6 +361,17 @@ npm run test:watch        # Tests en modo watch
 npm run test:coverage     # Tests con cobertura
 ```
 
+**Cobertura actual (170 tests, 12 archivos de test):**
+
+| Metrica | Cobertura | Umbral CI |
+|---------|-----------|-----------|
+| Statements | 21.71% | 18% |
+| Branches | 85.96% | 80% |
+| Functions | 72.34% | 65% |
+| Lines | 21.71% | 18% |
+
+> Los porcentajes globales son moderados porque los componentes React (pages, components) requieren `@testing-library/react` para testear. Los modulos de logica pura (services, utils) tienen **100% de cobertura**.
+
 ### Backend
 
 ```bash
