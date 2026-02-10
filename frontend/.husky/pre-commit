@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Frontend: ESLint en archivos staged via lint-staged
+cd frontend
+npx lint-staged --quiet
+
+# Backend: formato y estilo en archivos Python staged
+cd ..
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '^backend/.*\.py$' || true)
+if [ -n "$STAGED_PY" ]; then
+  cd backend
+  FILES=$(echo "$STAGED_PY" | sed 's|^backend/||' | tr '\n' ' ')
+  echo "Verificando archivos Python..."
+  python3 -m black --check --quiet $FILES || { echo "Ejecuta 'cd backend && python3 -m black .' para formatear"; exit 1; }
+  python3 -m isort --check-only --quiet $FILES || { echo "Ejecuta 'cd backend && python3 -m isort .' para ordenar imports"; exit 1; }
+  python3 -m flake8 $FILES || { echo "Corrige los errores de flake8"; exit 1; }
+fi
