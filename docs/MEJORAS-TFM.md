@@ -51,6 +51,8 @@ Según `docs/Documentacion-TFM.md`:
 | Documentación | README.md extenso, diagramas Mermaid, CLAUDE.md |
 | IA en proceso de desarrollo | Uso de Claude Code y GitHub Copilot |
 | Code Quality | ESLint, Black, isort, flake8, mypy, TypeScript strict |
+| Pre-commit hooks | Husky v9 + lint-staged (frontend) y script shell Black/isort/flake8 (backend) |
+| IA responsable | Sección detallada: datos enviados/no enviados, alergias como caso critico, sesgos, transparencia visual |
 | Usabilidad | Dark mode, responsive, multi-perfil, módulos activables por hijo |
 | Ciclo de vida del software | Diseño → desarrollo → testing → CI/CD → deploy |
 | Presentación TFM | `Agenda Escolar Pro - Defensa TFM.pptx` creada con Kimi AI, referenciada en README |
@@ -60,11 +62,11 @@ Según `docs/Documentacion-TFM.md`:
 
 | Tema | Estado actual | Mejora propuesta | Prioridad |
 |------|--------------|------------------|-----------|
-| Pre-commit hooks | No configurados | Husky (frontend) + pre-commit (backend) para lint/format automático | Alta |
+| ~~Pre-commit hooks~~ | ~~Completado~~ | ~~Husky v9 + lint-staged (frontend) + script shell (backend)~~ | ~~Alta~~ |
 | Observabilidad (Sentry) | No implementado | Integrar Sentry en frontend y/o backend | Media |
 | E2E Testing | No existe | 1-2 tests E2E con Playwright | Media |
 | Rate limiting | No implementado | `slowapi` en FastAPI para endpoints públicos (login/register) | Media |
-| IA responsable | Mencionado en README brevemente | Ampliar: qué datos se envían a Gemini, transparencia, sesgos | Media |
+| ~~IA responsable~~ | ~~Completado~~ | ~~Sección ampliada: datos enviados/no enviados, alergias, sesgos, transparencia~~ | ~~Media~~ |
 | Refresh tokens | No implementado (token expira 30 min sin renovación) | Implementar rotación automática de refresh tokens | Baja |
 
 ### 2.3 Temas no cubiertos
@@ -85,15 +87,15 @@ Según `docs/Documentacion-TFM.md`:
 
 - [x] **~~Corregir configuración CORS~~** *(completado)*
 
-- [ ] **Configurar pre-commit hooks**
-  - Frontend: Husky + lint-staged (ESLint + TypeScript check)
-  - Backend: pre-commit framework (Black + isort + flake8 + mypy)
+- [x] **~~Configurar pre-commit hooks~~** *(completado)*
+  - Frontend: Husky v9 + lint-staged (ESLint --max-warnings 0)
+  - Backend: script shell (Black + isort + flake8) sobre archivos staged
 
-- [ ] **Ampliar sección de IA responsable en README**
-  - Qué datos se envían a Gemini (y cuáles NO)
-  - Transparencia: el usuario sabe cuándo interactúa con IA
-  - Limitaciones del modelo y posibles sesgos
-  - Manejo de alergias como caso crítico de seguridad
+- [x] **~~Ampliar sección de IA responsable en README~~** *(completado)*
+  - Tabla de datos enviados vs NO enviados a Gemini
+  - Alergias como caso critico de seguridad (prompt reforzado, doble barrera, sin garantia absoluta)
+  - Limitaciones y sesgos del modelo
+  - Transparencia: indicador visual "IA SUGERIDA", estado de carga, prompts auditables
 
 ### 🟡 Opcional (diferenciadores)
 

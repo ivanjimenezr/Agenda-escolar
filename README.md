@@ -53,6 +53,7 @@ Aplicacion web para que padres y madres gestionen la vida escolar de sus hijos: 
 | Testing frontend | Vitest + jsdom | 1.1 |
 | Testing backend | pytest + httpx + testcontainers | 8.3 |
 | Linting | ESLint / Black + flake8 + mypy + isort | - |
+| Pre-commit hooks | Husky v9 + lint-staged / shell script | - |
 | CI/CD | GitHub Actions | - |
 | Deploy frontend | Vercel | - |
 | Deploy backend | Render | - |
@@ -417,6 +418,15 @@ Se ejecuta en push a `main` cuando hay cambios en `backend/`:
 
 > **Nota sobre coverage**: los reportes detallados de cobertura se publican como artifacts en cada ejecucion del CI. Para consultarlos, ve a la pestana Actions del repositorio, selecciona un workflow run y descarga el artifact correspondiente (`frontend-coverage-html` o `backend-coverage-xml`).
 
+### Pre-commit hooks
+
+Ademas del CI, el proyecto incluye **pre-commit hooks** que validan el codigo antes de cada commit:
+
+- **Frontend**: Husky v9 + lint-staged ejecutan ESLint (`--max-warnings 0`) sobre los archivos `.ts/.tsx` staged
+- **Backend**: un script shell ejecuta Black, isort y flake8 sobre los archivos `.py` staged
+
+Los hooks se instalan automaticamente al ejecutar `npm install` en `frontend/` (via el script `prepare`).
+
 ---
 
 ## Integracion con IA
@@ -453,23 +463,53 @@ Responde en JSON con el campo "meal".
 
 ## IA Responsable
 
-### Privacidad de datos de menores
+### Datos enviados al modelo
 
-- La IA **no recibe datos identificativos** del menor (nombre, colegio, curso). Solo recibe el menu escolar y las restricciones alimentarias
-- Los datos de perfiles se almacenan unicamente en la base de datos del backend, no se envian al modelo
-- Las API Keys de Gemini se gestionan como variables de entorno, nunca en el codigo fuente
+En cada llamada a Gemini se envian **unicamente** los datos necesarios para generar la sugerencia:
 
-### Limitaciones del modelo
+| Dato enviado | Ejemplo | Funcion |
+|--------------|---------|---------|
+| Menu escolar del dia | `"Lentejas con verduras"` | Complementar nutricionalmente la cena |
+| Menus de la semana | Platos de lunes a viernes | Evitar repetir ingredientes |
+| Alergias | `["gluten", "lactosa"]` | Restriccion estricta en el prompt |
+| Alimentos excluidos | `["marisco"]` | Restriccion estricta en el prompt |
+| Cenas planificadas (lista de la compra) | Nombres de platos e ingredientes | Calcular ingredientes necesarios |
+| Numero de comensales (lista de la compra) | `4` | Ajustar cantidades |
 
-- Las sugerencias de cena son **orientativas** y no sustituyen el consejo de un nutricionista
-- El modelo puede no conocer platos locales o regionales especificos
-- Las restricciones por alergias se envian como instrucciones al modelo, pero **no se garantiza al 100%** que no mencione un alergeno; la responsabilidad final es del padre/madre
+**Datos que NO se envian al modelo:**
+
+- Nombre del menor, colegio, curso ni ningun dato identificativo
+- Email, contrasena ni datos de la cuenta del padre/madre
+- Identificadores internos (UUIDs de usuario o alumno)
+- Historial de cenas anteriores (salvo las de la semana actual como contexto)
+- Ubicacion geografica, direccion ni telefono
+
+Los datos de perfil se almacenan exclusivamente en PostgreSQL y nunca se incluyen en los prompts. Las API Keys de Gemini se gestionan como variables de entorno, nunca en el codigo fuente.
+
+### Alergias como caso critico de seguridad
+
+Las alergias alimentarias pueden tener consecuencias graves (anafilaxia), por lo que reciben un tratamiento especial:
+
+- **Prompt reforzado**: las alergias se inyectan con lenguaje imperativo (`"NUNCA incluir estos ingredientes bajo ninguna circunstancia"`) diferenciandose de las exclusiones por preferencia
+- **Doble barrera (frontend + backend)**: tanto `aiService.ts` como `GeminiService` construyen las restricciones de forma independiente; si una falla, la otra sigue activa
+- **Respuesta estructurada**: todas las llamadas usan `responseMimeType: 'application/json'` con `responseSchema`, lo que reduce respuestas libres que podrian omitir restricciones
+- **Sin garantia absoluta**: pese a las medidas, un LLM **no es un sistema determinista**. La aplicacion muestra una advertencia: las sugerencias son orientativas y la responsabilidad final recae en el padre o madre. Esto se refleja tambien en la UI con la etiqueta "IA SUGERIDA"
+
+### Limitaciones y sesgos del modelo
+
+- Las sugerencias de cena son **orientativas** y no sustituyen el consejo de un nutricionista profesional
+- El modelo puede no conocer platos locales o regionales especificos, tendiendo a sugerir cocina generica europea/occidental
+- Las cantidades sugeridas en la lista de la compra son estimaciones que pueden no ajustarse a todos los contextos familiares
+- El modelo no tiene acceso a informacion nutricional precisa (calorias, macros) y sus recomendaciones se basan en patrones generales de alimentacion equilibrada
+- No se puede descartar que el modelo sugiera un alergeno a pesar de las instrucciones explicitas; por eso la app advierte que la responsabilidad final es del usuario
 
 ### Transparencia
 
-- El usuario ve claramente que las sugerencias son generadas por IA
-- Los prompts son auditables en el codigo fuente (`frontend/services/aiService.ts`)
-- No se recopilan datos de uso de la IA para entrenamiento de modelos
+- **Indicador visual**: las cenas generadas por IA muestran una etiqueta `IA SUGERIDA` con icono de sparkles, distinguiendolas de las cenas introducidas manualmente
+- **Estado de carga**: durante la generacion se muestra `"CONSULTANDO..."` y un mensaje explicativo (`"Estamos analizando el menú escolar y las restricciones dietéticas..."`) para que el usuario sepa que la IA esta trabajando
+- **Prompts auditables**: todo el codigo de generacion de prompts es abierto y revisable en `frontend/services/aiService.ts` (frontend) y `backend/src/infrastructure/services/gemini_service.py` (backend)
+- **Sin reentrenamiento**: los datos enviados a Gemini no se utilizan para reentrenar el modelo. Google Gemini API no usa datos de clientes para mejorar sus modelos (segun su politica de datos de API)
+- **Edicion manual**: el usuario puede editar o eliminar cualquier cena sugerida por la IA, manteniendo siempre el control final sobre el contenido
 
 ---
 
