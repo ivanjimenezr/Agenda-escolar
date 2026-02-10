@@ -12,10 +12,11 @@ const mockSubject = {
   id: 'subject-1',
   student_id: 'student-123',
   name: 'Matemáticas',
-  type: 'school',
+  type: 'colegio' as const,
   days: ['Lunes', 'Miércoles'],
   time: '09:00',
   teacher: 'Prof. García',
+  color: '#4A90D9',
   created_at: '2026-01-31T10:00:00Z',
   updated_at: '2026-01-31T10:00:00Z',
 };
@@ -37,7 +38,7 @@ describe('subjectService', () => {
     it('should create a subject without replace flag', async () => {
       vi.spyOn(apiClient, 'post').mockResolvedValueOnce(mockSubject as any);
 
-      const data = { name: 'Matemáticas', type: 'school' as const, days: ['Lunes'] };
+      const data = { name: 'Matemáticas', type: 'colegio' as const, days: ['Lunes' as const], time: '09:00', teacher: 'Prof. García', color: '#4A90D9' };
       const result = await createSubject('student-123', data);
 
       expect(apiClient.post).toHaveBeenCalledWith(
@@ -50,7 +51,7 @@ describe('subjectService', () => {
     it('should create a subject with replace=true', async () => {
       vi.spyOn(apiClient, 'post').mockResolvedValueOnce(mockSubject as any);
 
-      const data = { name: 'Matemáticas', type: 'school' as const, days: ['Lunes'] };
+      const data = { name: 'Matemáticas', type: 'colegio' as const, days: ['Lunes' as const], time: '09:00', teacher: 'Prof. García', color: '#4A90D9' };
       await createSubject('student-123', data, true);
 
       expect(apiClient.post).toHaveBeenCalledWith(
@@ -63,7 +64,7 @@ describe('subjectService', () => {
       vi.spyOn(apiClient, 'post').mockRejectedValueOnce(new Error('Validation error'));
 
       await expect(
-        createSubject('student-123', { name: '', type: 'school' as const, days: [] })
+        createSubject('student-123', { name: '', type: 'colegio' as const, days: [], time: '', teacher: '', color: '' })
       ).rejects.toThrow('Validation error');
     });
   });
