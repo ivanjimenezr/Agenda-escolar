@@ -45,7 +45,7 @@ Según `docs/Documentacion-TFM.md`:
 | CI/CD | GitHub Actions (2 pipelines), deploy automático a Vercel y Render |
 | Cloud computing | Vercel + Render + Supabase (3 servicios cloud distintos) |
 | Seguridad (JWT) | Autenticación JWT + bcrypt + Bearer tokens |
-| OWASP básico | SQL injection prevenido (ORM), validación inputs (Pydantic), HTTPS |
+| OWASP básico | SQL injection prevenido (ORM), validación inputs (Pydantic), HTTPS, CORS restrictivo |
 | Variables de entorno | .env gestionados, .gitignore configurado correctamente |
 | DevOps | CI/CD pipelines, linting automatizado, deploy hooks |
 | Documentación | README.md extenso, diagramas Mermaid, CLAUDE.md |
@@ -53,17 +53,17 @@ Según `docs/Documentacion-TFM.md`:
 | Code Quality | ESLint, Black, isort, flake8, mypy, TypeScript strict |
 | Usabilidad | Dark mode, responsive, multi-perfil, módulos activables por hijo |
 | Ciclo de vida del software | Diseño → desarrollo → testing → CI/CD → deploy |
+| Presentación TFM | `Agenda Escolar Pro - Defensa TFM.pptx` creada con Kimi AI, referenciada en README |
+| Test coverage | 170 tests (12 archivos), services/utils al 100%. Umbrales en CI y cobertura documentada en README |
 
 ### 2.2 Temas parcialmente cubiertos
 
 | Tema | Estado actual | Mejora propuesta | Prioridad |
 |------|--------------|------------------|-----------|
-| Test coverage | ✅ 170 tests, 12 archivos. Services/utils al 100%. Umbrales en CI (stmts 18%, branches 80%, funcs 65%). Cobertura reportada en README | Badge de coverage en README (pendiente integrar con CI artifact) | Media |
 | Pre-commit hooks | No configurados | Husky (frontend) + pre-commit (backend) para lint/format automático | Alta |
 | Observabilidad (Sentry) | No implementado | Integrar Sentry en frontend y/o backend | Media |
 | E2E Testing | No existe | 1-2 tests E2E con Playwright | Media |
 | Rate limiting | No implementado | `slowapi` en FastAPI para endpoints públicos (login/register) | Media |
-| CORS | Fallback a wildcard `*` | Eliminar fallback y dejar solo orígenes específicos | Alta |
 | IA responsable | Mencionado en README brevemente | Ampliar: qué datos se envían a Gemini, transparencia, sesgos | Media |
 | Refresh tokens | No implementado (token expira 30 min sin renovación) | Implementar rotación automática de refresh tokens | Baja |
 
@@ -71,7 +71,6 @@ Según `docs/Documentacion-TFM.md`:
 
 | Tema del Máster | Relevancia para el proyecto | Acción |
 |-----------------|----------------------------|--------|
-| Slides/Presentación | 🔴 Obligatorio (requisito TFM) | Crear presentación completa |
 | ADRs (Architecture Decision Records) | Media - demuestra madurez profesional | Crear 2-3 ADRs con decisiones clave |
 | Automatización n8n | Baja - no aplica al proyecto | No implementar |
 | LangChain/LlamaIndex | Media - se usa Gemini SDK directo | Válido como está, no requiere cambio |
@@ -82,24 +81,9 @@ Según `docs/Documentacion-TFM.md`:
 
 ## 3. Plan de Acción por Prioridad
 
-### 🔴 Imprescindible
-
-- [x] **Crear slides de presentación del TFM** ✅
-  - Archivo: `Agenda Escolar Pro - Defensa TFM.pptx` (raíz del repo)
-  - Creada con Kimi AI, referenciada en README.md
-
 ### 🟠 Recomendado (alto impacto)
 
-- [ ] **Corregir configuración CORS**
-  - Eliminar fallback a wildcard `*`
-  - Dejar solo orígenes específicos (localhost + dominio producción)
-  - Archivo: `backend/src/infrastructure/config.py`
-
-- [x] **Subir cobertura de tests frontend y documentar en README** ✅
-  - 170 tests (12 archivos): services y utils al 100%
-  - Umbrales mínimos configurados en `vitest.config.ts` (stmts 18%, branches 80%, funcs 65%, lines 18%)
-  - Tabla de cobertura añadida al README.md en sección Testing
-  - Pendiente: badge visual integrado con CI artifact
+- [x] **~~Corregir configuración CORS~~** *(completado)*
 
 - [ ] **Configurar pre-commit hooks**
   - Frontend: Husky + lint-staged (ESLint + TypeScript check)
@@ -180,6 +164,6 @@ Según `docs/Documentacion-TFM.md`:
 ## 5. Notas
 
 - La fecha límite del TFM es el **23 de febrero de 2026**
-- Las slides son el único requisito obligatorio que falta
+- Todos los requisitos obligatorios están cumplidos (incluidas slides y tests)
 - El proyecto ya está desplegado y funcional en producción
-- Se recomienda priorizar las mejoras 🔴 y 🟠 antes de la entrega
+- Se recomienda priorizar las mejoras 🟠 antes de la entrega

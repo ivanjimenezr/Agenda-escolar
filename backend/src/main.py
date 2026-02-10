@@ -42,32 +42,18 @@ app = FastAPI(
 )
 
 # Configure CORS
-# Note: Make sure to set CORS_ORIGINS environment variable in production
-# with your frontend domain (e.g., "https://yourapp.vercel.app")
 cors_origins = settings.cors_origins_list
 print(f"🌐 CORS origins configured: {cors_origins}")
 
-# Check if we have wildcard (which doesn't work with credentials)
-if "*" in cors_origins:
-    print("⚠️  WARNING: Using wildcard CORS without credentials for compatibility")
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
-        expose_headers=["Content-Type", "Authorization"],
-        max_age=3600,  # Cache preflight requests for 1 hour
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+    expose_headers=["Content-Type", "Authorization"],
+    max_age=3600,
+)
 
 
 # Health check endpoint

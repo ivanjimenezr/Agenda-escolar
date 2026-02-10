@@ -32,6 +32,7 @@ Aplicacion web para que padres y madres gestionen la vida escolar de sus hijos: 
 - **Modulos activables**: cada perfil puede activar/desactivar funcionalidades (asignaturas, examenes, menu, eventos, cenas, contactos)
 - **Modo oscuro**: tema claro/oscuro con persistencia
 - **Autenticacion JWT**: registro, login y proteccion de endpoints con tokens
+- **CORS restrictivo**: origenes permitidos configurados explicitamente; en produccion es obligatorio definir `CORS_ORIGINS` (sin fallback a wildcard)
 
 ---
 
@@ -488,7 +489,7 @@ Responde en JSON con el campo "meal".
 | `SECRET_KEY` | Clave secreta para firmar JWT |
 | `ALGORITHM` | Algoritmo JWT (por defecto HS256) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Duracion del access token en minutos |
-| `CORS_ORIGINS` | Origenes permitidos (separados por coma) |
+| `CORS_ORIGINS` | Origenes permitidos (separados por coma). **Obligatorio en produccion** — sin valor la app no arranca |
 | `GEMINI_API_KEY` | API Key de Google Gemini |
 
 ---

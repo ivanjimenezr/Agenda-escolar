@@ -43,13 +43,13 @@ class Settings(BaseSettings):
         """
         origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
-        # In production, log the configured origins for debugging
         if self.is_production:
-            print(f"[Config] Production CORS origins: {origins}")
-            # If no origins configured in production, allow all temporarily
             if not origins:
-                print("[Config] WARNING: No CORS_ORIGINS configured, allowing all origins")
-                return ["*"]
+                raise ValueError(
+                    "CORS_ORIGINS debe estar configurado en producción. "
+                    "Ejemplo: CORS_ORIGINS=https://agenda-escolar-sage.vercel.app"
+                )
+            print(f"[Config] Production CORS origins: {origins}")
 
         return origins if origins else ["http://localhost:5173", "http://localhost:3000"]
 
