@@ -39,11 +39,18 @@ jobs:
           echo "🔍 Running TypeScript type checking..."
           npx tsc --noEmit
 
-      - name: Run Tests
+      - name: Run Tests with Coverage
         working-directory: ./frontend
         run: |
-          # Usamos CI=true para que herramientas como Vitest/Jest no se queden en modo watch
-          CI=true npm test 
+          CI=true npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-html
+          path: frontend/coverage/
+          retention-days: 14
 
       - name: Build for production
         working-directory: ./frontend
@@ -60,5 +67,8 @@ jobs:
       - name: Build summary
         if: always()
         run: |
-          echo "### 🎯 Frontend CI Summary" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Linting, Typing y Tests completados." >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lint + TypeCheck**: completado" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests con coverage**: umbrales minimos configurados en vitest.config.ts" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reporte de coverage**: disponible en artifacts" >> $GITHUB_STEP_SUMMARY

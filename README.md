@@ -1,5 +1,8 @@
 # Agenda Escolar Pro
 
+![Frontend CI](https://github.com/ivanjimenezr/Agenda-escolar/actions/workflows/frontend-ci.yml/badge.svg)
+![Backend CI](https://github.com/ivanjimenezr/Agenda-escolar/actions/workflows/backend-ci.yml/badge.svg)
+
 Aplicacion web para que padres y madres gestionen la vida escolar de sus hijos: asignaturas, examenes, menu del comedor, eventos y **sugerencias de cena con IA** que complementan el menu del colegio.
 
 > Trabajo de Fin de Master - Master en Desarrollo con IA, BIG School (2025-2026)
@@ -383,9 +386,9 @@ Se ejecuta en push a `main` cuando hay cambios en `frontend/`:
 2. `npm ci` - Instalacion de dependencias
 3. ESLint - Lint (max 200 warnings)
 4. `tsc --noEmit` - Verificacion de tipos
-5. `npm test` - Tests con Vitest
+5. `npm run test:coverage` - Tests con Vitest y cobertura (umbrales minimos configurados)
 6. `npm run build` - Build de produccion
-7. Resumen del tamano del build
+7. Subida de reporte de coverage como artifact
 
 ### Backend (`backend-ci.yml`)
 
@@ -395,9 +398,12 @@ Se ejecuta en push a `main` cuando hay cambios en `backend/`:
 2. PostgreSQL 15 como servicio para tests
 3. Instalacion de dependencias
 4. Calidad de codigo: Black, isort, flake8, mypy
-5. Tests unitarios con cobertura
+5. Tests unitarios con cobertura (umbral minimo 50%, `--cov-fail-under=50`)
 6. Tests de integracion
-7. **Auto-deploy a Render** si los tests pasan en `main`
+7. Subida de reporte de coverage como artifact
+8. **Auto-deploy a Render** si los tests pasan en `main`
+
+> **Nota sobre coverage**: los reportes detallados de cobertura se publican como artifacts en cada ejecucion del CI. Para consultarlos, ve a la pestana Actions del repositorio, selecciona un workflow run y descarga el artifact correspondiente (`frontend-coverage-html` o `backend-coverage-xml`).
 
 ---
 

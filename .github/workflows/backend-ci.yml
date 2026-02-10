@@ -74,8 +74,8 @@ jobs:
           GEMINI_API_KEY: test-gemini-key
           CI: true
         run: |
-          echo "🧪 Running unit tests..."
-          pytest tests/unit -v --cov=src --cov-report=xml --tb=short
+          echo "Running unit tests..."
+          pytest tests/unit -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=50 --tb=short
 
       - name: Run Integration Tests
         working-directory: ./backend
@@ -86,8 +86,16 @@ jobs:
           GEMINI_API_KEY: test-gemini-key
           CI: true
         run: |
-          echo "🧪 Running integration tests (may skip some due to Docker)..."
-          pytest tests/integration -v --cov=src --cov-append --cov-report=xml --tb=short
+          echo "Running integration tests (may skip some due to Docker)..."
+          pytest tests/integration -v --cov=src --cov-append --cov-report=xml --cov-report=term-missing --tb=short
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-xml
+          path: backend/coverage.xml
+          retention-days: 14
 
       # PASO CLAVE: Solo si los tests pasan y estamos en main, avisamos a Render
       - name: Trigger Render Deploy
@@ -106,5 +114,9 @@ jobs:
       - name: Build summary
         if: always()
         run: |
-          echo "### 🎯 Backend CI Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tests**: ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests unitarios**: umbral minimo 50% coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests integracion**: ejecutados (continue-on-error)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reporte de coverage**: disponible en artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
