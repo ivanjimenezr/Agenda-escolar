@@ -13,11 +13,13 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "prepare": "cd .. && husky frontend/.husky"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --max-warnings 0"
+      "eslint --max-warnings 0 --no-warn-ignored"
     ]
   },
   "dependencies": {
@@ -42,6 +44,7 @@
     "vite": "^6.2.0",
     "husky": "^9.1.0",
     "lint-staged": "^15.4.0",
-    "vitest": "^1.1.0"
+    "vitest": "^1.1.0",
+    "@playwright/test": "^1.50.0"
   }
 }

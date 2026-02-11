@@ -41,7 +41,7 @@ Según `docs/Documentacion-TFM.md`:
 | Bases de datos | PostgreSQL + SQLAlchemy ORM + Alembic (7 migraciones) |
 | IA Generativa | Integración Gemini con 3 funcionalidades AI reales |
 | Prompting | Prompts estructurados con restricciones alimentarias, schemas de respuesta JSON |
-| Testing | Vitest (frontend, 170 tests, services/utils 100%) + pytest (backend), tests unitarios + integración |
+| Testing | Vitest (frontend, 170 tests, services/utils 100%) + pytest (backend), tests unitarios + integración + E2E Playwright |
 | CI/CD | GitHub Actions (2 pipelines), deploy automático a Vercel y Render |
 | Cloud computing | Vercel + Render + Supabase (3 servicios cloud distintos) |
 | Seguridad (JWT) | Autenticación JWT + bcrypt + Bearer tokens |
@@ -64,7 +64,7 @@ Según `docs/Documentacion-TFM.md`:
 |------|--------------|------------------|-----------|
 | ~~Pre-commit hooks~~ | ~~Completado~~ | ~~Husky v9 + lint-staged (frontend) + script shell (backend)~~ | ~~Alta~~ |
 | Observabilidad (Sentry) | No implementado | Integrar Sentry en frontend y/o backend | Media |
-| E2E Testing | No existe | 1-2 tests E2E con Playwright | Media |
+| ~~E2E Testing~~ | ~~Completado~~ | ~~1-2 tests E2E con Playwright~~ | ~~Media~~ |
 | Rate limiting | No implementado | `slowapi` en FastAPI para endpoints públicos (login/register) | Media |
 | ~~IA responsable~~ | ~~Completado~~ | ~~Sección ampliada: datos enviados/no enviados, alergias, sesgos, transparencia~~ | ~~Media~~ |
 | Refresh tokens | No implementado (token expira 30 min sin renovación) | Implementar rotación automática de refresh tokens | Baja |
@@ -103,8 +103,9 @@ Según `docs/Documentacion-TFM.md`:
   - Al menos en frontend para capturar errores en producción
   - Demostrar conocimiento de monitoring/observabilidad
 
-- [ ] **Añadir 1-2 tests E2E con Playwright**
-  - Flujo de login → crear perfil → añadir asignatura
+- [x] **~~Añadir 1-2 tests E2E con Playwright~~** *(completado)*
+  - 3 tests: registro, login, flujo completo (crear perfil → añadir asignatura)
+  - Playwright con API mockeada (`page.route()`) para tests deterministas
   - Demuestra conocimiento completo de la pirámide de testing
 
 - [ ] **Rate limiting en endpoints de auth**

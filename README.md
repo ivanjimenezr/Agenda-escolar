@@ -50,7 +50,7 @@ Aplicacion web para que padres y madres gestionen la vida escolar de sus hijos: 
 | IA (backend) | google-generativeai | 0.8.3 |
 | Modelo IA | Gemini 3 Flash Preview | - |
 | Auth | python-jose + bcrypt | JWT RS256/HS256 |
-| Testing frontend | Vitest + jsdom | 1.1 |
+| Testing frontend | Vitest + jsdom + Playwright (E2E) | 1.1 / 1.50 |
 | Testing backend | pytest + httpx + testcontainers | 8.3 |
 | Linting | ESLint / Black + flake8 + mypy + isort | - |
 | Pre-commit hooks | Husky v9 + lint-staged / shell script | - |
@@ -134,6 +134,7 @@ Agenda-escolar/
 │   ├── services/
 │   │   └── aiService.ts             # Integracion con Gemini AI
 │   ├── tests/unit/                  # Tests unitarios
+│   ├── e2e/                         # Tests E2E (Playwright)
 │   ├── utils/                       # Utilidades
 │   ├── types.ts                     # Interfaces TypeScript
 │   ├── App.tsx                      # Componente raiz y gestion de estado
@@ -373,6 +374,21 @@ npm run test:coverage     # Tests con cobertura
 | Lines | 21.71% | 18% |
 
 > Los porcentajes globales son moderados porque los componentes React (pages, components) requieren `@testing-library/react` para testear. Los modulos de logica pura (services, utils) tienen **100% de cobertura**.
+
+### Tests E2E (Playwright)
+
+```bash
+cd frontend
+
+npx playwright install chromium  # Instalar navegador (solo la primera vez)
+npm run test:e2e                 # Ejecutar tests E2E
+npm run test:e2e:ui              # Ejecutar con interfaz grafica
+```
+
+Los tests E2E validan flujos completos del usuario con la API mockeada (`page.route()`):
+- **Registro e inicio de sesion automatico**
+- **Login con credenciales validas**
+- **Crear perfil de estudiante y añadir asignatura**
 
 ### Backend
 
