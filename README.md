@@ -32,6 +32,7 @@ Aplicacion web para que padres y madres gestionen la vida escolar de sus hijos: 
 - **Modulos activables**: cada perfil puede activar/desactivar funcionalidades (asignaturas, examenes, menu, eventos, cenas, contactos)
 - **Modo oscuro**: tema claro/oscuro con persistencia
 - **Autenticacion JWT**: registro, login y proteccion de endpoints con tokens
+- **Rate limiting**: proteccion contra fuerza bruta con `slowapi` (login: 5 req/min, register: 3 req/min por IP)
 - **CORS restrictivo**: origenes permitidos configurados explicitamente; en produccion es obligatorio definir `CORS_ORIGINS` (sin fallback a wildcard)
 
 ---
@@ -50,6 +51,7 @@ Aplicacion web para que padres y madres gestionen la vida escolar de sus hijos: 
 | IA (backend) | google-generativeai | 0.8.3 |
 | Modelo IA | Gemini 3 Flash Preview | - |
 | Auth | python-jose + bcrypt | JWT RS256/HS256 |
+| Rate limiting | slowapi | 0.1.9 |
 | Testing frontend | Vitest + jsdom + Playwright (E2E) | 1.1 / 1.50 |
 | Testing backend | pytest + httpx + testcontainers | 8.3 |
 | Linting | ESLint / Black + flake8 + mypy + isort | - |

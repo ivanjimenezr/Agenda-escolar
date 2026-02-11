@@ -65,7 +65,7 @@ Según `docs/Documentacion-TFM.md`:
 | ~~Pre-commit hooks~~ | ~~Completado~~ | ~~Husky v9 + lint-staged (frontend) + script shell (backend)~~ | ~~Alta~~ |
 | Observabilidad (Sentry) | No implementado | Integrar Sentry en frontend y/o backend | Media |
 | ~~E2E Testing~~ | ~~Completado~~ | ~~1-2 tests E2E con Playwright~~ | ~~Media~~ |
-| Rate limiting | No implementado | `slowapi` en FastAPI para endpoints públicos (login/register) | Media |
+| ~~Rate limiting~~ | ~~Completado~~ | ~~`slowapi` en FastAPI para endpoints públicos (login/register)~~ | ~~Media~~ |
 | ~~IA responsable~~ | ~~Completado~~ | ~~Sección ampliada: datos enviados/no enviados, alergias, sesgos, transparencia~~ | ~~Media~~ |
 | Refresh tokens | No implementado (token expira 30 min sin renovación) | Implementar rotación automática de refresh tokens | Baja |
 
@@ -108,9 +108,9 @@ Según `docs/Documentacion-TFM.md`:
   - Playwright con API mockeada (`page.route()`) para tests deterministas
   - Demuestra conocimiento completo de la pirámide de testing
 
-- [ ] **Rate limiting en endpoints de auth**
-  - Instalar `slowapi` en FastAPI
-  - Aplicar en `/auth/login` y `/auth/register`
+- [x] **~~Rate limiting en endpoints de auth~~** *(completado)*
+  - `slowapi` con límites por IP: login (5/min), register (3/min)
+  - Test de integración que verifica HTTP 429 tras superar el límite
 
 - [ ] **Crear 2-3 ADRs**
   - ADR-001: Elección de Clean Architecture para el backend

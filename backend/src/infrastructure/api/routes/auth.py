@@ -2,11 +2,12 @@
 Authentication API endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from src.application.schemas.user import TokenResponse, UserLoginRequest, UserRegisterRequest, UserResponse
 from src.application.use_cases.user_use_cases import UserUseCases
+from src.infrastructure.api.rate_limit import limiter
 from src.infrastructure.database import get_db
 from src.infrastructure.repositories.user_repository import UserRepository
 
@@ -14,7 +15,8 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(data: UserRegisterRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def register_user(request: Request, data: UserRegisterRequest, db: Session = Depends(get_db)):
     """
     Register a new user.
 
@@ -39,7 +41,8 @@ def register_user(data: UserRegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login_user(data: UserLoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login_user(request: Request, data: UserLoginRequest, db: Session = Depends(get_db)):
     """
     Login user and return JWT token.
 

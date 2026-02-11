@@ -67,11 +67,15 @@ def sample_user_data():
 from fastapi.testclient import TestClient
 
 from src.infrastructure.api.dependencies.database import get_db as real_get_db
+from src.infrastructure.api.rate_limit import limiter
 from src.main import app
 
 
 @pytest.fixture(scope="function")
 def client(db_session):
+    # Resetear rate limiter entre tests para evitar falsos 429
+    limiter._limiter.storage.reset()
+
     def override_get_db():
         try:
             yield db_session

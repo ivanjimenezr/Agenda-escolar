@@ -18,3 +18,7 @@ extend-ignore =
     W503,
 per-file-ignores =
     __init__.py:F401,F403
+    # conftest.py: os.environ debe ir antes de imports (E402), import de models registra modelos (F401)
+    tests/conftest.py:E402,F401,E501
+    # main.py: routers se importan tras crear app (E402), init_db se mantiene comentado (F401)
+    src/main.py:E402,F401

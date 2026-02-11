@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from src.infrastructure.api.rate_limit import limiter
 from src.infrastructure.database import get_db
 from src.main import app
 
@@ -14,6 +15,8 @@ from src.main import app
 @pytest.fixture
 def client(db_session: Session):
     """Create test client with database override."""
+    # Resetear rate limiter entre tests para evitar falsos 429
+    limiter._limiter.storage.reset()
 
     def override_get_db():
         try:
@@ -167,3 +170,21 @@ class TestUserEndpoints:
 
         # Assert
         assert response.status_code == 401
+
+    def test_login_rate_limit(self, client: TestClient):
+        """Test POST /api/v1/auth/login - rate limited after 5 requests per minute."""
+        # Arrange
+        login_payload = {"email": "ratelimit@example.com", "password": "SomePass123!"}
+
+        # Act - Enviar 6 peticiones consecutivas (limite: 5/minuto)
+        responses = []
+        for _ in range(6):
+            resp = client.post("/api/v1/auth/login", json=login_payload)
+            responses.append(resp)
+
+        # Assert - Las primeras 5 deben pasar (401 porque el usuario no existe, pero NO 429)
+        for resp in responses[:5]:
+            assert resp.status_code != 429
+
+        # La 6a peticion debe ser rechazada con 429 Too Many Requests
+        assert responses[5].status_code == 429
