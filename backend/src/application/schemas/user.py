@@ -101,6 +101,7 @@ class TokenResponse(BaseModel):
     """Schema for authentication token response."""
 
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     user: UserResponse
 
@@ -108,6 +109,7 @@ class TokenResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "refresh_token": "dGhpcyBpcyBhIHJhbmRvbSByZWZyZXNoIHRva2Vu",
                 "token_type": "bearer",
                 "user": {
                     "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -119,6 +121,26 @@ class TokenResponse(BaseModel):
                 },
             }
         }
+    )
+
+
+class RefreshTokenRequest(BaseModel):
+    """Schema for refresh token rotation request."""
+
+    refresh_token: str = Field(..., description="Opaque refresh token obtained at login")
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"refresh_token": "dGhpcyBpcyBhIHJhbmRvbSByZWZyZXNoIHRva2Vu"}}
+    )
+
+
+class LogoutRequest(BaseModel):
+    """Schema for logout request - revokes the supplied refresh token."""
+
+    refresh_token: str = Field(..., description="Refresh token to revoke")
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"refresh_token": "dGhpcyBpcyBhIHJhbmRvbSByZWZyZXNoIHRva2Vu"}}
     )
 
 

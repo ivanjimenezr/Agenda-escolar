@@ -31,7 +31,7 @@ Aplicacion web para que padres y madres gestionen la vida escolar de sus hijos: 
 - **Lista de la compra con IA**: genera lista categorizada a partir de las cenas planificadas
 - **Modulos activables**: cada perfil puede activar/desactivar funcionalidades (asignaturas, examenes, menu, eventos, cenas, contactos)
 - **Modo oscuro**: tema claro/oscuro con persistencia
-- **Autenticacion JWT**: registro, login y proteccion de endpoints con tokens
+- **Autenticacion JWT + Refresh tokens**: registro, login con access token (30 min) y refresh token rotativo (7 dias); `POST /auth/refresh` para renovar sin reintroducir credenciales; `POST /auth/logout` para revocar sesion; reuse detection (token revocado presentado invalida todas las sesiones del usuario)
 - **Rate limiting**: proteccion contra fuerza bruta con `slowapi` (login: 5 req/min, register: 3 req/min por IP)
 - **CORS restrictivo**: origenes permitidos configurados explicitamente; en produccion es obligatorio definir `CORS_ORIGINS` (sin fallback a wildcard)
 
@@ -546,7 +546,8 @@ Las alergias alimentarias pueden tener consecuencias graves (anafilaxia), por lo
 | `DATABASE_URL` | URL de conexion a PostgreSQL |
 | `SECRET_KEY` | Clave secreta para firmar JWT |
 | `ALGORITHM` | Algoritmo JWT (por defecto HS256) |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Duracion del access token en minutos |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Duracion del access token en minutos (por defecto 30) |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | Duracion del refresh token en dias (por defecto 7) |
 | `CORS_ORIGINS` | Origenes permitidos (separados por coma). **Obligatorio en produccion** — sin valor la app no arranca |
 | `GEMINI_API_KEY` | API Key de Google Gemini |
 
@@ -557,7 +558,9 @@ Las alergias alimentarias pueden tener consecuencias graves (anafilaxia), por lo
 | Metodo | Ruta | Descripcion |
 |--------|------|-------------|
 | POST | `/api/v1/auth/register` | Registro de usuario |
-| POST | `/api/v1/auth/login` | Login (devuelve JWT) |
+| POST | `/api/v1/auth/login` | Login — devuelve access token (JWT) + refresh token (opaco) |
+| POST | `/api/v1/auth/refresh` | Rota el refresh token y emite nuevos access + refresh tokens |
+| POST | `/api/v1/auth/logout` | Revoca el refresh token (cierra sesion) |
 | GET | `/api/v1/students` | Listar perfiles de alumnos |
 | POST | `/api/v1/students` | Crear perfil de alumno |
 | GET | `/api/v1/subjects` | Listar asignaturas |

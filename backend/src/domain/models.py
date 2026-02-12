@@ -144,6 +144,9 @@ class User(Base):
     preferences = relationship(
         "UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="noload"
     )
+    refresh_tokens = relationship(
+        "RefreshToken", back_populates="user", cascade="all, delete-orphan", lazy="noload"
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', name='{self.name}')>"
@@ -397,6 +400,28 @@ class Contact(Base):
 
     def __repr__(self):
         return f"<Contact(id={self.id}, name='{self.name}', phone='{self.phone}')>"
+
+
+class RefreshToken(Base):
+    """Refresh token model - supports token rotation and revocation."""
+
+    __tablename__ = "refresh_tokens"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    # SHA-256 hex digest of the raw token (64 chars). Never store the raw token.
+    token_hash = Column(String(64), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_revoked = Column(Boolean, default=False, nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="refresh_tokens", lazy="noload")
+
+    def __repr__(self):
+        return f"<RefreshToken(id={self.id}, user_id={self.user_id}, is_revoked={self.is_revoked})>"
 
 
 class UserPreference(Base):

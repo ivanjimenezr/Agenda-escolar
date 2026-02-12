@@ -1,9 +1,12 @@
 """
 JWT token creation and validation utilities.
+Also provides opaque refresh token generation and hashing.
 """
 
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 from uuid import UUID
 
 from jose import JWTError, jwt
@@ -77,3 +80,37 @@ def get_user_id_from_token(token: str) -> Optional[UUID]:
         return UUID(user_id_str)
     except (ValueError, TypeError):
         return None
+
+
+# ---------------------------------------------------------------------------
+# Refresh token utilities (opaque tokens)
+# ---------------------------------------------------------------------------
+
+
+def generate_refresh_token() -> Tuple[str, str, datetime]:
+    """
+    Generate a cryptographically secure opaque refresh token.
+
+    Returns:
+        Tuple of (raw_token, token_hash, expires_at):
+          - raw_token: The token to send to the client (URL-safe base64, 43 chars).
+          - token_hash: SHA-256 hex digest to store in the database.
+          - expires_at: UTC datetime when the token expires.
+    """
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hash_refresh_token(raw_token)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+    return raw_token, token_hash, expires_at
+
+
+def hash_refresh_token(raw_token: str) -> str:
+    """
+    Return the SHA-256 hex digest of the raw refresh token.
+
+    Args:
+        raw_token: Raw opaque token string received from the client.
+
+    Returns:
+        str: 64-character hex digest used for database lookup.
+    """
+    return hashlib.sha256(raw_token.encode()).hexdigest()

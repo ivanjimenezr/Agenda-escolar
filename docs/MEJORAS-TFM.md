@@ -67,7 +67,7 @@ Según `docs/Documentacion-TFM.md`:
 | ~~E2E Testing~~ | ~~Completado~~ | ~~1-2 tests E2E con Playwright~~ | ~~Media~~ |
 | ~~Rate limiting~~ | ~~Completado~~ | ~~`slowapi` en FastAPI para endpoints públicos (login/register)~~ | ~~Media~~ |
 | ~~IA responsable~~ | ~~Completado~~ | ~~Sección ampliada: datos enviados/no enviados, alergias, sesgos, transparencia~~ | ~~Media~~ |
-| Refresh tokens | No implementado (token expira 30 min sin renovación) | Implementar rotación automática de refresh tokens | Baja |
+| ~~Refresh tokens~~ | ~~Completado~~ | ~~Rotación automática con reuse detection, logout endpoint~~ | ~~Baja~~ |
 
 ### 2.3 Temas no cubiertos
 
@@ -117,9 +117,13 @@ Según `docs/Documentacion-TFM.md`:
   - ADR-002: Gemini como proveedor de IA (vs OpenAI, local)
   - ADR-003: Monorepo vs repositorios separados
 
-- [ ] **Refresh token rotation**
-  - Implementar endpoint `/auth/refresh`
-  - Rotación automática cuando expira el access token
+- [x] **~~Refresh token rotation~~** *(completado)*
+  - Token opaco (`secrets.token_urlsafe`) almacenado como hash SHA-256 en BD
+  - `POST /auth/refresh`: rota el token (uso único) y emite nuevos access + refresh tokens
+  - `POST /auth/logout`: revoca el refresh token para cerrar sesión
+  - Reuse detection: token revocado presentado → se invalidan TODAS las sesiones del usuario
+  - Expiración configurable (por defecto 7 días) vía `REFRESH_TOKEN_EXPIRE_DAYS`
+  - Migración Alembic 008, modelo `RefreshToken`, 10 tests de integración (todos pasan)
 
 ---
 
