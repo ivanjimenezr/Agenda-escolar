@@ -98,8 +98,10 @@ async function apiFetch<T>(
         removeAuthToken();
         // Clear user from localStorage to trigger logout
         localStorage.removeItem('school-agenda-auth-v2');
-        // Reload page to show login screen
-        window.location.reload();
+        // Dispatch event so React can update auth state without a page reload.
+        // window.location.reload() must NOT be used here: if something keeps
+        // returning 401 on page load the reload would create an infinite loop.
+        window.dispatchEvent(new CustomEvent('auth:session-expired'));
       }
 
       throw new ApiError(

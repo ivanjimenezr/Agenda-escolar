@@ -2,9 +2,12 @@
 User Use Cases - Business logic for user operations.
 """
 
+import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 from src.application.schemas.user import (
     PasswordChangeRequest,
@@ -92,9 +95,22 @@ class UserUseCases:
         # Generate opaque refresh token and persist its hash
         raw_refresh, token_hash, expires_at = generate_refresh_token()
         if self.refresh_token_repo is not None:
-            # Clean up old expired tokens to keep the table lean
-            self.refresh_token_repo.delete_expired(user.id)
-            self.refresh_token_repo.create(user_id=user.id, token_hash=token_hash, expires_at=expires_at)
+            try:
+                # Clean up old expired tokens to keep the table lean
+                self.refresh_token_repo.delete_expired(user.id)
+                self.refresh_token_repo.create(user_id=user.id, token_hash=token_hash, expires_at=expires_at)
+            except Exception as exc:
+                # If the refresh_tokens table does not exist yet (migration not applied)
+                # or any other DB error, log a warning and continue without refresh token.
+                # This prevents an unhandled SQLAlchemy exception from reaching Starlette's
+                # ServerErrorMiddleware (which sits outside CORSMiddleware), which would
+                # produce a 500 response without CORS headers, causing a browser CORS error.
+                logger.warning("Could not persist refresh token (migration not applied?): %s", exc)
+                try:
+                    self.refresh_token_repo.db.rollback()
+                except Exception:
+                    pass
+                raw_refresh = None
 
         return {"user": user, "access_token": access_token, "refresh_token": raw_refresh}
 

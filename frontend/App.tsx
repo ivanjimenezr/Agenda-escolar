@@ -48,6 +48,19 @@ const App: React.FC = () => {
 
   const [cardOrder, setCardOrder] = useLocalStorage<ModuleKey[]>('school-agenda-order', defaultCardOrder);
 
+  // Handle session expiry: apiClient dispatches 'auth:session-expired' instead of
+  // calling window.location.reload() to avoid an infinite reload loop.
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      console.warn('[App] Session expired - logging out');
+      setUser(null);
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('auth:session-expired', handleSessionExpired);
+    };
+  }, []);
+
   // Load students and events from backend when component mounts or user changes
   useEffect(() => {
     console.log('[App] useEffect triggered - user:', user ? 'logged in' : 'not logged in');

@@ -101,7 +101,7 @@ class TokenResponse(BaseModel):
     """Schema for authentication token response."""
 
     access_token: str
-    refresh_token: str
+    refresh_token: Optional[str] = None  # None when refresh_tokens table not yet migrated
     token_type: str = "bearer"
     user: UserResponse
 

@@ -30,6 +30,7 @@ export interface TokenResponse {
   access_token: string;
   token_type: string;
   user: User;
+  refresh_token?: string; // Optional - absent when migration not yet applied
 }
 
 /**

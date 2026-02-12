@@ -2,16 +2,20 @@
 FastAPI main application entry point.
 """
 
+import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from src.infrastructure.api.rate_limit import limiter
 from src.infrastructure.config import settings
 from src.infrastructure.database import close_db, init_db
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -47,6 +51,28 @@ app = FastAPI(
 # Configure rate limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """
+    Catch-all handler for unhandled exceptions.
+
+    Without this, unhandled exceptions (e.g. SQLAlchemy ProgrammingError when
+    a migration has not been applied yet) bubble up to Starlette's
+    ServerErrorMiddleware, which lives *outside* CORSMiddleware in the ASGI
+    stack.  That means the 500 response would be sent without CORS headers,
+    causing the browser to report a CORS error instead of a useful 500.
+
+    Registering an explicit handler here keeps the response inside the
+    CORSMiddleware layer so CORS headers are always present.
+    """
+    logger.error("Unhandled exception on %s %s: %s", request.method, request.url, exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
 
 # Configure CORS
 cors_origins = settings.cors_origins_list
