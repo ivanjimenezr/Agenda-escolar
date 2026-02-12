@@ -2,6 +2,8 @@
 Authentication dependencies for FastAPI endpoints.
 """
 
+from typing import Optional
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -11,25 +13,36 @@ from src.infrastructure.database import get_db
 from src.infrastructure.repositories.user_repository import UserRepository
 from src.infrastructure.security.jwt import get_user_id_from_token
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db),
 ) -> User:
     """
     Dependency to get current authenticated user from JWT token.
 
+    Uses auto_error=False so that missing credentials raise HTTP 401
+    (RFC 9110 §15.5.2) instead of FastAPI's default HTTP 403.
+
     Args:
-        credentials: HTTP Bearer token credentials
+        credentials: HTTP Bearer token credentials (None if header absent)
         db: Database session
 
     Returns:
         User: Current authenticated user
 
     Raises:
-        HTTPException: If token is invalid or user not found
+        HTTPException 401: If credentials are missing or token is invalid
     """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = credentials.credentials
 
     # Extract user ID from token

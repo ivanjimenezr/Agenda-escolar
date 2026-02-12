@@ -71,7 +71,7 @@ class TestSubjectEndpointsSerialization:
             "type": "colegio",
         }
 
-        response = client.post(f"/students/{sample_student.id}/subjects", json=payload, headers=headers)
+        response = client.post(f"/api/v1/students/{sample_student.id}/subjects", json=payload, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -128,7 +128,7 @@ class TestSubjectEndpointsSerialization:
         )
 
         # THIS IS THE CRITICAL TEST - Getting multiple subjects
-        response = client.get(f"/students/{sample_student.id}/subjects", headers=headers)
+        response = client.get(f"/api/v1/students/{sample_student.id}/subjects", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -197,7 +197,7 @@ class TestSubjectEndpointsSerialization:
         update_payload = {"name": "Updated Name", "teacher": "Updated Teacher", "color": "#00FF00"}
 
         response = client.put(
-            f"/students/{sample_student.id}/subjects/{subject.id}", json=update_payload, headers=headers
+            f"/api/v1/students/{sample_student.id}/subjects/{subject.id}", json=update_payload, headers=headers
         )
 
         assert response.status_code == 200
@@ -233,7 +233,7 @@ class TestSubjectEndpointsSerialization:
         update_payload = {"time": "14:30:00"}
 
         response = client.put(
-            f"/students/{sample_student.id}/subjects/{subject.id}", json=update_payload, headers=headers
+            f"/api/v1/students/{sample_student.id}/subjects/{subject.id}", json=update_payload, headers=headers
         )
 
         assert response.status_code == 200
@@ -278,14 +278,14 @@ class TestSubjectEndpointsSerialization:
 
         created_ids = []
         for subject_data in subjects_data:
-            response = client.post(f"/students/{sample_student.id}/subjects", json=subject_data, headers=headers)
+            response = client.post(f"/api/v1/students/{sample_student.id}/subjects", json=subject_data, headers=headers)
             assert response.status_code == 201
             data = response.json()
             created_ids.append(data["id"])
             assert "student" not in data
 
         # Get all subjects
-        response = client.get(f"/students/{sample_student.id}/subjects", headers=headers)
+        response = client.get(f"/api/v1/students/{sample_student.id}/subjects", headers=headers)
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 3
@@ -312,7 +312,7 @@ class TestSubjectEndpointsSerialization:
             type="extraescolar",
         )
 
-        response = client.get(f"/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
+        response = client.get(f"/api/v1/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -340,12 +340,12 @@ class TestSubjectEndpointsSerialization:
         )
 
         # Delete
-        response = client.delete(f"/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
+        response = client.delete(f"/api/v1/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
 
         assert response.status_code == 204
 
         # Verify it's deleted
-        response = client.get(f"/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
+        response = client.get(f"/api/v1/students/{sample_student.id}/subjects/{subject.id}", headers=headers)
         assert response.status_code == 404
 
     def test_create_subject_with_conflict_without_replace(
@@ -379,7 +379,7 @@ class TestSubjectEndpointsSerialization:
             "type": "colegio",
         }
 
-        response = client.post(f"/students/{sample_student.id}/subjects", json=payload, headers=headers)
+        response = client.post(f"/api/v1/students/{sample_student.id}/subjects", json=payload, headers=headers)
 
         # Should return conflict error
         assert response.status_code == 409
@@ -415,7 +415,7 @@ class TestSubjectEndpointsSerialization:
             "type": "colegio",
         }
 
-        response = client.post(f"/students/{sample_student.id}/subjects?replace=true", json=payload, headers=headers)
+        response = client.post(f"/api/v1/students/{sample_student.id}/subjects?replace=true", json=payload, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -423,7 +423,7 @@ class TestSubjectEndpointsSerialization:
         assert "student" not in data
 
         # Old subject should be soft-deleted
-        all_subjects = client.get(f"/students/{sample_student.id}/subjects", headers=headers)
+        all_subjects = client.get(f"/api/v1/students/{sample_student.id}/subjects", headers=headers)
         subjects_list = all_subjects.json()
         # Should only have the new one
         assert len(subjects_list) == 1
@@ -442,7 +442,7 @@ class TestSubjectEndpointsSerialization:
             "type": "COLEGIO",  # Uppercase
         }
 
-        response = client.post(f"/students/{sample_student.id}/subjects", json=payload, headers=headers)
+        response = client.post(f"/api/v1/students/{sample_student.id}/subjects", json=payload, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -479,13 +479,13 @@ class TestSubjectEndpointsSerialization:
                 )
 
         # Get subjects for student1
-        response1 = client.get(f"/students/{student1.id}/subjects", headers=headers)
+        response1 = client.get(f"/api/v1/students/{student1.id}/subjects", headers=headers)
         assert response1.status_code == 200
         data1 = response1.json()
         assert len(data1) == 3
 
         # Get subjects for student2
-        response2 = client.get(f"/students/{student2.id}/subjects", headers=headers)
+        response2 = client.get(f"/api/v1/students/{student2.id}/subjects", headers=headers)
         assert response2.status_code == 200
         data2 = response2.json()
         assert len(data2) == 3

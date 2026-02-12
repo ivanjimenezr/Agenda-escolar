@@ -68,6 +68,7 @@ from fastapi.testclient import TestClient
 
 from src.infrastructure.api.dependencies.database import get_db as real_get_db
 from src.infrastructure.api.rate_limit import limiter
+from src.infrastructure.database import get_db as db_get_db
 from src.main import app
 
 
@@ -82,7 +83,10 @@ def client(db_session):
         finally:
             pass
 
+    # Override both get_db variants: routes may import from either module
     app.dependency_overrides[real_get_db] = override_get_db
+    app.dependency_overrides[db_get_db] = override_get_db
     client = TestClient(app)
     yield client
     app.dependency_overrides.pop(real_get_db, None)
+    app.dependency_overrides.pop(db_get_db, None)

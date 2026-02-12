@@ -71,7 +71,7 @@ class TestMenuEndpointsSerialization:
             "allergens": ["gluten"],
         }
 
-        response = client.post("/menus", json=payload, headers=headers)
+        response = client.post("/api/v1/menus", json=payload, headers=headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -120,7 +120,7 @@ class TestMenuEndpointsSerialization:
         )
 
         # THIS IS THE CRITICAL TEST - Getting multiple menus
-        response = client.get(f"/menus/student/{sample_student.id}", headers=headers)
+        response = client.get(f"/api/v1/menus/student/{sample_student.id}", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -185,7 +185,7 @@ class TestMenuEndpointsSerialization:
         end_date = (today + timedelta(days=3)).isoformat()
 
         response = client.get(
-            f"/menus/student/{sample_student.id}?start_date={start_date}&end_date={end_date}", headers=headers
+            f"/api/v1/menus/student/{sample_student.id}?start_date={start_date}&end_date={end_date}", headers=headers
         )
 
         assert response.status_code == 200
@@ -214,7 +214,7 @@ class TestMenuEndpointsSerialization:
             allergens=["gluten"],
         )
 
-        response = client.get(f"/menus/{menu.id}", headers=headers)
+        response = client.get(f"/api/v1/menus/{menu.id}", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -241,7 +241,7 @@ class TestMenuEndpointsSerialization:
 
         update_payload = {"first_course": "Updated First Course", "allergens": ["updated", "allergen"]}
 
-        response = client.put(f"/menus/{menu.id}", json=update_payload, headers=headers)
+        response = client.put(f"/api/v1/menus/{menu.id}", json=update_payload, headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -264,13 +264,13 @@ class TestMenuEndpointsSerialization:
         }
 
         # First upsert (create)
-        response = client.put("/menus/upsert", json=payload, headers=headers)
+        response = client.put("/api/v1/menus/upsert", json=payload, headers=headers)
         assert response.status_code == 200
         first_data = response.json()
 
         # Second upsert (update)
         payload["first_course"] = "Updated Upsert"
-        response = client.put("/menus/upsert", json=payload, headers=headers)
+        response = client.put("/api/v1/menus/upsert", json=payload, headers=headers)
         assert response.status_code == 200
         second_data = response.json()
 
@@ -306,13 +306,13 @@ class TestMenuEndpointsSerialization:
                 )
 
         # Get menus for student1
-        response1 = client.get(f"/menus/student/{student1.id}", headers=headers)
+        response1 = client.get(f"/api/v1/menus/student/{student1.id}", headers=headers)
         assert response1.status_code == 200
         data1 = response1.json()
         assert len(data1) == 3
 
         # Get menus for student2
-        response2 = client.get(f"/menus/student/{student2.id}", headers=headers)
+        response2 = client.get(f"/api/v1/menus/student/{student2.id}", headers=headers)
         assert response2.status_code == 200
         data2 = response2.json()
         assert len(data2) == 3

@@ -95,6 +95,49 @@ def get_menu_item(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
+@router.put(
+    "/upsert", response_model=MenuItemResponse, status_code=status.HTTP_200_OK, summary="Create or update a menu item"
+)
+def upsert_menu_item(
+    data: MenuItemCreateRequest,
+    current_user: User = Depends(get_current_user),
+    use_cases: MenuUseCases = Depends(get_menu_use_cases),
+):
+    """
+    Create or update a menu item for a specific student and date.
+
+    If a menu already exists for the given student_id and date, it will be updated.
+    Otherwise, a new menu item will be created.
+
+    - **student_id**: UUID of the student
+    - **date**: Date of the menu
+    - **first_course**: First course (e.g., "Lentejas")
+    - **second_course**: Second course (e.g., "Pollo asado")
+    - **side_dish**: Optional side dish
+    - **dessert**: Optional dessert
+    - **allergens**: List of allergens
+
+    NOTE: this route must be registered before PUT /{menu_id} so that FastAPI
+    matches the static path "/upsert" before the dynamic UUID path parameter.
+    """
+    try:
+        menu = use_cases.upsert_menu_item(
+            user_id=current_user.id,
+            student_id=data.student_id,
+            menu_date=data.date,
+            first_course=data.first_course,
+            second_course=data.second_course,
+            side_dish=data.side_dish,
+            dessert=data.dessert,
+            allergens=data.allergens,
+        )
+        return MenuItemResponse.model_validate(menu)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
 @router.put("/{menu_id}", response_model=MenuItemResponse, summary="Update a menu item")
 def update_menu_item(
     menu_id: UUID,
@@ -131,45 +174,5 @@ def delete_menu_item(
         return None
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-
-
-@router.put(
-    "/upsert", response_model=MenuItemResponse, status_code=status.HTTP_200_OK, summary="Create or update a menu item"
-)
-def upsert_menu_item(
-    data: MenuItemCreateRequest,
-    current_user: User = Depends(get_current_user),
-    use_cases: MenuUseCases = Depends(get_menu_use_cases),
-):
-    """
-    Create or update a menu item for a specific student and date.
-
-    If a menu already exists for the given student_id and date, it will be updated.
-    Otherwise, a new menu item will be created.
-
-    - **student_id**: UUID of the student
-    - **date**: Date of the menu
-    - **first_course**: First course (e.g., "Lentejas")
-    - **second_course**: Second course (e.g., "Pollo asado")
-    - **side_dish**: Optional side dish
-    - **dessert**: Optional dessert
-    - **allergens**: List of allergens
-    """
-    try:
-        menu = use_cases.upsert_menu_item(
-            user_id=current_user.id,
-            student_id=data.student_id,
-            menu_date=data.date,
-            first_course=data.first_course,
-            second_course=data.second_course,
-            side_dish=data.side_dish,
-            dessert=data.dessert,
-            allergens=data.allergens,
-        )
-        return MenuItemResponse.model_validate(menu)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
